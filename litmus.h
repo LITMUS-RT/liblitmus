@@ -11,16 +11,17 @@ typedef int (*rt_fn_t)(void*);
 
 /*	Litmus scheduling policies	*/
 typedef enum {
-	SCHED_LINUX 		= 0,
-	SCHED_PFAIR 		= 1,
-	SCHED_PFAIR_STAGGER 	= 2,
-	SCHED_PART_EDF 		= 3,
-	SCHED_PART_EEVDF 	= 4,
-	SCHED_GLOBAL_EDF 	= 5,
-	SCHED_PFAIR_DESYNC 	= 6,
-	SCHED_GLOBAL_EDF_NP 	= 7,	
-	SCHED_CUSTOM 		= 8,
-	SCHED_EDF_HSB		= 9,
+	SCHED_LINUX 		=  0,
+	SCHED_PFAIR 		=  1,
+	SCHED_PFAIR_STAGGER 	=  2,
+	SCHED_PART_EDF 		=  3,
+	SCHED_PART_EEVDF 	=  4,
+	SCHED_GLOBAL_EDF 	=  5,
+	SCHED_PFAIR_DESYNC 	=  6,
+	SCHED_GLOBAL_EDF_NP 	=  7,	
+	SCHED_CUSTOM 		=  8,
+	SCHED_EDF_HSB		=  9,
+	SCHED_GSN_EDF		= 10
 } spolicy;
 
 /* different types of clients */

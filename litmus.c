@@ -87,6 +87,9 @@ const char* get_scheduler_name(spolicy scheduler)
 	case SCHED_EDF_HSB:
 		name = "EDF-HSB";
 		break;
+	case SCHED_GSN_EDF:
+		name = "GSN-EDF";
+		break;
 	default:
 		name = "Unkown";
 		break;
