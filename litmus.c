@@ -177,6 +177,8 @@ task_class_t str2class(const char* str)
 #define __NR_reset_stat		326
 #define __NR_sleep_next_period  327
 #define __NR_scheduler_setup	328
+#define __NR_enter_np		329
+#define __NR_exit_np		330
 
 
 /*	Syscall stub for setting RT mode and scheduling options */
@@ -189,3 +191,5 @@ _syscall1(int, 	   prepare_rt_task,   pid_t,   pid);
 _syscall0(int,     reset_stat);
 _syscall0(int,     sleep_next_period);
 _syscall2(int,     scheduler_setup,   int,     cmd,  void*,      param);
+_syscall0(int,     enter_np);
+_syscall0(int,     exit_np);

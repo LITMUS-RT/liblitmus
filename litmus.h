@@ -67,7 +67,8 @@ int tear_down_task(pid_t pid, int sig);
 int reset_stat(void);
 int sleep_next_period(void);
 int scheduler_setup(int cmd, void* param);
-
+int enter_np(void);
+int exit_np(void);
 
 /*  library functions */
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
