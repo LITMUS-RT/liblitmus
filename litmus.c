@@ -179,17 +179,34 @@ task_class_t str2class(const char* str)
 #define __NR_scheduler_setup	328
 #define __NR_enter_np		329
 #define __NR_exit_np		330
+#define __NR_pi_sema_init       331
+#define __NR_pi_down            332
+#define __NR_pi_up              333
+#define __NR_pi_sema_free       334
+#define __NR_sema_init          335
+#define __NR_down               336
+#define __NR_up                 337
+#define __NR_sema_free          338
 
 
 /*	Syscall stub for setting RT mode and scheduling options */
 _syscall1(spolicy, sched_setpolicy,   spolicy, arg1);
 _syscall0(spolicy, sched_getpolicy);
-_syscall1(int,     set_rt_mode,       int,     arg1);
-_syscall2(int,     set_rt_task_param, pid_t,   pid,  rt_param_t*, arg1);
-_syscall2(int,     get_rt_task_param, pid_t,   pid,  rt_param_t*, arg1);
-_syscall1(int, 	   prepare_rt_task,   pid_t,   pid);
+_syscall1(int,     set_rt_mode,       int,        arg1);
+_syscall2(int,     set_rt_task_param, pid_t,      pid,  rt_param_t*, arg1);
+_syscall2(int,     get_rt_task_param, pid_t,      pid,  rt_param_t*, arg1);
+_syscall1(int, 	   prepare_rt_task,   pid_t,      pid);
 _syscall0(int,     reset_stat);
 _syscall0(int,     sleep_next_period);
-_syscall2(int,     scheduler_setup,   int,     cmd,  void*,      param);
+_syscall2(int,     scheduler_setup,   int,        cmd,  void*,      param);
 _syscall0(int,     enter_np);
 _syscall0(int,     exit_np);
+_syscall0(int,	   pi_sema_init);
+_syscall1(int,     pi_down,           pi_sema_id, sem_id);
+_syscall1(int,     pi_up,             pi_sema_id, sem_id);
+_syscall1(int,     pi_sema_free,      pi_sema_id, sem_id);
+_syscall0(int,     sema_init);
+_syscall1(int,     down,              sema_id,    sem_id);
+_syscall1(int,     up,                sema_id,    sem_id);
+_syscall1(int,     sema_free,         sema_id,    sem_id);
+

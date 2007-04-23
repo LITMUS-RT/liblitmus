@@ -47,6 +47,9 @@ typedef struct rt_param {
 	task_class_t  	cls;
 } rt_param_t;
 
+typedef int sema_id; /* ID of a semaphore in the Linux kernel */
+typedef int pi_sema_id; /* ID of a PI semaphore in the Linux kernel */
+
 #define set_param(t,p,e) do{\
 			(t).is_realtime=1;\
 			(t).exec_cost=(e);\
