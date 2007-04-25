@@ -72,6 +72,14 @@ int sleep_next_period(void);
 int scheduler_setup(int cmd, void* param);
 int enter_np(void);
 int exit_np(void);
+int pi_sema_init(void);
+int pi_down(pi_sema_id sem_id);
+int pi_up(pi_sema_id sem_id);
+int pi_sema_free(pi_sema_id sem_id);
+int sema_init(void);
+int down(sema_id sem_id);
+int up(sema_id sem_id);
+int sema_free(sema_id sem_id);
 
 /*  library functions */
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
