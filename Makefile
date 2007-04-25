@@ -2,8 +2,10 @@ CFLAGS=-Wall -g
 CPPFLAGS=-Wall -g
 
 
-all: showsched iotest set_rt_mode  run timeout rt_launch edfhsb
+all: showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a
 
+clean:
+	rm *.o showsched iotest set_rt_mode run timeout rt_launch edfhsb liblitmus.a
 
 iotest: iotest.o litmus.h litmus.o
 	cc -static -o iotest litmus.o iotest.o
@@ -26,3 +28,5 @@ rt_launch: litmus.o litmus.h rt_launch.o
 edfhsb: litmus.o edf-hsb.o litmus.h edf-hsb.h hrt.o
 	cc -o edfhsb hrt.o litmus.o edf-hsb.o
 
+liblitmus.a: litmus.o litmus.h edf-hsb.o edf-hsb.h
+	${AR} rcs liblitmus.a litmus.o edf-hsb.o
