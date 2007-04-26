@@ -187,26 +187,35 @@ task_class_t str2class(const char* str)
 #define __NR_down               336
 #define __NR_up                 337
 #define __NR_sema_free          338
-
+#define __NR_srp_sema_init      339
+#define __NR_srp_down           340
+#define __NR_srp_up             341
+#define __NR_reg_task_srp_sem   342
+#define __NR_srp_sema_free      343
 
 /*	Syscall stub for setting RT mode and scheduling options */
 _syscall1(spolicy, sched_setpolicy,   spolicy, arg1);
 _syscall0(spolicy, sched_getpolicy);
-_syscall1(int,     set_rt_mode,       int,        arg1);
-_syscall2(int,     set_rt_task_param, pid_t,      pid,  rt_param_t*, arg1);
-_syscall2(int,     get_rt_task_param, pid_t,      pid,  rt_param_t*, arg1);
-_syscall1(int, 	   prepare_rt_task,   pid_t,      pid);
+_syscall1(int,     set_rt_mode,       int,         arg1);
+_syscall2(int,     set_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
+_syscall2(int,     get_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
+_syscall1(int, 	   prepare_rt_task,   pid_t,       pid);
 _syscall0(int,     reset_stat);
 _syscall0(int,     sleep_next_period);
-_syscall2(int,     scheduler_setup,   int,        cmd,  void*,      param);
+_syscall2(int,     scheduler_setup,   int,         cmd,    void*,       param);
 _syscall0(int,     enter_np);
 _syscall0(int,     exit_np);
 _syscall0(int,	   pi_sema_init);
-_syscall1(int,     pi_down,           pi_sema_id, sem_id);
-_syscall1(int,     pi_up,             pi_sema_id, sem_id);
-_syscall1(int,     pi_sema_free,      pi_sema_id, sem_id);
+_syscall1(int,     pi_down,           pi_sema_id,  sem_id);
+_syscall1(int,     pi_up,             pi_sema_id,  sem_id);
+_syscall1(int,     pi_sema_free,      pi_sema_id,  sem_id);
 _syscall0(int,     sema_init);
-_syscall1(int,     down,              sema_id,    sem_id);
-_syscall1(int,     up,                sema_id,    sem_id);
-_syscall1(int,     sema_free,         sema_id,    sem_id);
+_syscall1(int,     down,              sema_id,     sem_id);
+_syscall1(int,     up,                sema_id,     sem_id);
+_syscall1(int,     sema_free,         sema_id,     sem_id);
+_syscall0(int,     srp_sema_init);
+_syscall1(int,     srp_down,          srp_sema_id, sem_id);
+_syscall1(int,     srp_up,            srp_sema_id, sem_id);
+_syscall2(int,     reg_task_srp_sem,  srp_sema_id, sem_id, pid_t,       t_pid);
+_syscall1(int,     srp_sema_free,     srp_sema_id, sem_id);
 

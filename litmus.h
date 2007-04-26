@@ -47,8 +47,11 @@ typedef struct rt_param {
 	task_class_t  	cls;
 } rt_param_t;
 
-typedef int sema_id; /* ID of a semaphore in the Linux kernel */
-typedef int pi_sema_id; /* ID of a PI semaphore in the Linux kernel */
+typedef int sema_id;     /* ID of a semaphore in the Linux kernel */
+typedef int pi_sema_id;  /* ID of a PI semaphore in the Linux kernel */
+typedef int srp_sema_id; /* ID of an SRP "semaphore" in the Linux kernel */
+
+typedef int pid_t;	 /* PID of a task */
 
 #define set_param(t,p,e) do{\
 			(t).is_realtime=1;\
@@ -80,6 +83,11 @@ int sema_init(void);
 int down(sema_id sem_id);
 int up(sema_id sem_id);
 int sema_free(sema_id sem_id);
+int srp_sema_init(void);
+int srp_down(srp_sema_id sem_id);
+int srp_up(srp_sema_id sem_id);
+int reg_task_srp_sem(srp_sema_id sem_id, pid_t t_pid);
+int srp_sema_free(srp_sema_id sem_id);
 
 /*  library functions */
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
