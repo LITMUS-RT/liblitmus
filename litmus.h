@@ -21,7 +21,8 @@ typedef enum {
 	SCHED_GLOBAL_EDF_NP 	=  7,	
 	SCHED_CUSTOM 		=  8,
 	SCHED_EDF_HSB		=  9,
-	SCHED_GSN_EDF		= 10
+	SCHED_GSN_EDF		= 10,
+	SCHED_PSN_EDF		= 11
 } spolicy;
 
 /* different types of clients */
