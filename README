@@ -1,0 +1,44 @@
+LITMUS^RT User-Space Library: liblitmus
+=======================================
+
+  Copyright (c) 2007 
+  The University of North Carolina at Chapel Hill
+  Department of Computer Science
+  Real-Time Systems Group
+  Dr. Anderson & students
+  http://www.cs.unc.edu/~anderson/litmus-rt/
+
+Released as open source under the terms of the GNU General Public License
+(GPL). 
+
+Overview
+========
+This library and the included tools provide the user-space interface to
+LITMUS^RT. Real-time tasks should link against this library. The header file
+"litmus.h" contains all necessary system calls and definitions to interact with
+the kernel services provided for real-time tasks.
+
+Tools
+=====
+
+* set_rt_mode {on|off}
+  Enter or exit real-time mode. Real-time tasks are only scheduled by the
+  kernel if the system is in real-time mode.
+
+* showsched
+  Print the name of the currently active scheduler. Schedulers are selected at
+  boot time with the "rtsched=<NAME>" kernel parameter.
+
+* rt_launch {-p <PROCESSOR>} <WCET> <PERIOD> <PROGRAM> <ARGS>...
+  Launch the program <PROGRAM> as a real-time task provisioned with the given
+  worst-case execution time and priod. Any additional parameters are passed on
+  to the real-time task.
+
+Install
+=======
+The library and the included tools  must be compiled from source. Currently,
+the library and all tools are compiled by  by issuing the
+command:
+
+        $ make
+
