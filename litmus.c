@@ -171,30 +171,33 @@ task_class_t str2class(const char* str)
 
 
 /*	Litmus syscalls definitions */
-#define __NR_sched_setpolicy 	320
-#define __NR_sched_getpolicy 	321
-#define __NR_set_rt_mode	322
-#define __NR_set_rt_task_param	323
-#define __NR_get_rt_task_param	324
-#define __NR_prepare_rt_task	325
-#define __NR_reset_stat		326
-#define __NR_sleep_next_period  327
-#define __NR_scheduler_setup	328
-#define __NR_enter_np		329
-#define __NR_exit_np		330
-#define __NR_pi_sema_init       331
-#define __NR_pi_down            332
-#define __NR_pi_up              333
-#define __NR_pi_sema_free       334
-#define __NR_sema_init          335
-#define __NR_down               336
-#define __NR_up                 337
-#define __NR_sema_free          338
-#define __NR_srp_sema_init      339
-#define __NR_srp_down           340
-#define __NR_srp_up             341
-#define __NR_reg_task_srp_sem   342
-#define __NR_srp_sema_free      343
+#define __NR_sched_setpolicy 	  320
+#define __NR_sched_getpolicy 	  321
+#define __NR_set_rt_mode	  322
+#define __NR_set_rt_task_param	  323
+#define __NR_get_rt_task_param	  324
+#define __NR_prepare_rt_task	  325
+#define __NR_reset_stat		  326
+#define __NR_sleep_next_period    327
+#define __NR_scheduler_setup	  328
+#define __NR_enter_np		  329
+#define __NR_exit_np		  330
+#define __NR_pi_sema_init         331
+#define __NR_pi_down              332
+#define __NR_pi_up                333
+#define __NR_pi_sema_free         334
+#define __NR_sema_init            335
+#define __NR_down                 336
+#define __NR_up                   337
+#define __NR_sema_free            338
+#define __NR_srp_sema_init        339
+#define __NR_srp_down             340
+#define __NR_srp_up               341
+#define __NR_reg_task_srp_sem     342
+#define __NR_srp_sema_free        343
+#define __NR_query_job_no         344
+#define __NR_wait_for_job_release 345
+
 
 /*	Syscall stub for setting RT mode and scheduling options */
 _syscall1(spolicy, sched_setpolicy,   spolicy, arg1);
@@ -221,4 +224,6 @@ _syscall1(int,     srp_down,          srp_sema_id, sem_id);
 _syscall1(int,     srp_up,            srp_sema_id, sem_id);
 _syscall2(int,     reg_task_srp_sem,  srp_sema_id, sem_id, pid_t,       t_pid);
 _syscall1(int,     srp_sema_free,     srp_sema_id, sem_id);
+_syscall1(int,     query_job_no,      unsigned int*, job_no);
+_syscall1(int,     wait_for_job_release, unsigned int, job_no);
 

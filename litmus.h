@@ -89,6 +89,9 @@ int srp_down(srp_sema_id sem_id);
 int srp_up(srp_sema_id sem_id);
 int reg_task_srp_sem(srp_sema_id sem_id, pid_t t_pid);
 int srp_sema_free(srp_sema_id sem_id);
+int get_job_no(unsigned int* job_no);
+int wait_for_job_release(unsigned int job_no);
+
 
 /*  library functions */
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
