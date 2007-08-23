@@ -2,10 +2,13 @@ CFLAGS=-Wall -g
 CPPFLAGS=-Wall -g
 
 
-all: showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a
+all: showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a wait_test
 
 clean:
-	rm *.o showsched iotest set_rt_mode run timeout rt_launch edfhsb liblitmus.a
+	rm *.o showsched iotest set_rt_mode run timeout rt_launch edfhsb liblitmus.a wait_test
+
+wait_test: wait_test.o litmus.h litmus.o
+	cc -static -o wait_test litmus.o wait_test.o
 
 iotest: iotest.o litmus.h litmus.o
 	cc -static -o iotest litmus.o iotest.o

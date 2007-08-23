@@ -195,7 +195,7 @@ task_class_t str2class(const char* str)
 #define __NR_srp_up               341
 #define __NR_reg_task_srp_sem     342
 #define __NR_srp_sema_free        343
-#define __NR_query_job_no         344
+#define __NR_get_job_no           344
 #define __NR_wait_for_job_release 345
 
 
@@ -224,6 +224,6 @@ _syscall1(int,     srp_down,          srp_sema_id, sem_id);
 _syscall1(int,     srp_up,            srp_sema_id, sem_id);
 _syscall2(int,     reg_task_srp_sem,  srp_sema_id, sem_id, pid_t,       t_pid);
 _syscall1(int,     srp_sema_free,     srp_sema_id, sem_id);
-_syscall1(int,     query_job_no,      unsigned int*, job_no);
+_syscall1(int,     get_job_no,      unsigned int*, job_no);
 _syscall1(int,     wait_for_job_release, unsigned int, job_no);
 
