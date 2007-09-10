@@ -191,12 +191,17 @@ int register_np_flag(struct np_flag* flag);
 int signal_exit_np(void);
 
 
+static inline void barrier(void)
+{
+	__asm__ __volatile__("sfence": : :"memory");
+}
+
 void enter_np(void)
 {
 	if (++np_flag.ctr == 1)
 	{
 		np_flag.request = 0;
-		/* barrier here */
+		barrier();
 		np_flag.preemptivity = RT_NON_PREEMPTIVE;
 	}
 }
@@ -207,7 +212,7 @@ void exit_np(void)
 	if (--np_flag.ctr == 0)
 	{
 		np_flag.preemptivity = RT_PREEMPTIVE;
-		/* barrier here */
+		barrier();
 		if (np_flag.request == RT_EXIT_NP_REQUESTED)
 			signal_exit_np();
 	}
