@@ -5,8 +5,11 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/mman.h>
+
 
 #include "litmus.h"
+
 
 /* this is missing in newer linux/unistd.h versions */
 
@@ -170,6 +173,64 @@ task_class_t str2class(const char* str)
 }
 
 
+
+struct np_flag {
+	#define RT_PREEMPTIVE 		0x2050 /* = NP */
+	#define RT_NON_PREEMPTIVE 	0x4e50 /* =  P */
+	unsigned short preemptivity;
+
+	#define RT_EXIT_NP_REQUESTED	0x5251 /* = RQ */
+	unsigned short request;
+
+	unsigned int ctr;
+};
+
+static struct np_flag np_flag;
+
+int register_np_flag(struct np_flag* flag);
+int signal_exit_np(void);
+
+
+void enter_np(void)
+{
+	if (++np_flag.ctr == 1)
+	{
+		np_flag.request = 0;
+		/* barrier here */
+		np_flag.preemptivity = RT_NON_PREEMPTIVE;
+	}
+}
+
+
+void exit_np(void)
+{
+	if (--np_flag.ctr == 0)
+	{
+		np_flag.preemptivity = RT_PREEMPTIVE;
+		/* barrier here */
+		if (np_flag.request == RT_EXIT_NP_REQUESTED)
+			signal_exit_np();
+	}
+}
+
+
+#define check(str) if (ret == -1) {perror(str); fprintf(stderr, \
+	"Could not initialize LITMUS^RT, aborting...\n"); exit(1);}
+
+void init_litmus(void)
+{
+	int ret;
+	np_flag.preemptivity = RT_PREEMPTIVE;
+	np_flag.ctr = 0;
+
+	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
+	check("mlockall");
+	ret = register_np_flag(&np_flag);
+	check("register_np_flag");	
+}
+
+
+
 /*	Litmus syscalls definitions */
 #define __NR_sched_setpolicy 	  320
 #define __NR_sched_getpolicy 	  321
@@ -180,8 +241,8 @@ task_class_t str2class(const char* str)
 #define __NR_reset_stat		  326
 #define __NR_sleep_next_period    327
 #define __NR_scheduler_setup	  328
-#define __NR_enter_np		  329
-#define __NR_exit_np		  330
+#define __NR_register_np_flag	  329
+#define __NR_signal_exit_np	  330
 #define __NR_pi_sema_init         331
 #define __NR_pi_down              332
 #define __NR_pi_up                333
@@ -209,8 +270,8 @@ _syscall1(int, 	   prepare_rt_task,   pid_t,       pid);
 _syscall0(int,     reset_stat);
 _syscall0(int,     sleep_next_period);
 _syscall2(int,     scheduler_setup,   int,         cmd,    void*,       param);
-_syscall0(int,     enter_np);
-_syscall0(int,     exit_np);
+_syscall1(int,     register_np_flag, struct np_flag*, flag);
+_syscall0(int,     signal_exit_np);
 _syscall0(int,	   pi_sema_init);
 _syscall1(int,     pi_down,           pi_sema_id,  sem_id);
 _syscall1(int,     pi_up,             pi_sema_id,  sem_id);

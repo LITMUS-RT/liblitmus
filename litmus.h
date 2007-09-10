@@ -74,8 +74,6 @@ int tear_down_task(pid_t pid, int sig);
 int reset_stat(void);
 int sleep_next_period(void);
 int scheduler_setup(int cmd, void* param);
-int enter_np(void);
-int exit_np(void);
 int pi_sema_init(void);
 int pi_down(pi_sema_id sem_id);
 int pi_up(pi_sema_id sem_id);
@@ -92,14 +90,18 @@ int srp_sema_free(srp_sema_id sem_id);
 int get_job_no(unsigned int* job_no);
 int wait_for_job_release(unsigned int job_no);
 
-
 /*  library functions */
+void init_litmus(void);
+
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
 int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, 
 		     int period, task_class_t cls);
 const char* get_scheduler_name(spolicy scheduler);
 void show_rt_param(rt_param_t* tp);
 task_class_t str2class(const char* str);
+
+void enter_np(void);
+void exit_np(void);
 
 
 #endif

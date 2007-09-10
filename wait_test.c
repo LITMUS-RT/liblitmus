@@ -62,7 +62,8 @@ void sync_jobs(void)
 int main(int argc, char** argv) 
 {
 	int ret;
-	
+
+	init_litmus();
 
 	CALL(getpid());
 	printf("my pid is %d\n", ret);
