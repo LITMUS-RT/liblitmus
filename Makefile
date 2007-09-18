@@ -1,39 +1,43 @@
-CFLAGS=-Wall -g
+CFLAGS=-Wall -g -Iinclude/
 CPPFLAGS=-Wall -g
+
+LIBS= ./liblitmus.a
 
 TARGETS = showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a wait_test np_test
 
+vpath %.h include/
+vpath %.c src/
 
 all: ${TARGETS}
 clean:
-	rm *.o ${TARGETS}
+	rm -f *.o *~  ${TARGETS}
 
-wait_test: wait_test.o litmus.h litmus.o
-	cc -static -o wait_test litmus.o wait_test.o
+wait_test: wait_test.o litmus.h liblitmus.a
+	cc -static -o wait_test wait_test.o  ${LIBS}
 
-np_test: np_test.o litmus.h litmus.o
-	cc -static -o np_test litmus.o np_test.o
+np_test: np_test.o litmus.h liblitmus.a
+	cc -static -o np_test np_test.o  ${LIBS}
 
-iotest: iotest.o litmus.h litmus.o
-	cc -static -o iotest litmus.o iotest.o
+iotest: iotest.o litmus.h liblitmus.a
+	cc -static -o iotest iotest.o  ${LIBS}
 
 run: run.o
 	cc -o run run.o
 
-set_rt_mode: litmus.o set_rt_mode.o
-	cc -o set_rt_mode litmus.o set_rt_mode.o
+set_rt_mode: liblitmus.a set_rt_mode.o
+	cc -o set_rt_mode set_rt_mode.o  ${LIBS}
 
-showsched: show_scheduler.o litmus.o litmus.h
-	cc -o showsched show_scheduler.o litmus.o
+showsched: show_scheduler.o liblitmus.a litmus.h
+	cc -o showsched  show_scheduler.o  ${LIBS}
 
-timeout: litmus.o timeout.o litmus.h
-	cc -static -o timeout litmus.o timeout.o
+timeout: liblitmus.a timeout.o litmus.h
+	cc -static -o timeout timeout.o  ${LIBS}
 
-rt_launch: litmus.o litmus.h rt_launch.o
-	cc -static -o rt_launch litmus.o rt_launch.o
+rt_launch: liblitmus.a litmus.h rt_launch.o
+	cc -static -o rt_launch  rt_launch.o ${LIBS}
 
-edfhsb: litmus.o edf-hsb.o litmus.h edf-hsb.h hrt.o
-	cc -o edfhsb hrt.o litmus.o edf-hsb.o
+edfhsb: liblitmus.a edf-hsb.o litmus.h edf-hsb.h hrt.o
+	cc -o edfhsb hrt.o edf-hsb.o  ${LIBS}
 
 liblitmus.a: litmus.o litmus.h edf-hsb.o edf-hsb.h
-	${AR} rcs liblitmus.a litmus.o edf-hsb.o
+	${AR} rcs liblitmus.a litmus.o edf-hsb.o 
