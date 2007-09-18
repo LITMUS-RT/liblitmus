@@ -92,6 +92,12 @@ int wait_for_job_release(unsigned int job_no);
 
 /*  library functions */
 void init_litmus(void);
+/* exit is currently unused, but was needed for syscall
+ * tracing and may be needed in the future. Leave it in
+ * for the purpose of source code compatability.
+ */
+#define exit_litmus() {}
+
 
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
 int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, 
