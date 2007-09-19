@@ -77,6 +77,7 @@ int main(int argc, char** argv)
 	ret = __create_rt_task(launch, &info, cpu, wcet, period, class);
 	if (ret < 0) {
 		perror("Could not create rt child process");
+		return 2;
 	}
 
 	return 0;	
