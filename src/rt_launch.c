@@ -13,7 +13,7 @@ typedef struct {
 int launch(void *task_info_p) {
 	startup_info_t *info = (startup_info_t*) task_info_p;
 	int ret;
-	ret = execv(info->exec_path, info->argv);
+	ret = execvp(info->exec_path, info->argv);
 	perror("execv failed");
 	return ret;
 }
