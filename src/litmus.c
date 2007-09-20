@@ -218,6 +218,17 @@ void exit_np(void)
 	}
 }
 
+static int exit_requested = 0;
+
+static void sig_handler(int sig)
+{
+	exit_requested = 1;
+}
+
+int litmus_task_active(void)
+{
+	return !exit_requested;
+}
 
 #define check(str) if (ret == -1) {perror(str); fprintf(stderr, \
 	"Could not initialize LITMUS^RT, aborting...\n"); exit(1);}
@@ -232,6 +243,9 @@ void init_litmus(void)
 	check("mlockall");
 	ret = register_np_flag(&np_flag);
 	check("register_np_flag");	
+	signal(SIGINT, sig_handler);
+	signal(SIGTERM, sig_handler);
+	signal(SIGHUP, sig_handler);
 }
 
 

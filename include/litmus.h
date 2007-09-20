@@ -109,5 +109,6 @@ task_class_t str2class(const char* str);
 void enter_np(void);
 void exit_np(void);
 
+int litmus_task_active();
 
 #endif
