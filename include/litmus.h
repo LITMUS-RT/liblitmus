@@ -8,6 +8,7 @@
 #define CLONE_REALTIME		0x10000000	
 
 typedef int (*rt_fn_t)(void*);
+typedef int (*rt_setup_fn_t)(int pid, void* arg);
 
 /*	Litmus scheduling policies	*/
 typedef enum {
@@ -99,6 +100,7 @@ void init_litmus(void);
 #define exit_litmus() {}
 
 
+
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
 int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, 
 		     int period, task_class_t cls);
@@ -110,5 +112,11 @@ void enter_np(void);
 void exit_np(void);
 
 int litmus_task_active();
+
+
+/* low level operations, not intended for API use */
+int fork_rt(void);
+int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg, 
+		     rt_setup_fn_t setup, void* setup_arg);
 
 #endif

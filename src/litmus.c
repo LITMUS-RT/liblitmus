@@ -63,6 +63,12 @@ type name(type1 arg1,type2 arg2) \
 
 _syscall2(int, raw_clone, unsigned long, flags, unsigned long, child_stack)
 
+int fork_rt(void) 
+{
+	int rt_task = raw_clone(CLONE_LITMUS, 0);
+	return rt_task;
+}
+
 
 const char* get_scheduler_name(spolicy scheduler) 
 {
@@ -103,27 +109,20 @@ const char* get_scheduler_name(spolicy scheduler)
 	return name;
 }
 
-int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period) {
-	return __create_rt_task(rt_prog, arg, cpu, wcet, period, RT_CLASS_HARD);
-}
 
-int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period,
-		     task_class_t class) 
+/* common launch routine */
+int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg, rt_setup_fn_t setup, 
+		     void* setup_arg) 
 {
 	int ret;
-	rt_param_t params;
-	int rt_task = raw_clone(CLONE_LITMUS, 0);
+	int rt_task = fork_rt();
 
 	if (rt_task < 0) 
 		return rt_task;
 
 	if (rt_task > 0) {
 		/* we are the controller task */			
-		params.period      = period;
-		params.exec_cost   = wcet;
-		params.cpu         = cpu;
-		params.cls	   = class;
-		ret = set_rt_task_param(rt_task, &params);
+		ret = setup(rt_task, setup_arg);
 		if (ret < 0) {
 			/* we have a problem: we created the task but
 			 * for some stupid reason we cannot set the real-time
@@ -138,7 +137,7 @@ int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period,
 		ret = prepare_rt_task(rt_task);
 		if (ret < 0) {
 			/* same problem as above*/
-			//kill(rt_task, SIGKILL);
+			kill(rt_task, SIGKILL);
 			rt_task = -1;
 		}
 		return rt_task;
@@ -148,8 +147,41 @@ int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period,
 		 * launch task and die when it is done
 		 */		
 		
-		exit(rt_prog(arg));
+		exit(rt_prog(rt_arg));
 	}
+}
+
+struct create_rt_param {
+	int cpu;
+	int wcet;
+	int period;
+	task_class_t class;
+};
+
+int setup_create_rt(int pid, struct create_rt_param* arg)
+{
+	rt_param_t params;
+	params.period      = arg->period;
+	params.exec_cost   = arg->wcet;
+	params.cpu         = arg->cpu;
+	params.cls	   = arg->class;
+	return set_rt_task_param(pid, &params);
+}
+
+int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period,
+		     task_class_t class) 
+{
+	struct create_rt_param params;
+	params.cpu = cpu;
+	params.period = period;
+	params.wcet = wcet;
+	params.class = class;
+	return __launch_rt_task(rt_prog, arg, 
+				(rt_setup_fn_t) setup_create_rt, &params);
+}
+
+int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period) {
+	return __create_rt_task(rt_prog, arg, cpu, wcet, period, RT_CLASS_HARD);
 }
 
 
