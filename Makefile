@@ -1,4 +1,4 @@
-CFLAGS=-Wall -g -Iinclude/
+CFLAGS=-Wall -g -Iinclude/ -D_XOPEN_SOURCE=600
 CPPFLAGS=-Wall -g
 
 LIBS= ./liblitmus.a

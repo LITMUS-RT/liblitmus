@@ -1,23 +1,35 @@
 #ifndef ADAPTIVE_H
 #define ADAPTIVE_H
 
-#define MAX_SERVICE_LEVELS 10
+#define FP_SHIFT 16
+typedef struct
+{
+	long long val;
+} fp_t;
 
+static inline fp_t f2fp(double f)
+{
+	return (fp_t) {f * (1 << FP_SHIFT)};
+}
+
+#define MAX_SERVICE_LEVELS 10
 typedef struct {
-	unsigned long 	exec_cost;	
+	fp_t	 	weight;
 	unsigned long 	period;
-	/* fixed point */
-	unsigned long	utility;
+	fp_t		value;
 } service_level_t;
 
 int set_service_levels(pid_t pid, 
 		       unsigned int nr_levels,
-		       service_level_t* levels);
+		       service_level_t* levels,
+		       fp_t *wt_y, 
+		       fp_t *wt_slope);
 
 int get_cur_service_level(void);
 
 int create_adaptive_rt_task(rt_fn_t rt_prog, void *arg, 
-			    unsigned int no_levels, service_level_t* levels);
+			    unsigned int no_levels, service_level_t* levels,	
+			    fp_t wt_y, fp_t wt_slope);
 
 
 #endif

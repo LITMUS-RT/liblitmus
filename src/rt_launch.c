@@ -22,39 +22,78 @@ int launch(void *task_info_p) {
 }
 
 void usage(char *error) {
-	fprintf(stderr, "%s\nUsage: launch_rt [-c {hrt|srt|be}] [-p <cpu>]"
-		"{<wcet> <period>|{-a wcet/period/utility}+}"
-		" program arg1 arg2 ...\n",
+	fprintf(stderr, "%s\nUsage: \nlaunch_rt supports one of two modes:\n"
+		"\n\tlaunch_rt <SPORADIC OPTIONS> program arg1 arg2 ...\n"
+		"\n\tlaunch_rt <ADAPTIVE OPTIONS> program arg1 arg2 ...\n"
+		"\nwhere:"
+		"\n\t <SPORADIC OPTIONS> = "
+		"[-c {hrt|srt|be}] [-p <cpu>] <wcet> <period>\n"
+		"\n\t <ADAPTIVE OPTIONS> = "
+		"(-a weight/period/utility)+ [-w <y intercept>+<slope>v]\n"
+		"\nExamples:"
+		"\n\trt_launch -p 2 10 100 cpu_job"
+		"\n\t  => Launch cpu_job a hard real-time task with period 100 and weight 0.1"
+		"\n\t     on CPU 2.\n"
+		"\n\trt_launch -a 0.1/100/0.4 -a 0.2/75/0.5 -w 0.2+0.3v adaptive_job"
+		"\n\t  => Launch adaptive_job with two service levels and a custom "
+		"\n\t     weight-transfer function."
+		"\n\n",
 		error);
 	exit(1);
 }
 
-/* argument format should be wcet/period/utility */
+/* argument format should be weight/period/utility */
 static int parse_service_level(service_level_t* level, char* str) 
 {
-	char *wcet, *period, *utility;
-	double u;
-	wcet    = strtok(str, "/");
+	char *weight, *period, *utility;
+	double u, w;
+	weight    = strtok(str, "/");
 	period  = strtok(NULL, "/");
         utility = strtok(NULL, "/");
 	str     = strtok(NULL, "/");
 
-	if (str || !utility || !period || !wcet)
+	if (str || !utility || !period || !weight)
 		return 0;
 
-	level->exec_cost = atol(wcet);
-	level->period    = atol(period);
+	w = atof(weight);
 	u = atof(utility);
-
-	if (level->exec_cost == 0 || level->period < level->exec_cost ||
-	    u <= 0.0 || u > 1.0)
+	level->weight = f2fp(w);
+	level->period = atol(period);
+	level->value   = f2fp(u);
+	
+	if (level->period == 0  ||
+	    u <= 0.0 || u > 1.0 || w <= 0.0 || w > 1.0)
 		return 0;
-
-	level->utility = (unsigned long)  ULONG_MAX * u;
 	return 1;
 }
 
-#define OPTSTR "p:c:a:"
+/* argument format should be <y intercept>+<slope>v */
+static int parse_wt(fp_t *_y, fp_t *_slope, char* str) 
+{
+	char *y, *slope;
+	double yf, sf;
+	y     = strtok(str, "+");
+	slope = strtok(NULL, "v");
+	str   = strtok(NULL, "/"); /* If we find anyting at all then the
+				    * string is malformed.
+				    */
+	if (str || !y || !slope)
+		return 0;
+
+	yf = strtof(y, &y);
+	sf = strtof(slope, &slope);	
+
+	if (*y  || *slope ||
+	    yf < 0.0 || sf <= 0.0)
+		return 0;
+	
+	*_y     = f2fp(yf);
+	*_slope = f2fp(sf);
+	return 1;
+}
+
+
+#define OPTSTR "p:c:a:w:"
 
 int main(int argc, char** argv) 
 {
@@ -69,7 +108,13 @@ int main(int argc, char** argv)
 	int adaptive = 0;
 	unsigned int level = 0;
 	service_level_t slevel[MAX_SERVICE_LEVELS];
+	fp_t wt_y;     /* weight-transfer y intercept */
+	fp_t wt_slope; /* weight-transfer slope       */
 	
+
+	wt_y     = f2fp(0.0);
+	wt_slope = f2fp(1.0);
+
 	while ((opt = getopt(argc, argv, OPTSTR)) != -1) {
 		switch (opt) {
 		case 'a':						
@@ -78,6 +123,10 @@ int main(int argc, char** argv)
 				usage("Too many service levels.");
 			if (!parse_service_level(slevel + level++, optarg))
 				usage("Bad service level.");			
+			break;
+		case 'w':
+			if (!parse_wt(&wt_y, &wt_slope, optarg))
+				usage("Bad weight transfer function.");
 			break;
 		case 'p':
 			cpu = atoi(optarg);
@@ -93,7 +142,7 @@ int main(int argc, char** argv)
 			break;
 		case '?':
 		default:
-			usage("Unknown flag.");
+			usage("Bad argument.");
 			break;
 		}
 	}
@@ -120,7 +169,8 @@ int main(int argc, char** argv)
 			usage("Arguments missing.");       
 		info.exec_path = argv[optind];
 		info.argv      = argv + optind;
-		ret = create_adaptive_rt_task(launch, &info, level, slevel);
+		ret = create_adaptive_rt_task(launch, &info, level, slevel, 
+					      wt_y, wt_slope);
 	}
 
 	
