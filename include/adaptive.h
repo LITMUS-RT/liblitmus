@@ -1,10 +1,10 @@
 #ifndef ADAPTIVE_H
 #define ADAPTIVE_H
 
-#define FP_SHIFT 16
+#define FP_SHIFT 10
 typedef struct
 {
-	long long val;
+	long val;
 } fp_t;
 
 static inline fp_t f2fp(double f)
