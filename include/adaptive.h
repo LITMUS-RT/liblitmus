@@ -21,15 +21,12 @@ typedef struct {
 
 int set_service_levels(pid_t pid, 
 		       unsigned int nr_levels,
-		       service_level_t* levels,
-		       fp_t *wt_y, 
-		       fp_t *wt_slope);
+		       service_level_t* levels);
 
 int get_cur_service_level(void);
 
 int create_adaptive_rt_task(rt_fn_t rt_prog, void *arg, 
-			    unsigned int no_levels, service_level_t* levels,	
-			    fp_t wt_y, fp_t wt_slope);
+			    unsigned int no_levels, service_level_t* levels);
 
 
 #endif
