@@ -81,14 +81,8 @@ const char* get_scheduler_name(spolicy scheduler)
 	case SCHED_PFAIR:
 		name = "Pfair";
 		break;
-	case SCHED_PFAIR_STAGGER:
-		name = "Pfair (staggered)";
-		break;
 	case SCHED_PART_EDF:
 		name = "Partioned EDF";
-		break;
-	case SCHED_PART_EEVDF:
-		name = "Partioned EEVDF";
 		break;
 	case SCHED_GLOBAL_EDF:
 		name = "Global EDF";
@@ -287,13 +281,11 @@ void init_litmus(void)
 
 
 /*	Litmus syscalls definitions */
-#define __NR_sched_setpolicy 	  320
 #define __NR_sched_getpolicy 	  321
 #define __NR_set_rt_mode	  322
 #define __NR_set_rt_task_param	  323
 #define __NR_get_rt_task_param	  324
 #define __NR_prepare_rt_task	  325
-#define __NR_reset_stat		  326
 #define __NR_sleep_next_period    327
 #define __NR_scheduler_setup	  328
 #define __NR_register_np_flag	  329
@@ -302,10 +294,6 @@ void init_litmus(void)
 #define __NR_pi_down              332
 #define __NR_pi_up                333
 #define __NR_pi_sema_free         334
-#define __NR_sema_init            335
-#define __NR_down                 336
-#define __NR_up                   337
-#define __NR_sema_free            338
 #define __NR_srp_sema_init        339
 #define __NR_srp_down             340
 #define __NR_srp_up               341
@@ -316,13 +304,11 @@ void init_litmus(void)
 
 
 /*	Syscall stub for setting RT mode and scheduling options */
-_syscall1(spolicy, sched_setpolicy,   spolicy, arg1);
 _syscall0(spolicy, sched_getpolicy);
 _syscall1(int,     set_rt_mode,       int,         arg1);
 _syscall2(int,     set_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
 _syscall2(int,     get_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
 _syscall1(int, 	   prepare_rt_task,   pid_t,       pid);
-_syscall0(int,     reset_stat);
 _syscall0(int,     sleep_next_period);
 _syscall2(int,     scheduler_setup,   int,         cmd,    void*,       param);
 _syscall1(int,     register_np_flag, struct np_flag*, flag);
@@ -331,10 +317,6 @@ _syscall0(int,	   pi_sema_init);
 _syscall1(int,     pi_down,           pi_sema_id,  sem_id);
 _syscall1(int,     pi_up,             pi_sema_id,  sem_id);
 _syscall1(int,     pi_sema_free,      pi_sema_id,  sem_id);
-_syscall0(int,     sema_init);
-_syscall1(int,     down,              sema_id,     sem_id);
-_syscall1(int,     up,                sema_id,     sem_id);
-_syscall1(int,     sema_free,         sema_id,     sem_id);
 _syscall0(int,     srp_sema_init);
 _syscall1(int,     srp_down,          srp_sema_id, sem_id);
 _syscall1(int,     srp_up,            srp_sema_id, sem_id);
