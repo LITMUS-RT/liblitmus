@@ -39,5 +39,5 @@ rt_launch: liblitmus.a litmus.h rt_launch.o
 edfhsb: liblitmus.a edf-hsb.o litmus.h edf-hsb.h hrt.o
 	cc -o edfhsb hrt.o edf-hsb.o  ${LIBS}
 
-liblitmus.a: litmus.o adaptive.o adaptive.h litmus.h edf-hsb.o edf-hsb.h
+liblitmus.a: litmus.o sched_trace.o adaptive.o adaptive.h litmus.h edf-hsb.o edf-hsb.h
 	${AR} rcs liblitmus.a litmus.o adaptive.o edf-hsb.o 
