@@ -102,6 +102,9 @@ const char* get_scheduler_name(spolicy scheduler)
 	case SCHED_PSN_EDF:
 		name = "PSN-EDF";
 		break;
+	case SCHED_ADAPTIVE:
+		name = "ADAPTIVE";
+		break;
 	default:
 		name = "Unkown";
 		break;
@@ -278,6 +281,7 @@ void init_litmus(void)
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
 	signal(SIGHUP, sig_handler);
+	signal(SIGUSR1, SIG_IGN);
 }
 
 

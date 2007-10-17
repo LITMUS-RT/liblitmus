@@ -14,16 +14,14 @@ typedef int (*rt_setup_fn_t)(int pid, void* arg);
 typedef enum {
 	SCHED_LINUX 		=  0,
 	SCHED_PFAIR 		=  1,
-	SCHED_PFAIR_STAGGER 	=  2,
 	SCHED_PART_EDF 		=  3,
-	SCHED_PART_EEVDF 	=  4,
 	SCHED_GLOBAL_EDF 	=  5,
 	SCHED_PFAIR_DESYNC 	=  6,
 	SCHED_GLOBAL_EDF_NP 	=  7,	
-	SCHED_CUSTOM 		=  8,
 	SCHED_EDF_HSB		=  9,
 	SCHED_GSN_EDF		= 10,
-	SCHED_PSN_EDF		= 11
+	SCHED_PSN_EDF		= 11,
+	SCHED_ADAPTIVE		= 12,
 } spolicy;
 
 /* different types of clients */
@@ -55,6 +53,7 @@ typedef int srp_sema_id; /* ID of an SRP "semaphore" in the Linux kernel */
 
 typedef int pid_t;	 /* PID of a task */
 
+/* X */
 #define set_param(t,p,e) do{\
 			(t).is_realtime=1;\
 			(t).exec_cost=(e);\
@@ -65,24 +64,26 @@ typedef int pid_t;	 /* PID of a task */
 #define MODE_NON_RT 0
 #define MODE_RT_RUN 1
 
-spolicy sched_setpolicy(spolicy policy);
 spolicy sched_getpolicy(void);
 int set_rt_mode(int mode);
 int set_rt_task_param(pid_t pid, rt_param_t* param);
 int get_rt_task_param(pid_t pid, rt_param_t* param);
 int prepare_rt_task(pid_t pid);
-int tear_down_task(pid_t pid, int sig);
-int reset_stat(void);
 int sleep_next_period(void);
+
+
+enum {
+	LITMUS_RESERVED_RANGE = 1024,
+} SCHED_SETUP_CMD;
+
 int scheduler_setup(int cmd, void* param);
+
+
+
 int pi_sema_init(void);
 int pi_down(pi_sema_id sem_id);
 int pi_up(pi_sema_id sem_id);
 int pi_sema_free(pi_sema_id sem_id);
-int sema_init(void);
-int down(sema_id sem_id);
-int up(sema_id sem_id);
-int sema_free(sema_id sem_id);
 int srp_sema_init(void);
 int srp_down(srp_sema_id sem_id);
 int srp_up(srp_sema_id sem_id);
