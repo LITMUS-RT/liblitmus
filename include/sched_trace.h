@@ -128,6 +128,11 @@ typedef struct {
 #define set_callback(type, fn, a)    do {(a)->handler[type] = fn; } while (0);
 
 int walk_sched_trace(void* start, void* end, record_callback_t *cb);
+int walk_sched_traces_ordered(void** start, void** end, unsigned int count,
+			      record_callback_t *cb);
+
 int walk_sched_trace_file(const char* name, int keep_mapped, 
 			  record_callback_t *cb);
+int walk_sched_trace_files_ordered(const char** names, unsigned int count, 
+				   int keep_mapped, record_callback_t *cb);
 #endif
