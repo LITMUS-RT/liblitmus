@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <signal.h>
 
 #include "litmus.h"
 #include "adaptive.h"
@@ -110,6 +111,8 @@ int main(int argc, char** argv)
 			break;
 		}
 	}
+
+	signal(SIGUSR1, SIG_IGN);
 
 	if (!adaptive) {
 		if (argc - optind < 3)
