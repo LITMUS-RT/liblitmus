@@ -80,6 +80,7 @@ typedef struct {
 	u16   		        period;
 	u16            		wcet;
 	int			tardiness;
+	unsigned int		job_no;
 } completion_record_t;
 
 typedef struct {
@@ -98,7 +99,10 @@ typedef struct {
 typedef struct {
 	trace_header_t		header;
 	task_info_t		task;
+	unsigned int		from:16;
+	unsigned int		to:16;
 	service_level_t		new_level;
+	service_level_t		old_level;
 } service_level_change_record_t;
 
 typedef struct {

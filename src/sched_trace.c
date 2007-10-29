@@ -16,7 +16,7 @@ int walk_sched_trace(void* start, void* end, record_callback_t *cb)
 {
 	void* pos = start;
 	trace_header_t* header;
-	int ret;
+	int ret = 0;
 	
 	while (pos < end) {
 		header = (trace_header_t*) pos;
@@ -36,7 +36,7 @@ int walk_sched_traces_ordered(void** start, void** end, unsigned int count,
 {
 	void** pos;
 	trace_header_t* header;
-	int ret, i, adv;
+	int ret = 0, i, adv;
 
 	pos = malloc(sizeof(void*) * count);
 
@@ -51,9 +51,12 @@ int walk_sched_traces_ordered(void** start, void** end, unsigned int count,
 			     ((trace_header_t*) pos[i])->timestamp)) {
 				header = (trace_header_t*) pos[i];
 				adv = i;
-			}
+			}		
 		if (header) {
-			pos[i] += header->size; 
+			pos[adv] += header->size; 
+/*			printf("header id: %d  pos=%p adv=%d\n", 
+			       header->trace, pos[adv], adv);
+*/
 			if (header->trace >= ST_MAX)
 				return INVALID_HEADER;
 			if (cb->handler[header->trace])
@@ -124,16 +127,20 @@ int walk_sched_trace_files_ordered(const char** names, unsigned int count,
 	void **start, **end;	
 	size_t *size;
 	int i;
-	int ret;
+	int ret = 0;
 	
+/*      printf("count=%d\n", count); */
+
 	start = malloc(sizeof(void*) * count);
         end   = malloc(sizeof(void*) * count);
 	size  = malloc(sizeof(size_t) * count);
 
 	for (i = 0; i < count; i++)
 		size[i] = 0;
-	for (i = 0; i < count && !ret; i++)
+	for (i = 0; i < count && !ret; i++) {
+/*		printf("mapping %s\n", names[i]); */
 		ret = map_trace(names[i], start + i, end + i, size + i);
+	}
 	
 	if (!ret)
 		/* everything mapped, now walk it */
