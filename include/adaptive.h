@@ -12,6 +12,12 @@ static inline fp_t f2fp(double f)
 	return (fp_t) {f * (1 << FP_SHIFT)};
 }
 
+static inline double fp2f(fp_t f)
+{
+	return ((double) f.val) / (1 << FP_SHIFT);
+}
+
+
 #define MAX_SERVICE_LEVELS 10
 typedef struct {
 	fp_t	 	weight;

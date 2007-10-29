@@ -3,7 +3,7 @@ CPPFLAGS=-Wall -g
 
 LIBS= ./liblitmus.a
 
-TARGETS = showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a wait_test np_test
+TARGETS = showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a wait_test np_test stdump
 
 vpath %.h include/
 vpath %.c src/
@@ -22,7 +22,7 @@ iotest: iotest.o litmus.h liblitmus.a
 	cc -static -o iotest iotest.o  ${LIBS}
 
 run: run.o
-	cc -o run run.o
+	cc -o run run.o ${LIBS}
 
 set_rt_mode: liblitmus.a set_rt_mode.o
 	cc -o set_rt_mode set_rt_mode.o  ${LIBS}
@@ -39,5 +39,8 @@ rt_launch: liblitmus.a litmus.h rt_launch.o
 edfhsb: liblitmus.a edf-hsb.o litmus.h edf-hsb.h hrt.o
 	cc -o edfhsb hrt.o edf-hsb.o  ${LIBS}
 
+stdump: liblitmus.a litmus.h sched_trace.h stdump.o
+	cc -o stdump  stdump.o ${LIBS}
+
 liblitmus.a: litmus.o sched_trace.o adaptive.o adaptive.h litmus.h edf-hsb.o edf-hsb.h
-	${AR} rcs liblitmus.a litmus.o adaptive.o edf-hsb.o 
+	${AR} rcs liblitmus.a litmus.o adaptive.o edf-hsb.o sched_trace.o
