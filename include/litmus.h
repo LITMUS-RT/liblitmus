@@ -47,10 +47,6 @@ typedef struct rt_param {
 	task_class_t  	cls;
 } rt_param_t;
 
-typedef int sema_id;     /* ID of a semaphore in the Linux kernel */
-typedef int pi_sema_id;  /* ID of a PI semaphore in the Linux kernel */
-typedef int srp_sema_id; /* ID of an SRP "semaphore" in the Linux kernel */
-
 typedef int pid_t;	 /* PID of a task */
 
 /* X */
@@ -69,7 +65,6 @@ int set_rt_mode(int mode);
 int set_rt_task_param(pid_t pid, rt_param_t* param);
 int get_rt_task_param(pid_t pid, rt_param_t* param);
 int prepare_rt_task(pid_t pid);
-int sleep_next_period(void);
 
 
 enum {
@@ -79,18 +74,25 @@ enum {
 int scheduler_setup(int cmd, void* param);
 
 
+/* file descriptor attached shared objects support */
+int od_open(int fd, int type, int obj_id);
+int od_close(int od);
 
-int pi_sema_init(void);
-int pi_down(pi_sema_id sem_id);
-int pi_up(pi_sema_id sem_id);
-int pi_sema_free(pi_sema_id sem_id);
-int srp_sema_init(void);
-int srp_down(srp_sema_id sem_id);
-int srp_up(srp_sema_id sem_id);
-int reg_task_srp_sem(srp_sema_id sem_id, pid_t t_pid);
-int srp_sema_free(srp_sema_id sem_id);
+/* FMLP support */
+int pi_down(int od);
+int pi_up(int od);
+int srp_down(int od);
+int srp_up(int od);
+int reg_task_srp_sem(int od);
+
+/* job control*/
 int get_job_no(unsigned int* job_no);
 int wait_for_job_release(unsigned int job_no);
+int sleep_next_period(void);
+
+
+
+
 
 /*  library functions */
 void init_litmus(void);

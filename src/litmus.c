@@ -1,11 +1,16 @@
+/* To get syscall() we need to define _GNU_SOURCE 
+ * in modern glibc versions.
+ */
+#define _GNU_SOURCE
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <errno.h>
 #include <signal.h>
 #include <sys/mman.h>
+
 
 
 #include "litmus.h"
@@ -30,6 +35,12 @@ type name(type1 arg1) \
 type name(type1 arg1,type2 arg2) \
 {\
         return syscall(__NR_##name, arg1, arg2);\
+}
+
+#define _syscall3(type,name,type1,arg1,type2,arg2,type3,arg3)	\
+type name(type1 arg1,type2 arg2, type3 arg3)   \
+{\
+        return syscall(__NR_##name, arg1, arg2, arg3);	\
 }
 
 
@@ -281,26 +292,27 @@ void init_litmus(void)
 
 
 /*	Litmus syscalls definitions */
-#define __NR_sched_getpolicy 	  321
-#define __NR_set_rt_mode	  322
-#define __NR_set_rt_task_param	  323
-#define __NR_get_rt_task_param	  324
-#define __NR_prepare_rt_task	  325
-#define __NR_sleep_next_period    327
-#define __NR_scheduler_setup	  328
-#define __NR_register_np_flag	  329
-#define __NR_signal_exit_np	  330
-#define __NR_pi_sema_init         331
-#define __NR_pi_down              332
-#define __NR_pi_up                333
-#define __NR_pi_sema_free         334
-#define __NR_srp_sema_init        339
-#define __NR_srp_down             340
-#define __NR_srp_up               341
-#define __NR_reg_task_srp_sem     342
-#define __NR_srp_sema_free        343
-#define __NR_get_job_no           344
-#define __NR_wait_for_job_release 345
+#define __NR_sched_setpolicy 	320
+#define __NR_sched_getpolicy 	321
+#define __NR_set_rt_mode	322
+#define __NR_set_rt_task_param	323
+#define __NR_get_rt_task_param	324
+#define __NR_prepare_rt_task	325
+#define __NR_sleep_next_period  326
+#define __NR_scheduler_setup	327
+#define __NR_register_np_flag   328
+#define __NR_signal_exit_np     329
+#define __NR_od_open		330
+#define __NR_od_close		331
+#define __NR_pi_down		332
+#define __NR_pi_up		333
+#define __NR_srp_down		334
+#define __NR_srp_up		335
+#define __NR_reg_task_srp_sem	336
+#define __NR_get_job_no		337
+#define __NR_wait_for_job_release 338
+#define __NR_set_service_levels 339
+#define __NR_get_cur_service_level 340
 
 
 /*	Syscall stub for setting RT mode and scheduling options */
@@ -313,15 +325,15 @@ _syscall0(int,     sleep_next_period);
 _syscall2(int,     scheduler_setup,   int,         cmd,    void*,       param);
 _syscall1(int,     register_np_flag, struct np_flag*, flag);
 _syscall0(int,     signal_exit_np);
-_syscall0(int,	   pi_sema_init);
-_syscall1(int,     pi_down,           pi_sema_id,  sem_id);
-_syscall1(int,     pi_up,             pi_sema_id,  sem_id);
-_syscall1(int,     pi_sema_free,      pi_sema_id,  sem_id);
-_syscall0(int,     srp_sema_init);
-_syscall1(int,     srp_down,          srp_sema_id, sem_id);
-_syscall1(int,     srp_up,            srp_sema_id, sem_id);
-_syscall2(int,     reg_task_srp_sem,  srp_sema_id, sem_id, pid_t,       t_pid);
-_syscall1(int,     srp_sema_free,     srp_sema_id, sem_id);
+
+_syscall3(int,     od_open,           int,  fd, int, type, int, obj_id);
+_syscall1(int,     od_close,          int,  od);
+_syscall1(int,     pi_down,           int,  od);
+_syscall1(int,     pi_up,             int,  od);
+_syscall1(int,     srp_down,          int,  od);
+_syscall1(int,     srp_up,            int,  od);
+_syscall1(int,     reg_task_srp_sem,  int,  od);
+
 _syscall1(int,     get_job_no,      unsigned int*, job_no);
 _syscall1(int,     wait_for_job_release, unsigned int, job_no);
 
