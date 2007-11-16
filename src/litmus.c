@@ -326,7 +326,7 @@ _syscall2(int,     scheduler_setup,   int,         cmd,    void*,       param);
 _syscall1(int,     register_np_flag, struct np_flag*, flag);
 _syscall0(int,     signal_exit_np);
 
-_syscall3(int,     od_open,           int,  fd, int, type, int, obj_id);
+_syscall3(int,     od_open,           int,  fd, obj_type_t, type, int, obj_id);
 _syscall1(int,     od_close,          int,  od);
 _syscall1(int,     pi_down,           int,  od);
 _syscall1(int,     pi_up,             int,  od);

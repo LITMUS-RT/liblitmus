@@ -75,7 +75,13 @@ int scheduler_setup(int cmd, void* param);
 
 
 /* file descriptor attached shared objects support */
-int od_open(int fd, int type, int obj_id);
+
+typedef enum  {
+	PI_SEM 		= 0,
+	SRP_SEM		= 1,
+	ICS_ID		= 2,
+} obj_type_t;
+int od_open(int fd, obj_type_t type, int obj_id);
 int od_close(int od);
 
 /* FMLP support */
