@@ -108,9 +108,12 @@ int sleep_next_period(void);
 
 /* ICS control block */
 struct ics_cb {
-	void*		rollback_addr;
+	void*		rollback_eip;
+	void*		rollback_esp;
 	int		ics_stack[MAX_ICS_NESTING];
 };
+int reg_ics_cb(struct ics_cb* ics_cb);
+int start_wcs(int od);
 
 
 
