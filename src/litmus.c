@@ -43,6 +43,12 @@ type name(type1 arg1,type2 arg2, type3 arg3)   \
         return syscall(__NR_##name, arg1, arg2, arg3);	\
 }
 
+#define _syscall4(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4)\
+type name(type1 arg1,type2 arg2, type3 arg3, type4 arg4)	      	\
+{\
+        return syscall(__NR_##name, arg1, arg2, arg3, arg4);	\
+}
+
 
 /* clear the TID in the child */
 #define CLONE_CHILD_CLEARTID	0x00200000	
@@ -302,7 +308,7 @@ void init_litmus(void)
 #define __NR_scheduler_setup	327
 #define __NR_register_np_flag   328
 #define __NR_signal_exit_np     329
-#define __NR_od_open		330
+#define __NR_od_openx		330
 #define __NR_od_close		331
 #define __NR_pi_down		332
 #define __NR_pi_up		333
@@ -313,6 +319,8 @@ void init_litmus(void)
 #define __NR_wait_for_job_release 338
 #define __NR_set_service_levels 339
 #define __NR_get_cur_service_level 340
+#define __NR_reg_ics_cb		341
+#define __NR_start_wcs		342
 
 
 /*	Syscall stub for setting RT mode and scheduling options */
@@ -326,7 +334,8 @@ _syscall2(int,     scheduler_setup,   int,         cmd,    void*,       param);
 _syscall1(int,     register_np_flag, struct np_flag*, flag);
 _syscall0(int,     signal_exit_np);
 
-_syscall3(int,     od_open,           int,  fd, obj_type_t, type, int, obj_id);
+_syscall4(int,     od_openx,           int,  fd, obj_type_t, type, int, obj_id,
+	  void*,   config);
 _syscall1(int,     od_close,          int,  od);
 _syscall1(int,     pi_down,           int,  od);
 _syscall1(int,     pi_up,             int,  od);
@@ -337,3 +346,5 @@ _syscall1(int,     reg_task_srp_sem,  int,  od);
 _syscall1(int,     get_job_no,      unsigned int*, job_no);
 _syscall1(int,     wait_for_job_release, unsigned int, job_no);
 
+_syscall1(int,     start_wcs,         int,  od);
+_syscall1(int,     reg_ics_cb,        struct ics_cb*, ics_cb);

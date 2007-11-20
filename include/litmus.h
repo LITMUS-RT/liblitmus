@@ -81,8 +81,13 @@ typedef enum  {
 	SRP_SEM		= 1,
 	ICS_ID		= 2,
 } obj_type_t;
-int od_open(int fd, obj_type_t type, int obj_id);
+int od_openx(int fd, obj_type_t type, int obj_id, void* config);
 int od_close(int od);
+
+static inline int od_open(int fd, obj_type_t type, int obj_id)
+{
+	return od_openx(fd, type, obj_id, 0);
+}
 
 /* FMLP support */
 int pi_down(int od);
@@ -97,6 +102,15 @@ int wait_for_job_release(unsigned int job_no);
 int sleep_next_period(void);
 
 
+/* interruptible critical section support */
+#define MAX_ICS_NESTING 	16
+#define ICS_END_OF_STACK 	(-2)
+
+/* ICS control block */
+struct ics_cb {
+	void*		rollback_addr;
+	int		ics_stack[MAX_ICS_NESTING];
+};
 
 
 
