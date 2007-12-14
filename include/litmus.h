@@ -104,14 +104,29 @@ int sleep_next_period(void);
 
 /* interruptible critical section support */
 #define MAX_ICS_NESTING 	16
-#define ICS_END_OF_STACK 	(-2)
+#define ICS_STACK_EMPTY 	(-1)
+
+struct ics_descriptor {
+	/* ICS id, only read by kernel */
+	int 	id;
+	/* rollback program counter, only read by kernel */
+	void* 	pc; 
+	/* rollback stack pointer, not used by kernel */
+	void*	 sp;
+	/* retry flag, not used by kernel */
+	int* 	retry;
+};
 
 /* ICS control block */
 struct ics_cb {
-	void*		rollback_eip;
-	void*		rollback_esp;
-	int		ics_stack[MAX_ICS_NESTING];
+	/* Points to the top-most valid entry.
+	 * -1 indicates an empty stack.
+	 * Read and written by kernel.
+	 */
+	int			top;	
+	struct ics_descriptor	ics_stack[MAX_ICS_NESTING];
 };
+
 int reg_ics_cb(struct ics_cb* ics_cb);
 int start_wcs(int od);
 
