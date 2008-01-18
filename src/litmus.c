@@ -316,12 +316,12 @@ void init_litmus(void)
 #define __NR_srp_up		335
 #define __NR_reg_task_srp_sem	336
 #define __NR_get_job_no		337
-#define __NR_wait_for_job_release 338
-#define __NR_set_service_levels 339
-#define __NR_get_cur_service_level 340
-#define __NR_reg_ics_cb		341
-#define __NR_start_wcs		342
-
+#define __NR_wait_for_job_release 	338
+#define __NR_set_service_levels 	339
+#define __NR_get_cur_service_level 	340
+#define __NR_reg_ics_cb			341
+#define __NR_start_wcs			342
+#define __NR_task_mode_transition 	343
 
 /*	Syscall stub for setting RT mode and scheduling options */
 _syscall0(spolicy, sched_getpolicy);
@@ -348,3 +348,4 @@ _syscall1(int,     wait_for_job_release, unsigned int, job_no);
 
 _syscall1(int,     start_wcs,         int,  od);
 _syscall1(int,     reg_ics_cb,        struct ics_cb*, ics_cb);
+_syscall1(int,     task_mode_transition, int, target_mode);

@@ -145,6 +145,16 @@ void init_litmus(void);
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
 int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, 
 		     int period, task_class_t cls);
+
+
+/*	per-task modes */
+enum rt_task_mode_t {
+	BACKGROUND_TASK = 0,
+	LITMUS_RT_TASK  = 1
+};
+int task_mode_transition(int target_mode);
+
+
 const char* get_scheduler_name(spolicy scheduler);
 void show_rt_param(rt_param_t* tp);
 task_class_t str2class(const char* str);
