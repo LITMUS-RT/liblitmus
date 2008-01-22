@@ -3,12 +3,8 @@
 
 #include <sys/types.h>
 
-/* This flag is needed to start new RT tasks in STOPPED state	*/
-/* Task is going to run in realtime mode */
-#define CLONE_REALTIME		0x10000000	
-
+/* A real-time program. */
 typedef int (*rt_fn_t)(void*);
-typedef int (*rt_setup_fn_t)(int pid, void* arg);
 
 /*	Litmus scheduling policies	*/
 typedef enum {
@@ -59,6 +55,7 @@ int set_rt_task_param(pid_t pid, rt_param_t* param);
 int get_rt_task_param(pid_t pid, rt_param_t* param);
 int prepare_rt_task(pid_t pid);
 
+/* setup helper */
 int sporadic_task(unsigned long exec_cost, unsigned long period, 
 		  int partition, task_class_t cls);
 
@@ -68,20 +65,19 @@ int sporadic_task(unsigned long exec_cost, unsigned long period,
 	sporadic_task(e, p, cpu, RT_CLASS_SOFT)
 
 
+/* deprecated */
 enum {
 	LITMUS_RESERVED_RANGE = 1024,
 } SCHED_SETUP_CMD;
-
 int scheduler_setup(int cmd, void* param);
 
-
 /* file descriptor attached shared objects support */
-
 typedef enum  {
 	PI_SEM 		= 0,
 	SRP_SEM		= 1,
 	ICS_ID		= 2,
 } obj_type_t;
+
 int od_openx(int fd, obj_type_t type, int obj_id, void* config);
 int od_close(int od);
 
@@ -101,7 +97,6 @@ int reg_task_srp_sem(int od);
 int get_job_no(unsigned int* job_no);
 int wait_for_job_release(unsigned int job_no);
 int sleep_next_period(void);
-
 
 /* interruptible critical section support */
 #define MAX_ICS_NESTING 	16
@@ -131,8 +126,6 @@ struct ics_cb {
 int reg_ics_cb(struct ics_cb* ics_cb);
 int start_wcs(int od);
 
-
-
 /*  library functions */
 void init_litmus(void);
 /* exit is currently unused, but was needed for syscall
@@ -141,12 +134,9 @@ void init_litmus(void);
  */
 #define exit_litmus() {}
 
-
-
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
 int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, 
 		     int period, task_class_t cls);
-
 
 /*	per-task modes */
 enum rt_task_mode_t {
@@ -155,19 +145,24 @@ enum rt_task_mode_t {
 };
 int task_mode(int target_mode);
 
-
 const char* get_scheduler_name(spolicy scheduler);
 void show_rt_param(rt_param_t* tp);
 task_class_t str2class(const char* str);
 
+/* non-preemptive section support */
 void enter_np(void);
 void exit_np(void);
 
+/* Returns 1 if the task is still active.
+ * Use it for main job loop.
+ */
 int litmus_task_active();
 
 
 /* low level operations, not intended for API use */
-int fork_rt(void);
+
+/* prepare a real-time task */
+typedef int (*rt_setup_fn_t)(int pid, void* arg);
 int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg, 
 		     rt_setup_fn_t setup, void* setup_arg);
 
