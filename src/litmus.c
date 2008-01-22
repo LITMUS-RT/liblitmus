@@ -49,44 +49,6 @@ type name(type1 arg1,type2 arg2, type3 arg3, type4 arg4)	      	\
         return syscall(__NR_##name, arg1, arg2, arg3, arg4);	\
 }
 
-
-/* clear the TID in the child */
-#define CLONE_CHILD_CLEARTID	0x00200000	
-/* set the TID in the child */
-#define CLONE_CHILD_SETTID	0x01000000
-/* don't let the child run before we have completed setup */
-#define CLONE_STOPPED		0x02000000	
-/* litmus clone flag */
-#define CLONE_REALTIME		0x10000000
-
-/* CLONE_REALTIME is necessary because CLONE_STOPPED will put a SIGSTOP in 
- * the pending signal queue. Thus the first thing a newly created task will
- * do after it is released is to stop, which is not what we want
- * 
- * CLONE_REALTIME just sets the status to TASK_STOPPED without queueing a 
- * signal.
- */
-
-
-/* this is essentially a fork with CLONE_STOPPED */
-/* #define CLONE_LITMUS  CLONE_STOPPED | CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID */
-#define CLONE_LITMUS CLONE_REALTIME | CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID
-
-/* we need to override libc because it wants to be clever 
- * and rejects our call without presenting it even to the kernel
- */
-#define __NR_raw_clone		120
-
-
-_syscall2(int, raw_clone, unsigned long, flags, unsigned long, child_stack)
-
-int fork_rt(void) 
-{
-	int rt_task = raw_clone(CLONE_LITMUS, 0);
-	return rt_task;
-}
-
-
 const char* get_scheduler_name(spolicy scheduler) 
 {
 	const char* name;
@@ -123,46 +85,36 @@ const char* get_scheduler_name(spolicy scheduler)
 	return name;
 }
 
+static void tperrorx(char* msg) 
+{
+	fprintf(stderr, 
+		"Task %d: %s: %m",
+		getpid(), msg);
+	exit(-1);
+}
 
 /* common launch routine */
 int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg, rt_setup_fn_t setup, 
 		     void* setup_arg) 
 {
 	int ret;
-	int rt_task = fork_rt();
+	int rt_task = fork();
 
-	if (rt_task < 0) 
-		return rt_task;
-
-	if (rt_task > 0) {
-		/* we are the controller task */			
-		ret = setup(rt_task, setup_arg);
-		if (ret < 0) {
-			/* we have a problem: we created the task but
-			 * for some stupid reason we cannot set the real-time
-			 * parameters. We must clean up the stopped task.
-			 */
-			kill(rt_task, SIGKILL);
-			/* syscall will have set errno, we don't have to do
-			 * anything
-			 */
-			return -1;
-		}
-		ret = prepare_rt_task(rt_task);
-		if (ret < 0) {
-			/* same problem as above*/
-			kill(rt_task, SIGKILL);
-			rt_task = -1;
-		}
-		return rt_task;
-	}
-	else {
+	if (rt_task == 0) {
 		/* we are the real-time task 
 		 * launch task and die when it is done
 		 */		
-		
+		rt_task = getpid();		
+		ret = setup(rt_task, setup_arg);
+		if (ret < 0)
+			tperrorx("could not setup task parameters");
+		ret = task_mode(LITMUS_RT_TASK);
+		if (ret < 0)
+			tperrorx("could not become real-time task");
 		exit(rt_prog(rt_arg));
 	}
+
+	return rt_task;
 }
 
 struct create_rt_param {
