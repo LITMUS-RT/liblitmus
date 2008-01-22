@@ -33,7 +33,7 @@ void do_stuff(void)
 		j += prefix();
 }
 
-#define CALL(sc) do { ret = sc; if (ret == -1) {perror(" (!!) " #sc " failed: "); /*exit(1)*/;}} while (0);
+#define CALL(sc) do { ret = sc; if (ret == -1) {perror(" (!!) " #sc " failed"); /*exit(1)*/;}} while (0);
 
 unsigned int job_no;
 
@@ -57,9 +57,13 @@ int main(int argc, char** argv)
 
 
 	CALL(get_job_no(&job_no));
-	printf("my job_no is %u", job_no);
+	printf("my job_no is %u", job_no);	
 
 	CALL( task_mode(LITMUS_RT_TASK) );
+
+	CALL( sporadic_global(3, 33) );
+
+	CALL( task_mode(LITMUS_RT_TASK) );	
 
 	next();
 	do_stuff();
