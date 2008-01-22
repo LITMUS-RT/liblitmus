@@ -53,7 +53,6 @@ spolicy sched_getpolicy(void);
 int set_rt_mode(int mode);
 int set_rt_task_param(pid_t pid, rt_param_t* param);
 int get_rt_task_param(pid_t pid, rt_param_t* param);
-int prepare_rt_task(pid_t pid);
 
 /* setup helper */
 int sporadic_task(unsigned long exec_cost, unsigned long period, 

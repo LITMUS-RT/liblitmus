@@ -269,7 +269,6 @@ void init_litmus(void)
 #define __NR_set_rt_mode	322
 #define __NR_set_rt_task_param	323
 #define __NR_get_rt_task_param	324
-#define __NR_prepare_rt_task	325
 #define __NR_sleep_next_period  326
 #define __NR_scheduler_setup	327
 #define __NR_register_np_flag   328
@@ -294,7 +293,6 @@ _syscall0(spolicy, sched_getpolicy);
 _syscall1(int,     set_rt_mode,       int,         arg1);
 _syscall2(int,     set_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
 _syscall2(int,     get_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
-_syscall1(int, 	   prepare_rt_task,   pid_t,       pid);
 _syscall0(int,     sleep_next_period);
 _syscall2(int,     scheduler_setup,   int,         cmd,    void*,       param);
 _syscall1(int,     register_np_flag, struct np_flag*, flag);
