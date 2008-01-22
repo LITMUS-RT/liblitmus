@@ -59,12 +59,13 @@ int set_rt_task_param(pid_t pid, rt_param_t* param);
 int get_rt_task_param(pid_t pid, rt_param_t* param);
 int prepare_rt_task(pid_t pid);
 
-#define sporadic_gobal(e, p) \
+int sporadic_task(unsigned long exec_cost, unsigned long period, 
+		  int partition, task_class_t cls);
+
+#define sporadic_global(e, p) \
 	sporadic_task(e, p, 0, RT_CLASS_SOFT)
 #define sporadic_partitioned(e, p, cpu) \
 	sporadic_task(e, p, cpu, RT_CLASS_SOFT)
-int sporadic_task(unsigned long exec_cost, unsigned long period, 
-		  int partition, task_class_t cls);
 
 
 enum {
