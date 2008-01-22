@@ -3,7 +3,7 @@ CPPFLAGS=-Wall -g
 
 LIBS= ./liblitmus.a
 
-TARGETS = showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a wait_test np_test stdump
+TARGETS = showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a wait_test np_test stdump mode_test
 
 vpath %.h include/
 vpath %.c src/
@@ -14,6 +14,9 @@ clean:
 
 wait_test: wait_test.o litmus.h liblitmus.a
 	cc -static -o wait_test wait_test.o  ${LIBS}
+
+mode_test: mode_test.o litmus.h liblitmus.a
+	cc -static -o mode_test mode_test.o  ${LIBS}
 
 np_test: np_test.o litmus.h liblitmus.a
 	cc -static -o np_test np_test.o  ${LIBS}
