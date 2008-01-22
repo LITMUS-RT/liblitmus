@@ -218,7 +218,16 @@ task_class_t str2class(const char* str)
 		return -1;
 }
 
-
+int sporadic_task(unsigned long e, unsigned long p, 
+		  int cpu, task_class_t cls)
+{
+	rt_param_t param;
+	param.exec_cost = e;
+	param.period    = p;
+	param.cpu       = cpu;
+	param.cls       = cls;
+	return set_rt_task_param(getpid(), &param);
+}
 
 struct np_flag {
 	#define RT_PREEMPTIVE 		0x2050 /* = NP */

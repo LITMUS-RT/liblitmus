@@ -49,13 +49,6 @@ typedef struct rt_param {
 
 typedef int pid_t;	 /* PID of a task */
 
-/* X */
-#define set_param(t,p,e) do{\
-			(t).is_realtime=1;\
-			(t).exec_cost=(e);\
-			(t).period=(p);\
-			}while(0);
-
 /*	scheduler modes */
 #define MODE_NON_RT 0
 #define MODE_RT_RUN 1
@@ -65,6 +58,13 @@ int set_rt_mode(int mode);
 int set_rt_task_param(pid_t pid, rt_param_t* param);
 int get_rt_task_param(pid_t pid, rt_param_t* param);
 int prepare_rt_task(pid_t pid);
+
+#define sporadic_gobal(e, p) \
+	sporadic_task(e, p, 0, RT_CLASS_SOFT)
+#define sporadic_partitioned(e, p, cpu) \
+	sporadic_task(e, p, cpu, RT_CLASS_SOFT)
+int sporadic_task(unsigned long exec_cost, unsigned long period, 
+		  int partition, task_class_t cls);
 
 
 enum {
