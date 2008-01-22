@@ -276,8 +276,14 @@ int litmus_task_active(void)
 	return !exit_requested;
 }
 
-#define check(str) if (ret == -1) {perror(str); fprintf(stderr, \
-	"Could not initialize LITMUS^RT, aborting...\n"); exit(1);}
+#define check(str)	 \
+	if (ret == -1) { \
+		perror(str); \
+		fprintf(stderr,	\
+			"Warning: Could not initialize LITMUS^RT, " \
+			"%s failed.\n",	str			    \
+			); \
+	}
 
 void init_litmus(void)
 {
@@ -286,15 +292,14 @@ void init_litmus(void)
 	np_flag.ctr = 0;
 
 	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
-	check("mlockall");
+	check("mlockall()");
 	ret = register_np_flag(&np_flag);
-	check("register_np_flag");	
+	check("register_np_flag()");	
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
 	signal(SIGHUP, sig_handler);
 	signal(SIGUSR1, SIG_IGN);
 }
-
 
 
 /*	Litmus syscalls definitions */
@@ -321,7 +326,7 @@ void init_litmus(void)
 #define __NR_get_cur_service_level 	340
 #define __NR_reg_ics_cb			341
 #define __NR_start_wcs			342
-#define __NR_task_mode_transition 	343
+#define __NR_task_mode		 	343
 
 /*	Syscall stub for setting RT mode and scheduling options */
 _syscall0(spolicy, sched_getpolicy);
@@ -348,4 +353,4 @@ _syscall1(int,     wait_for_job_release, unsigned int, job_no);
 
 _syscall1(int,     start_wcs,         int,  od);
 _syscall1(int,     reg_ics_cb,        struct ics_cb*, ics_cb);
-_syscall1(int,     task_mode_transition, int, target_mode);
+_syscall1(int,     task_mode, int, target_mode);

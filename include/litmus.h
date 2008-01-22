@@ -152,7 +152,7 @@ enum rt_task_mode_t {
 	BACKGROUND_TASK = 0,
 	LITMUS_RT_TASK  = 1
 };
-int task_mode_transition(int target_mode);
+int task_mode(int target_mode);
 
 
 const char* get_scheduler_name(spolicy scheduler);
