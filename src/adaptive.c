@@ -2,6 +2,9 @@
 #include <unistd.h>
 
 #include "litmus.h"
+#include "internal.h"
+#include "syscalls.h"
+
 #include "adaptive.h"
 
 #define __NR_set_service_levels 	346

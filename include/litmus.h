@@ -126,12 +126,8 @@ int reg_ics_cb(struct ics_cb* ics_cb);
 int start_wcs(int od);
 
 /*  library functions */
-void init_litmus(void);
-/* exit is currently unused, but was needed for syscall
- * tracing and may be needed in the future. Leave it in
- * for the purpose of source code compatability.
- */
-#define exit_litmus() {}
+int  init_litmus(void);
+void exit_litmus(void);
 
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
 int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, 
@@ -156,13 +152,5 @@ void exit_np(void);
  * Use it for main job loop.
  */
 int litmus_task_active();
-
-
-/* low level operations, not intended for API use */
-
-/* prepare a real-time task */
-typedef int (*rt_setup_fn_t)(int pid, void* arg);
-int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg, 
-		     rt_setup_fn_t setup, void* setup_arg);
 
 #endif

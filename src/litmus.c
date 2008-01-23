@@ -1,53 +1,12 @@
-/* To get syscall() we need to define _GNU_SOURCE 
- * in modern glibc versions.
- */
-#define _GNU_SOURCE
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <errno.h>
 #include <signal.h>
 #include <sys/mman.h>
 
-
-
 #include "litmus.h"
-
-
-/* this is missing in newer linux/unistd.h versions */
-
-#define _syscall0(type,name) \
-type name(void) \
-{\
-        return syscall(__NR_##name);\
-}
-
-#define _syscall1(type,name,type1,arg1) \
-type name(type1 arg1) \
-{\
-        return syscall(__NR_##name, arg1);\
-}
-
-
-#define _syscall2(type,name,type1,arg1,type2,arg2) \
-type name(type1 arg1,type2 arg2) \
-{\
-        return syscall(__NR_##name, arg1, arg2);\
-}
-
-#define _syscall3(type,name,type1,arg1,type2,arg2,type3,arg3)	\
-type name(type1 arg1,type2 arg2, type3 arg3)   \
-{\
-        return syscall(__NR_##name, arg1, arg2, arg3);	\
-}
-
-#define _syscall4(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4)\
-type name(type1 arg1,type2 arg2, type3 arg3, type4 arg4)	      	\
-{\
-        return syscall(__NR_##name, arg1, arg2, arg3, arg4);	\
-}
+#include "internal.h"
 
 const char* get_scheduler_name(spolicy scheduler) 
 {
@@ -85,71 +44,6 @@ const char* get_scheduler_name(spolicy scheduler)
 	return name;
 }
 
-static void tperrorx(char* msg) 
-{
-	fprintf(stderr, 
-		"Task %d: %s: %m",
-		getpid(), msg);
-	exit(-1);
-}
-
-/* common launch routine */
-int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg, rt_setup_fn_t setup, 
-		     void* setup_arg) 
-{
-	int ret;
-	int rt_task = fork();
-
-	if (rt_task == 0) {
-		/* we are the real-time task 
-		 * launch task and die when it is done
-		 */		
-		rt_task = getpid();		
-		ret = setup(rt_task, setup_arg);
-		if (ret < 0)
-			tperrorx("could not setup task parameters");
-		ret = task_mode(LITMUS_RT_TASK);
-		if (ret < 0)
-			tperrorx("could not become real-time task");
-		exit(rt_prog(rt_arg));
-	}
-
-	return rt_task;
-}
-
-struct create_rt_param {
-	int cpu;
-	int wcet;
-	int period;
-	task_class_t class;
-};
-
-int setup_create_rt(int pid, struct create_rt_param* arg)
-{
-	rt_param_t params;
-	params.period      = arg->period;
-	params.exec_cost   = arg->wcet;
-	params.cpu         = arg->cpu;
-	params.cls	   = arg->class;
-	return set_rt_task_param(pid, &params);
-}
-
-int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period,
-		     task_class_t class) 
-{
-	struct create_rt_param params;
-	params.cpu = cpu;
-	params.period = period;
-	params.wcet = wcet;
-	params.class = class;
-	return __launch_rt_task(rt_prog, arg, 
-				(rt_setup_fn_t) setup_create_rt, &params);
-}
-
-int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period) {
-	return __create_rt_task(rt_prog, arg, cpu, wcet, period, RT_CLASS_HARD);
-}
-
 
 void show_rt_param(rt_param_t* tp) 
 {
@@ -181,49 +75,6 @@ int sporadic_task(unsigned long e, unsigned long p,
 	return set_rt_task_param(getpid(), &param);
 }
 
-struct np_flag {
-	#define RT_PREEMPTIVE 		0x2050 /* = NP */
-	#define RT_NON_PREEMPTIVE 	0x4e50 /* =  P */
-	unsigned short preemptivity;
-
-	#define RT_EXIT_NP_REQUESTED	0x5251 /* = RQ */
-	unsigned short request;
-
-	unsigned int ctr;
-};
-
-static struct np_flag np_flag;
-
-int register_np_flag(struct np_flag* flag);
-int signal_exit_np(void);
-
-
-static inline void barrier(void)
-{
-	__asm__ __volatile__("sfence": : :"memory");
-}
-
-void enter_np(void)
-{
-	if (++np_flag.ctr == 1)
-	{
-		np_flag.request = 0;
-		barrier();
-		np_flag.preemptivity = RT_NON_PREEMPTIVE;
-	}
-}
-
-
-void exit_np(void)
-{
-	if (--np_flag.ctr == 0)
-	{
-		np_flag.preemptivity = RT_PREEMPTIVE;
-		barrier();
-		if (np_flag.request == RT_EXIT_NP_REQUESTED)
-			signal_exit_np();
-	}
-}
 
 static int exit_requested = 0;
 
@@ -237,79 +88,26 @@ int litmus_task_active(void)
 	return !exit_requested;
 }
 
-#define check(str)	 \
-	if (ret == -1) { \
-		perror(str); \
-		fprintf(stderr,	\
-			"Warning: Could not initialize LITMUS^RT, " \
-			"%s failed.\n",	str			    \
-			); \
-	}
 
-void init_litmus(void)
+int init_kernel_iface(void);
+
+int init_litmus(void)
 {
-	int ret;
-	np_flag.preemptivity = RT_PREEMPTIVE;
-	np_flag.ctr = 0;
+	int ret, ret1, ret2;
 
-	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
+	ret1 = ret = mlockall(MCL_CURRENT | MCL_FUTURE);
 	check("mlockall()");
-	ret = register_np_flag(&np_flag);
-	check("register_np_flag()");	
+	ret2 = ret = init_kernel_iface();
+	check("kernel <-> user space interface initialization");
+
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
 	signal(SIGHUP, sig_handler);
 	signal(SIGUSR1, SIG_IGN);
+	return ret1 == 0 && ret2 == 0;
 }
 
-
-/*	Litmus syscalls definitions */
-#define __NR_sched_setpolicy 	320
-#define __NR_sched_getpolicy 	321
-#define __NR_set_rt_mode	322
-#define __NR_set_rt_task_param	323
-#define __NR_get_rt_task_param	324
-#define __NR_sleep_next_period  326
-#define __NR_scheduler_setup	327
-#define __NR_register_np_flag   328
-#define __NR_signal_exit_np     329
-#define __NR_od_openx		330
-#define __NR_od_close		331
-#define __NR_pi_down		332
-#define __NR_pi_up		333
-#define __NR_srp_down		334
-#define __NR_srp_up		335
-#define __NR_reg_task_srp_sem	336
-#define __NR_get_job_no		337
-#define __NR_wait_for_job_release 	338
-#define __NR_set_service_levels 	339
-#define __NR_get_cur_service_level 	340
-#define __NR_reg_ics_cb			341
-#define __NR_start_wcs			342
-#define __NR_task_mode		 	343
-
-/*	Syscall stub for setting RT mode and scheduling options */
-_syscall0(spolicy, sched_getpolicy);
-_syscall1(int,     set_rt_mode,       int,         arg1);
-_syscall2(int,     set_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
-_syscall2(int,     get_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
-_syscall0(int,     sleep_next_period);
-_syscall2(int,     scheduler_setup,   int,         cmd,    void*,       param);
-_syscall1(int,     register_np_flag, struct np_flag*, flag);
-_syscall0(int,     signal_exit_np);
-
-_syscall4(int,     od_openx,           int,  fd, obj_type_t, type, int, obj_id,
-	  void*,   config);
-_syscall1(int,     od_close,          int,  od);
-_syscall1(int,     pi_down,           int,  od);
-_syscall1(int,     pi_up,             int,  od);
-_syscall1(int,     srp_down,          int,  od);
-_syscall1(int,     srp_up,            int,  od);
-_syscall1(int,     reg_task_srp_sem,  int,  od);
-
-_syscall1(int,     get_job_no,      unsigned int*, job_no);
-_syscall1(int,     wait_for_job_release, unsigned int, job_no);
-
-_syscall1(int,     start_wcs,         int,  od);
-_syscall1(int,     reg_ics_cb,        struct ics_cb*, ics_cb);
-_syscall1(int,     task_mode, int, target_mode);
+void exit_litmus(void)
+{
+	/* nothing to do in current version */
+}

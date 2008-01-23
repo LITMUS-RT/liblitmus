@@ -3,7 +3,10 @@ CPPFLAGS=-Wall -g
 
 LIBS= ./liblitmus.a
 
-TARGETS = showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a wait_test np_test stdump mode_test
+LIB_OBJ=  litmus.o syscalls.o sched_trace.o adaptive.o edf-hsb.o task.o kernel_iface.o
+
+TARGETS = showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a \
+          wait_test np_test stdump mode_test
 
 vpath %.h include/
 vpath %.c src/
@@ -45,5 +48,6 @@ edfhsb: liblitmus.a edf-hsb.o litmus.h edf-hsb.h hrt.o
 stdump: liblitmus.a litmus.h sched_trace.h stdump.o
 	cc -o stdump  stdump.o ${LIBS}
 
-liblitmus.a: litmus.o sched_trace.o adaptive.o adaptive.h litmus.h edf-hsb.o edf-hsb.h
-	${AR} rcs liblitmus.a litmus.o adaptive.o edf-hsb.o sched_trace.o
+liblitmus.a:  ${LIB_OBJ} adaptive.h litmus.h edf-hsb.h
+	${AR} rcs liblitmus.a ${LIB_OBJ}
+
