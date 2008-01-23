@@ -9,7 +9,7 @@ TARGETS = showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a
           wait_test np_test stdump mode_test
 
 vpath %.h include/
-vpath %.c src/
+vpath %.c src/ bin/
 
 all: ${TARGETS}
 clean:
