@@ -6,7 +6,7 @@ LIBS= ./liblitmus.a
 LIB_OBJ=  litmus.o syscalls.o sched_trace.o adaptive.o edf-hsb.o task.o kernel_iface.o
 
 TARGETS = showsched iotest set_rt_mode  run timeout rt_launch edfhsb liblitmus.a \
-          wait_test np_test stdump mode_test base_task
+          wait_test np_test stdump mode_test base_task base_mt_task
 
 vpath %.h include/
 vpath %.c src/ bin/
@@ -14,6 +14,9 @@ vpath %.c src/ bin/
 all: ${TARGETS}
 clean:
 	rm -f *.o *~  ${TARGETS}
+
+base_mt_task: base_mt_task.o liblitmus.a
+	cc -static -pthread -o base_mt_task base_mt_task.o  ${LIBS}
 
 base_task: base_task.o liblitmus.a
 	cc -static -o base_task base_task.o  ${LIBS}

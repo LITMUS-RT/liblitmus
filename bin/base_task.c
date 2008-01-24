@@ -1,11 +1,8 @@
 /* based_task.c -- A basic real-time task skeleton. 
  *
- * This (by itself useless) task demos how to setup LITMUS^RT real-time task.
- *
- * Compile:
- *
+ * This (by itself useless) task demos how to setup a 
+ * single-threaded LITMUS^RT real-time task.
  */
-
 
 /* First, we include standard headers.
  * Generally speaking, a LITMUS^RT real-time task can perform any
@@ -118,7 +115,7 @@ int main(int argc, char** argv)
 
 
 	/***** 
-	 * 7) Clean up and exit.
+	 * 7) Clean up, maybe print results and stats, and exit.
 	 */
 	return 0;
 }
