@@ -3,6 +3,9 @@
 #include "litmus.h"
 #include "internal.h"
 
+/* per real-time thread kernel <-> user space flags */
+
+
 struct np_flag {
 	#define RT_PREEMPTIVE 		0x2050 /* = NP */
 	#define RT_NON_PREEMPTIVE 	0x4e50 /* =  P */
@@ -19,7 +22,7 @@ int signal_exit_np(void);
 
 
 
-static struct np_flag np_flag;
+static __thread struct np_flag np_flag;
 
 
 int init_kernel_iface(void)
