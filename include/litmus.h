@@ -127,6 +127,7 @@ int start_wcs(int od);
 
 /*  library functions */
 int  init_litmus(void);
+int  init_rt_thread(void);
 void exit_litmus(void);
 
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
