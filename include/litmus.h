@@ -148,9 +148,4 @@ task_class_t str2class(const char* str);
 void enter_np(void);
 void exit_np(void);
 
-/* Returns 1 if the task is still active.
- * Use it for main job loop.
- */
-int litmus_task_active();
-
 #endif

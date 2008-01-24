@@ -75,36 +75,25 @@ int sporadic_task(unsigned long e, unsigned long p,
 	return set_rt_task_param(getpid(), &param);
 }
 
-
-static int exit_requested = 0;
-
-static void sig_handler(int sig)
-{
-	exit_requested = 1;
-}
-
-int litmus_task_active(void)
-{
-	return !exit_requested;
-}
-
-
 int init_kernel_iface(void);
 
 int init_litmus(void)
 {
-	int ret, ret1, ret2;
+	int ret, ret2;
 
-	ret1 = ret = mlockall(MCL_CURRENT | MCL_FUTURE);
+	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
 	check("mlockall()");
-	ret2 = ret = init_kernel_iface();
-	check("kernel <-> user space interface initialization");
+	ret2 = init_rt_thread();
+	return ret == 0 && ret2 == 0;
+}
 
-	signal(SIGINT, sig_handler);
-	signal(SIGTERM, sig_handler);
-	signal(SIGHUP, sig_handler);
-	signal(SIGUSR1, SIG_IGN);
-	return ret1 == 0 && ret2 == 0;
+int init_rt_thread(void)
+{
+	int ret;
+
+        ret = init_kernel_iface();
+	check("kernel <-> user space interface initialization");
+	return ret;
 }
 
 void exit_litmus(void)
