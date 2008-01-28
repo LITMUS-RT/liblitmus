@@ -26,6 +26,18 @@
 #define PERIOD		100
 #define EXEC_COST	 10
 
+/* Catch errors.
+ */
+#define CALL( exp ) do { \
+		int ret; \
+		ret = exp; \
+		if (ret != 0) \
+			fprintf(stderr, "%s failed: %m\n", #exp);\
+		else \
+			fprintf(stderr, "%s ok.\n", #exp); \
+	} while (0)
+
+
 /* Declare the periodically invoked job. 
  * Returns 1 -> task should exit.
  *         0 -> task should continue.
@@ -72,8 +84,8 @@ int main(int argc, char** argv)
 	 *    If this were to execute under a partitioned scheduler, it would be assigned
 	 *    to the first partition (since partitioning is performed offline).
 	 */
-	init_litmus();
-	sporadic_global(EXEC_COST, PERIOD);
+	CALL( init_litmus() );
+	CALL( sporadic_global(EXEC_COST, PERIOD) );
 
 	/* To specify a partition, use sporadic_partitioned().
 	 * Example:
@@ -88,7 +100,7 @@ int main(int argc, char** argv)
 	/*****
 	 * 4) Transition to real-time mode.
 	 */
-	task_mode(LITMUS_RT_TASK);
+	CALL( task_mode(LITMUS_RT_TASK) );
 
 	/* The task is now executing as a real-time task if the call didn't fail. 
 	 */
@@ -110,7 +122,7 @@ int main(int argc, char** argv)
 	/*****
 	 * 6) Transition to background mode.
 	 */
-	task_mode(BACKGROUND_TASK);
+	CALL( task_mode(BACKGROUND_TASK) );
 
 
 

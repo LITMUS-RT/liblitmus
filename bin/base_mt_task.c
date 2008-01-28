@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Include gettid() */
+#include <sys/types.h>
+
 /* Include threading support. */
 #include <pthread.h>
 
@@ -41,6 +44,19 @@ void* rt_thread(struct thread_context* ctx);
  *         0 -> task should continue.
  */
 int job(void);
+
+
+/* Catch errors.
+ */
+#define CALL( exp ) do { \
+		int ret; \
+		ret = exp; \
+		if (ret != 0) \
+			fprintf(stderr, "%s failed: %m\n", #exp);\
+		else \
+			fprintf(stderr, "%s ok.\n", #exp); \
+	} while (0)
+
 
 /* Basic setup is the same as in the single-threaded example. However, 
  * we do some thread initiliazation first before invoking the job.
@@ -105,6 +121,7 @@ int main(int argc, char** argv)
 void* rt_thread(struct thread_context* ctx)
 {
 	int do_exit;
+	rt_param_t param;
 
 	/* Make presence visible. */
 	printf("RT Thread %d active.\n", ctx->id);
@@ -112,15 +129,17 @@ void* rt_thread(struct thread_context* ctx)
 	/*****
 	 * 1) Initialize real-time settings.
 	 */
-	init_rt_thread();
-	sporadic_global(EXEC_COST, PERIOD);
+	CALL( init_rt_thread() );
+	CALL( sporadic_global(EXEC_COST, PERIOD) );
 
-
+	/* Just for fun display the real-time parameters of this thread. */
+	CALL( get_rt_task_param(gettid(), &param) );
+	show_rt_param(&param);
 
 	/*****
 	 * 2) Transition to real-time mode.
 	 */
-	task_mode(LITMUS_RT_TASK);
+	CALL( task_mode(LITMUS_RT_TASK) );
 
 	/* The task is now executing as a real-time task if the call didn't fail. 
 	 */
@@ -142,7 +161,7 @@ void* rt_thread(struct thread_context* ctx)
 	/*****
 	 * 4) Transition to background mode.
 	 */
-	task_mode(BACKGROUND_TASK);
+	CALL( task_mode(BACKGROUND_TASK) );
 
 
 	return NULL;
