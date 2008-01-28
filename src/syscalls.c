@@ -3,6 +3,8 @@
  */
 #define _GNU_SOURCE
 #include <unistd.h>
+#include <linux/unistd.h>
+#include <sys/types.h>
 
 #include "litmus.h"
 
@@ -36,6 +38,9 @@ struct np_flag;
 #define __NR_task_mode		 	343
 
 /*	Syscall stub for setting RT mode and scheduling options */
+
+_syscall0(pid_t,   gettid);
+
 _syscall0(spolicy, sched_getpolicy);
 _syscall1(int,     set_rt_mode,       int,         arg1);
 _syscall2(int,     set_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);

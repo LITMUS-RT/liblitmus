@@ -45,6 +45,9 @@ typedef struct rt_param {
 
 typedef int pid_t;	 /* PID of a task */
 
+/* obtain the PID of a thread */
+pid_t gettid(void);
+
 /*	scheduler modes */
 #define MODE_NON_RT 0
 #define MODE_RT_RUN 1
