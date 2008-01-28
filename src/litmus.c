@@ -72,7 +72,7 @@ int sporadic_task(unsigned long e, unsigned long p,
 	param.period    = p;
 	param.cpu       = cpu;
 	param.cls       = cls;
-	return set_rt_task_param(getpid(), &param);
+	return set_rt_task_param(gettid(), &param);
 }
 
 int init_kernel_iface(void);
@@ -84,7 +84,7 @@ int init_litmus(void)
 	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
 	check("mlockall()");
 	ret2 = init_rt_thread();
-	return ret == 0 && ret2 == 0;
+	return (ret == 0) && (ret2 == 0) ? 0 : -1;
 }
 
 int init_rt_thread(void)
