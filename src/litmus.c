@@ -8,10 +8,10 @@
 #include "litmus.h"
 #include "internal.h"
 
-void show_rt_param(rt_param_t* tp) 
+void show_rt_param(struct rt_task* tp) 
 {
 	printf("rt params:\n\t"
-	       "exec_cost:\t%ld\n\tperiod:\t\t%ld\n\tcpu:\t%d\n",
+	       "exec_cost:\t%llu\n\tperiod:\t\t%llu\n\tcpu:\t%d\n",
 	       tp->exec_cost, tp->period, tp->cpu);
 }
 
@@ -30,11 +30,11 @@ task_class_t str2class(const char* str)
 int sporadic_task(unsigned long e, unsigned long p, 
 		  int cpu, task_class_t cls)
 {
-	rt_param_t param;
+	struct rt_task param;
 	param.exec_cost = e;
 	param.period    = p;
 	param.cpu       = cpu;
-	param.cls       = cls;
+	param.cls      = cls;
 	return set_rt_task_param(gettid(), &param);
 }
 

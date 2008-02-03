@@ -1,41 +1,16 @@
 #ifndef LITMUS_H
 #define LITMUS_H
 
+#include <linux/rt_param.h>
 #include <sys/types.h>
-
-/* A real-time program. */
-typedef int (*rt_fn_t)(void*);
-
-/* different types of clients */
-typedef enum {
-	RT_CLASS_HARD,	
-	RT_CLASS_SOFT,
-	RT_CLASS_BEST_EFFORT
-} task_class_t;
-
-/*	Task RT params for schedulers */
-/*	RT task parameters for scheduling extensions 	
-*	These parameters are inherited during clone and therefore must
-*	be explicitly set up before the task set is launched.
-*/
-typedef struct rt_param {	
-	/* 	Execution cost 	*/
-	unsigned long exec_cost;	
-	/*	Period		*/
-	unsigned long period;			
-	/*	Partition 	*/
-	unsigned int cpu;
-	/* 	type of task	*/
-	task_class_t  	cls;
-} rt_param_t;
 
 typedef int pid_t;	 /* PID of a task */
 
 /* obtain the PID of a thread */
 pid_t gettid(void);
 
-int set_rt_task_param(pid_t pid, rt_param_t* param);
-int get_rt_task_param(pid_t pid, rt_param_t* param);
+int set_rt_task_param(pid_t pid, struct rt_task* param);
+int get_rt_task_param(pid_t pid, struct rt_task* param);
 
 /* setup helper */
 int sporadic_task(unsigned long exec_cost, unsigned long period, 
@@ -77,6 +52,9 @@ int  init_litmus(void);
 int  init_rt_thread(void);
 void exit_litmus(void);
 
+/* A real-time program. */
+typedef int (*rt_fn_t)(void*);
+
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
 int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, 
 		     int period, task_class_t cls);
@@ -88,7 +66,7 @@ enum rt_task_mode_t {
 };
 int task_mode(int target_mode);
 
-void show_rt_param(rt_param_t* tp);
+void show_rt_param(struct rt_task* tp);
 task_class_t str2class(const char* str);
 
 /* non-preemptive section support */

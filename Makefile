@@ -1,4 +1,8 @@
-CFLAGS=-Wall -Wdeclaration-after-statement  -g -Iinclude/ -D_XOPEN_SOURCE=600
+KERNEL_DIR = ../litmus
+
+INC=-Iinclude/ -I${KERNEL_DIR}/include/
+
+CFLAGS=-Wall -Wdeclaration-after-statement ${INC} -g  -D_XOPEN_SOURCE=600
 CPPFLAGS=-Wall -g
 
 LIBS= ./liblitmus.a
@@ -41,4 +45,3 @@ stdump: liblitmus.a litmus.h sched_trace.h stdump.o
 
 liblitmus.a:  ${LIB_OBJ} litmus.h 
 	${AR} rcs liblitmus.a ${LIB_OBJ}
-

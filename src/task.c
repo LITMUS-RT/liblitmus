@@ -37,33 +37,16 @@ int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg, rt_setup_fn_t setup,
 	return rt_task;
 }
 
-struct create_rt_param {
-	int cpu;
-	int wcet;
-	int period;
-	task_class_t class;
-};
-
-int setup_create_rt(int pid, struct create_rt_param* arg)
-{
-	rt_param_t params;
-	params.period      = arg->period;
-	params.exec_cost   = arg->wcet;
-	params.cpu         = arg->cpu;
-	params.cls	   = arg->class;
-	return set_rt_task_param(pid, &params);
-}
-
 int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period,
 		     task_class_t class) 
 {
-	struct create_rt_param params;
+	struct rt_task params;
 	params.cpu = cpu;
 	params.period = period;
-	params.wcet = wcet;
-	params.class = class;
+	params.exec_cost = wcet;
+	params.cls = class;
 	return __launch_rt_task(rt_prog, arg, 
-				(rt_setup_fn_t) setup_create_rt, &params);
+				(rt_setup_fn_t) set_rt_task_param, &params);
 }
 
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period) {

@@ -8,53 +8,87 @@
 
 #include "litmus.h"
 
-#include "syscalls.h"
-
 struct np_flag;
-
-/*	Litmus syscalls definitions */
-#define __NR_sched_setpolicy 	320
-#define __NR_sched_getpolicy 	321
-#define __NR_set_rt_mode	322
-#define __NR_set_rt_task_param	323
-#define __NR_get_rt_task_param	324
-#define __NR_sleep_next_period  326
-#define __NR_scheduler_setup	327
-#define __NR_register_np_flag   328
-#define __NR_signal_exit_np     329
-#define __NR_od_openx		330
-#define __NR_od_close		331
-#define __NR_pi_down		332
-#define __NR_pi_up		333
-#define __NR_srp_down		334
-#define __NR_srp_up		335
-#define __NR_reg_task_srp_sem	336
-#define __NR_get_job_no		337
-#define __NR_wait_for_job_release 	338
-#define __NR_set_service_levels 	339
-#define __NR_get_cur_service_level 	340
-#define __NR_reg_ics_cb			341
-#define __NR_start_wcs			342
-#define __NR_task_mode		 	343
 
 /*	Syscall stub for setting RT mode and scheduling options */
 
-_syscall0(pid_t,   gettid);
+pid_t gettid(void)
+{
+	return syscall(__NR_gettid);
+}
 
-_syscall2(int,     set_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
-_syscall2(int,     get_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
-_syscall0(int,     sleep_next_period);
-_syscall1(int,     register_np_flag, struct np_flag*, flag);
-_syscall0(int,     signal_exit_np);
+int set_rt_task_param(pid_t pid, struct rt_task *param)
+{
+	return syscall(__NR_set_rt_task_param, pid, param);
+}
 
-_syscall4(int,     od_openx,           int,  fd, obj_type_t, type, int, obj_id,
-	  void*,   config);
-_syscall1(int,     od_close,          int,  od);
-_syscall1(int,     pi_down,           int,  od);
-_syscall1(int,     pi_up,             int,  od);
-_syscall1(int,     srp_down,          int,  od);
-_syscall1(int,     srp_up,            int,  od);
-_syscall1(int,     reg_task_srp_sem,  int,  od);
-_syscall1(int,     get_job_no,      unsigned int*, job_no);
-_syscall1(int,     wait_for_job_release, unsigned int, job_no);
-_syscall1(int,     task_mode, int, target_mode);
+int get_rt_task_param(pid_t pid, struct rt_task *param)
+{
+	return syscall(__NR_get_rt_task_param, pid, param);
+}
+
+int sleep_next_period(void)
+{
+	return syscall(__NR_sleep_next_period);
+}
+
+int register_np_flag(struct np_flag *flag)
+{
+	return syscall(__NR_register_np_flag, flag);
+}
+
+int signal_exit_np(void)
+{
+	return syscall(__NR_exit_np);
+}
+
+int od_openx(int fd, obj_type_t type, int obj_id, void *config)
+{
+	return syscall(__NR_od_open, fd, type, obj_id, config);
+}
+
+int od_close(int od)
+{
+	return syscall(__NR_od_close, od);
+}
+
+int pi_down(int od)
+{
+	return syscall(__NR_pi_down, od);
+}
+
+int pi_up(int od)
+{
+	return syscall(__NR_pi_up, od);
+}
+
+int srp_down(int od)
+{
+	return syscall(__NR_srp_down, od);
+}
+
+int srp_up(int od)
+{
+	return syscall(__NR_srp_up, od);
+}
+
+int reg_task_srp_sem(int od)
+{
+	return syscall(__NR_reg_task_srp_sem, od);
+}
+
+int get_job_no(unsigned int *job_no)
+{
+	return syscall(__NR_query_job_no, job_no);
+}
+
+int wait_for_job_release(unsigned int job_no)
+{
+	return syscall(__NR_wait_for_job_release, job_no);
+}
+
+int task_mode(int target_mode)
+{
+	return syscall(__NR_task_mode, target_mode);
+}
+

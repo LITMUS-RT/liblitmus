@@ -121,7 +121,6 @@ int main(int argc, char** argv)
 void* rt_thread(struct thread_context* ctx)
 {
 	int do_exit;
-	rt_param_t param;
 
 	/* Make presence visible. */
 	printf("RT Thread %d active.\n", ctx->id);
@@ -131,10 +130,6 @@ void* rt_thread(struct thread_context* ctx)
 	 */
 	CALL( init_rt_thread() );
 	CALL( sporadic_global(EXEC_COST, PERIOD) );
-
-	/* Just for fun display the real-time parameters of this thread. */
-	CALL( get_rt_task_param(gettid(), &param) );
-	show_rt_param(&param);
 
 	/*****
 	 * 2) Transition to real-time mode.
