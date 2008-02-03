@@ -45,3 +45,6 @@ stdump: liblitmus.a litmus.h sched_trace.h stdump.o
 
 liblitmus.a:  ${LIB_OBJ} litmus.h 
 	${AR} rcs liblitmus.a ${LIB_OBJ}
+
+check:
+	sparse ${CFLAGS} src/*.c bin/*.c
