@@ -17,9 +17,6 @@ typedef enum {
 	ST_JOB_COMPLETION	=  6,
 	ST_CAPACITY_RELEASE     =  7,
 	ST_CAPACITY_ALLOCATION  =  8,
-	ST_SERVICE_LEVEL_CHANGE =  9,
-	ST_WEIGHT_ERROR		= 10,
-
 
 	ST_MAX
 } trace_type_t;
@@ -95,24 +92,6 @@ typedef struct {
 	u32                     deadline;
 	pid_t			donor;
 } cap_allocation_record_t;
-
-typedef struct {
-	trace_header_t		header;
-	task_info_t		task;
-	unsigned int		from:16;
-	unsigned int		to:16;
-	service_level_t		new_level;
-	service_level_t		old_level;
-} service_level_change_record_t;
-
-typedef struct {
-	trace_header_t		header;
-	pid_t			task;
-	fp_t			estimate;
-	fp_t			actual;
-} weight_error_record_t;
-
-
 
 
 

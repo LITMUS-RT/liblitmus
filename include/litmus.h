@@ -6,20 +6,6 @@
 /* A real-time program. */
 typedef int (*rt_fn_t)(void*);
 
-/*	Litmus scheduling policies	*/
-typedef enum {
-	SCHED_LINUX 		=  0,
-	SCHED_PFAIR 		=  1,
-	SCHED_PART_EDF 		=  3,
-	SCHED_GLOBAL_EDF 	=  5,
-	SCHED_PFAIR_DESYNC 	=  6,
-	SCHED_GLOBAL_EDF_NP 	=  7,	
-	SCHED_EDF_HSB		=  9,
-	SCHED_GSN_EDF		= 10,
-	SCHED_PSN_EDF		= 11,
-	SCHED_ADAPTIVE		= 12,
-} spolicy;
-
 /* different types of clients */
 typedef enum {
 	RT_CLASS_HARD,	
@@ -48,12 +34,6 @@ typedef int pid_t;	 /* PID of a task */
 /* obtain the PID of a thread */
 pid_t gettid(void);
 
-/*	scheduler modes */
-#define MODE_NON_RT 0
-#define MODE_RT_RUN 1
-
-spolicy sched_getpolicy(void);
-int set_rt_mode(int mode);
 int set_rt_task_param(pid_t pid, rt_param_t* param);
 int get_rt_task_param(pid_t pid, rt_param_t* param);
 
@@ -66,18 +46,10 @@ int sporadic_task(unsigned long exec_cost, unsigned long period,
 #define sporadic_partitioned(e, p, cpu) \
 	sporadic_task(e, p, cpu, RT_CLASS_SOFT)
 
-
-/* deprecated */
-enum {
-	LITMUS_RESERVED_RANGE = 1024,
-} SCHED_SETUP_CMD;
-int scheduler_setup(int cmd, void* param);
-
 /* file descriptor attached shared objects support */
 typedef enum  {
 	PI_SEM 		= 0,
 	SRP_SEM		= 1,
-	ICS_ID		= 2,
 } obj_type_t;
 
 int od_openx(int fd, obj_type_t type, int obj_id, void* config);
@@ -100,34 +72,6 @@ int get_job_no(unsigned int* job_no);
 int wait_for_job_release(unsigned int job_no);
 int sleep_next_period(void);
 
-/* interruptible critical section support */
-#define MAX_ICS_NESTING 	16
-#define ICS_STACK_EMPTY 	(-1)
-
-struct ics_descriptor {
-	/* ICS id, only read by kernel */
-	int 	id;
-	/* rollback program counter, only read by kernel */
-	void* 	pc; 
-	/* rollback stack pointer, not used by kernel */
-	void*	 sp;
-	/* retry flag, not used by kernel */
-	int* 	retry;
-};
-
-/* ICS control block */
-struct ics_cb {
-	/* Points to the top-most valid entry.
-	 * -1 indicates an empty stack.
-	 * Read and written by kernel.
-	 */
-	int			top;	
-	struct ics_descriptor	ics_stack[MAX_ICS_NESTING];
-};
-
-int reg_ics_cb(struct ics_cb* ics_cb);
-int start_wcs(int od);
-
 /*  library functions */
 int  init_litmus(void);
 int  init_rt_thread(void);
@@ -144,7 +88,6 @@ enum rt_task_mode_t {
 };
 int task_mode(int target_mode);
 
-const char* get_scheduler_name(spolicy scheduler);
 void show_rt_param(rt_param_t* tp);
 task_class_t str2class(const char* str);
 

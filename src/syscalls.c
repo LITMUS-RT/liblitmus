@@ -41,12 +41,9 @@ struct np_flag;
 
 _syscall0(pid_t,   gettid);
 
-_syscall0(spolicy, sched_getpolicy);
-_syscall1(int,     set_rt_mode,       int,         arg1);
 _syscall2(int,     set_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
 _syscall2(int,     get_rt_task_param, pid_t,       pid,    rt_param_t*, arg1);
 _syscall0(int,     sleep_next_period);
-_syscall2(int,     scheduler_setup,   int,         cmd,    void*,       param);
 _syscall1(int,     register_np_flag, struct np_flag*, flag);
 _syscall0(int,     signal_exit_np);
 
@@ -58,10 +55,6 @@ _syscall1(int,     pi_up,             int,  od);
 _syscall1(int,     srp_down,          int,  od);
 _syscall1(int,     srp_up,            int,  od);
 _syscall1(int,     reg_task_srp_sem,  int,  od);
-
 _syscall1(int,     get_job_no,      unsigned int*, job_no);
 _syscall1(int,     wait_for_job_release, unsigned int, job_no);
-
-_syscall1(int,     start_wcs,         int,  od);
-_syscall1(int,     reg_ics_cb,        struct ics_cb*, ics_cb);
 _syscall1(int,     task_mode, int, target_mode);

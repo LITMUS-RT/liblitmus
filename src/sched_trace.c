@@ -8,7 +8,6 @@
 #include <unistd.h>
 
 #include "litmus.h"
-#include "adaptive.h"
 #include "sched_trace.h"
 
 

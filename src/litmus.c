@@ -8,43 +8,6 @@
 #include "litmus.h"
 #include "internal.h"
 
-const char* get_scheduler_name(spolicy scheduler) 
-{
-	const char* name;
-
-	switch (scheduler){
-	case SCHED_LINUX :
-		name = "Linux";
-		break;
-	case SCHED_PFAIR:
-		name = "Pfair";
-		break;
-	case SCHED_PART_EDF:
-		name = "Partioned EDF";
-		break;
-	case SCHED_GLOBAL_EDF:
-		name = "Global EDF";
-		break;
-	case SCHED_EDF_HSB:
-		name = "EDF-HSB";
-		break;
-	case SCHED_GSN_EDF:
-		name = "GSN-EDF";
-		break;
-	case SCHED_PSN_EDF:
-		name = "PSN-EDF";
-		break;
-	case SCHED_ADAPTIVE:
-		name = "ADAPTIVE";
-		break;
-	default:
-		name = "Unkown";
-		break;
-	}
-	return name;
-}
-
-
 void show_rt_param(rt_param_t* tp) 
 {
 	printf("rt params:\n\t"
