@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# showsched: show the currently active plugin and exit.
+
+ADIR=/proc/litmus/active_plugin
+
+if [ -e $ADIR ]; then
+    cat $ADIR
+else
+    KERN=`uname -s -r`
+    echo "Error: LITMUS^RT not found on $KERN!" 
+    exit 1
+fi
