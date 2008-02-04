@@ -20,7 +20,7 @@ if [ -z "$1" ]; then
     (awk "{print \$1 \" 'Plugin'\"}" $PDIR | \
     xargs  dialog --title "Select Plugin" --backtitle "Current: $ACTIVE"  \
 	--cancel-label "Cancel" --ok-label "Select Plugin" \
-	--menu "Select a new plugin to run: " 23 60 16) 2> $TMP
+	--menu "Select a new plugin to run: " 15 60 6) 2> $TMP
     OK=$?
     clear
     if [ "$OK" != "0" ]; then	
