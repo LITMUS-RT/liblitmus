@@ -13,6 +13,7 @@ int set_rt_task_param(pid_t pid, struct rt_task* param);
 int get_rt_task_param(pid_t pid, struct rt_task* param);
 
 /* setup helper */
+/* times are givin in ms */
 int sporadic_task(unsigned long exec_cost, unsigned long period, 
 		  int partition, task_class_t cls);
 

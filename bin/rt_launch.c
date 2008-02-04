@@ -30,14 +30,16 @@ void usage(char *error) {
 		"\nExamples:"
 		"\n\trt_launch -p 2 10 100 cpu_job"
 		"\n\t  => Launch cpu_job a hard real-time task with "
-		"\n\t     period 100 and weight 0.1 on CPU 2.\n"
+		"\n\t     period 100ms and weight 0.1 on CPU 2.\n"
 		"\n\n",
 		error);
 	exit(1);
 }
 
 
-#define OPTSTR "p:c:"
+#define OPTSTR "p:c:v"
+
+#define NS_PER_MS 1000000
 
 int main(int argc, char** argv) 
 {
@@ -46,11 +48,15 @@ int main(int argc, char** argv)
 	int period;
 	int cpu = 0;
 	int opt;
+	int verbose = 0;
 	startup_info_t info;
 	task_class_t class = RT_CLASS_HARD;
 
 	while ((opt = getopt(argc, argv, OPTSTR)) != -1) {
 		switch (opt) {
+		case 'v':
+			verbose = 1;
+			break;
 		case 'p':
 			cpu = atoi(optarg);
 			break;
@@ -74,8 +80,8 @@ int main(int argc, char** argv)
 
 	if (argc - optind < 3)
 		usage("Arguments missing.");       
-	wcet   = atoi(argv[optind + 0]);
-	period = atoi(argv[optind + 1]);
+	wcet   = atoi(argv[optind + 0]) * NS_PER_MS;
+	period = atoi(argv[optind + 1]) * NS_PER_MS;
 	if (wcet <= 0)
 	usage("The worst-case execution time must be a "
 	      "positive number.");
@@ -92,8 +98,9 @@ int main(int argc, char** argv)
 	
 	if (ret < 0) {
 		perror("Could not create rt child process");
-		return 2;
-	}
+		return 2;	
+	} else if (verbose)
+		printf("%d\n", ret);
 
 	return 0;	
 }
