@@ -1,7 +1,7 @@
 #ifndef LITMUS_H
 #define LITMUS_H
 
-#include <linux/rt_param.h>
+#include <litmus/rt_param.h>
 #include <sys/types.h>
 
 typedef int pid_t;	 /* PID of a task */
@@ -14,7 +14,7 @@ int get_rt_task_param(pid_t pid, struct rt_task* param);
 
 /* setup helper */
 /* times are givin in ms */
-int sporadic_task(unsigned long exec_cost, unsigned long period, 
+int sporadic_task(unsigned long exec_cost, unsigned long period,
 		  int partition, task_class_t cls);
 
 #define sporadic_global(e, p) \
@@ -57,7 +57,7 @@ void exit_litmus(void);
 typedef int (*rt_fn_t)(void*);
 
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
-int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, 
+int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet,
 		     int period, task_class_t cls);
 
 /*	per-task modes */

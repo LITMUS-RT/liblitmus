@@ -5,7 +5,7 @@
 
 /* prepare a real-time task */
 typedef int (*rt_setup_fn_t)(int pid, void* arg);
-int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg, 
+int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg,
 		     rt_setup_fn_t setup, void* setup_arg);
 
 #define check(str)	 \
@@ -19,3 +19,7 @@ int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg,
 
 
 #endif
+
+
+int sched_setscheduler(pid_t pid, int policy, int* prioriy);
+int sched_getscheduler(pid_t pid);

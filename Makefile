@@ -1,4 +1,4 @@
-KERNEL_DIR = ../litmus
+KERNEL_DIR = ../q08
 
 INC=-Iinclude/ -I${KERNEL_DIR}/include/
 
@@ -43,7 +43,7 @@ rt_launch: liblitmus.a litmus.h rt_launch.o
 stdump: liblitmus.a litmus.h sched_trace.h stdump.o
 	cc -o stdump  stdump.o ${LIBS}
 
-liblitmus.a:  ${LIB_OBJ} litmus.h 
+liblitmus.a:  ${LIB_OBJ} litmus.h
 	${AR} rcs liblitmus.a ${LIB_OBJ}
 
 check:

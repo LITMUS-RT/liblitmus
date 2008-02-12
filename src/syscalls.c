@@ -1,4 +1,4 @@
-/* To get syscall() we need to define _GNU_SOURCE 
+/* To get syscall() we need to define _GNU_SOURCE
  * in modern glibc versions.
  */
 #define _GNU_SOURCE
@@ -87,8 +87,12 @@ int wait_for_job_release(unsigned int job_no)
 	return syscall(__NR_wait_for_job_release, job_no);
 }
 
-int task_mode(int target_mode)
+int sched_setscheduler(pid_t pid, int policy, int* priority)
 {
-	return syscall(__NR_task_mode, target_mode);
+	return syscall(__NR_sched_setscheduler, pid, policy, priority);
 }
 
+int sched_getscheduler(pid_t pid)
+{
+	return syscall(__NR_sched_getscheduler, pid);
+}
