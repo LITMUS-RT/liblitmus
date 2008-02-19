@@ -10,7 +10,7 @@ LIBS= ./liblitmus.a
 LIB_OBJ=  litmus.o syscalls.o sched_trace.o task.o kernel_iface.o
 
 TARGETS = run rt_launch liblitmus.a \
-          wait_test np_test stdump mode_test base_task base_mt_task
+          wait_test np_test stdump mode_test base_task base_mt_task release_ts
 
 vpath %.h include/
 vpath %.c src/ bin/
@@ -39,6 +39,9 @@ run: run.o ${LIBS}
 
 rt_launch: liblitmus.a litmus.h rt_launch.o
 	cc -static -o rt_launch  rt_launch.o ${LIBS}
+
+release_ts: liblitmus.a litmus.h release_ts.o
+	cc -static -o release_ts release_ts.o ${LIBS}
 
 stdump: liblitmus.a litmus.h sched_trace.h stdump.o
 	cc -o stdump  stdump.o ${LIBS}
