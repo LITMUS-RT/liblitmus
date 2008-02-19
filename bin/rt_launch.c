@@ -8,6 +8,7 @@
 #include "litmus.h"
 
 typedef struct {
+	int  wait;
 	char * exec_path;
 	char ** argv;
 } startup_info_t;
@@ -16,6 +17,11 @@ typedef struct {
 int launch(void *task_info_p) {
 	startup_info_t *info = (startup_info_t*) task_info_p;
 	int ret;
+	if (info->wait) {
+		ret = wait_for_ts_release();
+		if (ret != 0)
+			perror("wait_for_ts_release()");
+	}
 	ret = execvp(info->exec_path, info->argv);
 	perror("execv failed");
 	return ret;
@@ -37,7 +43,7 @@ void usage(char *error) {
 }
 
 
-#define OPTSTR "p:c:v"
+#define OPTSTR "p:c:vw"
 
 int main(int argc, char** argv) 
 {
@@ -47,11 +53,15 @@ int main(int argc, char** argv)
 	int cpu = 0;
 	int opt;
 	int verbose = 0;
+	int wait = 0;
 	startup_info_t info;
 	task_class_t class = RT_CLASS_HARD;
 
 	while ((opt = getopt(argc, argv, OPTSTR)) != -1) {
 		switch (opt) {
+		case 'w':
+			wait = 1;
+			break;
 		case 'v':
 			verbose = 1;
 			break;
@@ -91,6 +101,7 @@ int main(int argc, char** argv)
 	}
 	info.exec_path = argv[optind + 2];
 	info.argv      = argv + optind + 2;
+	info.wait      = wait;
 	ret = __create_rt_task(launch, &info, cpu, wcet, period, class);
 
 	
