@@ -29,7 +29,7 @@ task_class_t str2class(const char* str)
 
 #define NS_PER_MS 1000000
 
-int sporadic_task(unsigned long e, unsigned long p, 
+int sporadic_task(lt_t e, lt_t p, lt_t phase,
 		  int cpu, task_class_t cls)
 {
 	struct rt_task param;
@@ -37,6 +37,7 @@ int sporadic_task(unsigned long e, unsigned long p,
 	param.period    = p * NS_PER_MS;
 	param.cpu       = cpu;
 	param.cls       = cls;
+	param.phase	= phase;
 	return set_rt_task_param(gettid(), &param);
 }
 

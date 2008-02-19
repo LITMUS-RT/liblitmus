@@ -14,13 +14,13 @@ int get_rt_task_param(pid_t pid, struct rt_task* param);
 
 /* setup helper */
 /* times are givin in ms */
-int sporadic_task(unsigned long exec_cost, unsigned long period,
+int sporadic_task(lt_t e, lt_t p, lt_t phase,
 		  int partition, task_class_t cls);
 
 #define sporadic_global(e, p) \
-	sporadic_task(e, p, 0, RT_CLASS_SOFT)
+	sporadic_task(e, p, 0, 0, RT_CLASS_SOFT)
 #define sporadic_partitioned(e, p, cpu) \
-	sporadic_task(e, p, cpu, RT_CLASS_SOFT)
+	sporadic_task(e, p, 0, cpu, RT_CLASS_SOFT)
 
 /* file descriptor attached shared objects support */
 typedef enum  {
@@ -73,5 +73,9 @@ task_class_t str2class(const char* str);
 /* non-preemptive section support */
 void enter_np(void);
 void exit_np(void);
+
+/* task system support */
+int wait_for_ts_release(void);
+int release_ts(lt_t *delay);
 
 #endif

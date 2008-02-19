@@ -1,4 +1,4 @@
-KERNEL_DIR = ../q08
+KERNEL_DIR = ../litmus2008
 
 INC=-Iinclude/ -I${KERNEL_DIR}/include/
 

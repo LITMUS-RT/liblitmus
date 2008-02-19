@@ -42,10 +42,11 @@ int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period,
 		     task_class_t class)
 {
 	struct rt_task params;
-	params.cpu = cpu;
-	params.period = period;
+	params.cpu       = cpu;
+	params.period    = period;
 	params.exec_cost = wcet;
-	params.cls = class;
+	params.cls       = class;
+	params.phase     = 0;
 	return __launch_rt_task(rt_prog, arg,
 				(rt_setup_fn_t) set_rt_task_param, &params);
 }

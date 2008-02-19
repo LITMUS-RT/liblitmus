@@ -96,3 +96,13 @@ int sched_getscheduler(pid_t pid)
 {
 	return syscall(__NR_sched_getscheduler, pid);
 }
+
+int wait_for_ts_release(void)
+{
+	return syscall(__NR_wait_for_ts_release);
+}
+
+int release_ts(lt_t *delay)
+{
+	return syscall(__NR_release_ts, delay);
+}
