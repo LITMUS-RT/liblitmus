@@ -39,13 +39,11 @@ void usage(char *error) {
 
 #define OPTSTR "p:c:v"
 
-#define NS_PER_MS 1000000
-
 int main(int argc, char** argv) 
 {
 	int ret;
-	int wcet;
-	int period;
+	lt_t wcet;
+	lt_t period;
 	int cpu = 0;
 	int opt;
 	int verbose = 0;
@@ -80,8 +78,8 @@ int main(int argc, char** argv)
 
 	if (argc - optind < 3)
 		usage("Arguments missing.");       
-	wcet   = atoi(argv[optind + 0]) * NS_PER_MS;
-	period = atoi(argv[optind + 1]) * NS_PER_MS;
+	wcet   = ms2lt(atoi(argv[optind + 0]));
+	period = ms2lt(atoi(argv[optind + 1]));
 	if (wcet <= 0)
 	usage("The worst-case execution time must be a "
 	      "positive number.");
