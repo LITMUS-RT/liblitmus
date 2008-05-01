@@ -85,6 +85,18 @@ static inline lt_t ms2lt(unsigned long milliseconds)
 	return __NS_PER_MS * milliseconds;
 }
 
+/* semaphore allocation */
+
+static inline int open_fmlp_sem(int fd, int name)
+{
+	return od_open(fd, FMLP_SEM, name);
+}
+
+static inline int open_srp_sem(int fd, int name)
+{
+	return od_open(fd, SRP_SEM, name);
+}
+
 
 
 #endif
