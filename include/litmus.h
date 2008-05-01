@@ -24,7 +24,7 @@ int sporadic_task(lt_t e, lt_t p, lt_t phase,
 
 /* file descriptor attached shared objects support */
 typedef enum  {
-	PI_SEM 		= 0,
+	FMLP_SEM	= 0,
 	SRP_SEM		= 1,
 } obj_type_t;
 
@@ -37,8 +37,8 @@ static inline int od_open(int fd, obj_type_t type, int obj_id)
 }
 
 /* FMLP support */
-int pi_down(int od);
-int pi_up(int od);
+int fmlp_down(int od);
+int fmlp_up(int od);
 int srp_down(int od);
 int srp_up(int od);
 int reg_task_srp_sem(int od);

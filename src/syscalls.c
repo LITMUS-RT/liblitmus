@@ -52,14 +52,14 @@ int od_close(int od)
 	return syscall(__NR_od_close, od);
 }
 
-int pi_down(int od)
+int fmlp_down(int od)
 {
-	return syscall(__NR_pi_down, od);
+	return syscall(__NR_fmlp_down, od);
 }
 
-int pi_up(int od)
+int fmlp_up(int od)
 {
-	return syscall(__NR_pi_up, od);
+	return syscall(__NR_fmlp_up, od);
 }
 
 int srp_down(int od)
@@ -70,11 +70,6 @@ int srp_down(int od)
 int srp_up(int od)
 {
 	return syscall(__NR_srp_up, od);
-}
-
-int reg_task_srp_sem(int od)
-{
-	return syscall(__NR_reg_task_srp_sem, od);
 }
 
 int get_job_no(unsigned int *job_no)
