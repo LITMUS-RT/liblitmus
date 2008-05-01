@@ -7,7 +7,7 @@ ARCH=$(shell uname -m | sed -e s/i.86/i386/)
 ifeq ($(ARCH),sparc64)
   CPU="-mcpu=v9"
 else
-  CPU=""
+  CPU=
 endif
 
 
