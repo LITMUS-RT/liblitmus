@@ -2,7 +2,16 @@ KERNEL_DIR = ../litmus2008
 
 INC=-Iinclude/ -I${KERNEL_DIR}/include/
 
-CFLAGS=-Wall -Wdeclaration-after-statement ${INC} -g  -D_XOPEN_SOURCE=600
+ARCH=$(shell uname -m | sed -e s/i.86/i386/)
+
+ifeq ($(ARCH),sparc64)
+  CPU="-mcpu=v9"
+else
+  CPU=""
+endif
+
+
+CFLAGS=-Wall -Wdeclaration-after-statement ${INC} ${CPU} -g  -D_XOPEN_SOURCE=600
 CPPFLAGS=-Wall -g
 
 LIBS= ./liblitmus.a
