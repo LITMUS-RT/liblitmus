@@ -2,6 +2,7 @@
 
 #include "litmus.h"
 #include "internal.h"
+#include "asm.h"
 
 /* per real-time thread kernel <-> user space flags */
 
@@ -33,11 +34,6 @@ int init_kernel_iface(void)
 	ret = register_np_flag(&np_flag);
 	check("register_np_flag()");  
 	return ret;
-}
-
-static inline void barrier(void)
-{
-	__asm__ __volatile__("sfence": : :"memory");
 }
 
 void enter_np(void)
