@@ -6,6 +6,7 @@
 #include <signal.h>
 
 #include "litmus.h"
+#include "common.h"
 
 typedef struct {
 	int  wait;
@@ -50,6 +51,7 @@ int main(int argc, char** argv)
 	int ret;
 	lt_t wcet;
 	lt_t period;
+	int migrate = 0;
 	int cpu = 0;
 	int opt;
 	int verbose = 0;
@@ -67,6 +69,7 @@ int main(int argc, char** argv)
 			break;
 		case 'p':
 			cpu = atoi(optarg);
+			migrate = 1;
 			break;
 		case 'c':
 			class = str2class(optarg);
@@ -102,13 +105,17 @@ int main(int argc, char** argv)
 	info.exec_path = argv[optind + 2];
 	info.argv      = argv + optind + 2;
 	info.wait      = wait;
+	if (migrate) {
+		ret = be_migrate_to(cpu);
+		if (ret < 0)
+			bail_out("could not migrate to target partition");
+	}
 	ret = __create_rt_task(launch, &info, cpu, wcet, period, class);
 
 	
-	if (ret < 0) {
-		perror("Could not create rt child process");
-		return 2;	
-	} else if (verbose)
+	if (ret < 0)
+		bail_out("could not create rt child process");
+	else if (verbose)
 		printf("%d\n", ret);
 
 	return 0;	

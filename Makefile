@@ -46,8 +46,8 @@ np_test: np_test.o litmus.h liblitmus.a
 run: run.o ${LIBS}
 	cc -o run run.o ${LIBS}
 
-rt_launch: liblitmus.a litmus.h rt_launch.o
-	cc -static -o rt_launch  rt_launch.o ${LIBS}
+rt_launch: liblitmus.a litmus.h rt_launch.o common.o
+	cc -static -o rt_launch  rt_launch.o common.o  ${LIBS}
 
 release_ts: liblitmus.a litmus.h release_ts.o
 	cc -static -o release_ts release_ts.o ${LIBS}
