@@ -5,6 +5,8 @@
 #include <signal.h>
 #include <sys/mman.h>
 
+#include <sched.h> /* for cpu sets */
+
 #include "litmus.h"
 #include "internal.h"
 
@@ -29,15 +31,30 @@ task_class_t str2class(const char* str)
 
 #define NS_PER_MS 1000000
 
+/* only for best-effort execution: migrate to target_cpu */
+int be_migrate_to(int target_cpu)
+{
+	cpu_set_t cpu_set;
+
+	CPU_ZERO(&cpu_set);
+	CPU_SET(target_cpu, &cpu_set);
+	return sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set);
+}
+
 int sporadic_task(lt_t e, lt_t p, lt_t phase,
-		  int cpu, task_class_t cls)
+		  int cpu, task_class_t cls, int set_cpu_set)
 {
 	struct rt_task param;
+	int ret;
 	param.exec_cost = e * NS_PER_MS;
 	param.period    = p * NS_PER_MS;
 	param.cpu       = cpu;
 	param.cls       = cls;
 	param.phase	= phase;
+	if (set_cpu_set) {	       
+		ret = be_migrate_to(cpu);
+		check("migrate to cpu");
+	}
 	return set_rt_task_param(gettid(), &param);
 }
 

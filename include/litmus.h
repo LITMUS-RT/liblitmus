@@ -9,18 +9,21 @@ typedef int pid_t;	 /* PID of a task */
 /* obtain the PID of a thread */
 pid_t gettid(void);
 
+/* migrate to partition */
+int be_migrate_to(int target_cpu);
+
 int set_rt_task_param(pid_t pid, struct rt_task* param);
 int get_rt_task_param(pid_t pid, struct rt_task* param);
 
 /* setup helper */
 /* times are givin in ms */
 int sporadic_task(lt_t e, lt_t p, lt_t phase,
-		  int partition, task_class_t cls);
+		  int partition, task_class_t cls, int set_cpu_set);
 
 #define sporadic_global(e, p) \
-	sporadic_task(e, p, 0, 0, RT_CLASS_SOFT)
+	sporadic_task(e, p, 0, 0, RT_CLASS_SOFT, 0)
 #define sporadic_partitioned(e, p, cpu) \
-	sporadic_task(e, p, 0, cpu, RT_CLASS_SOFT)
+	sporadic_task(e, p, 0, cpu, RT_CLASS_SOFT, 1)
 
 /* file descriptor attached shared objects support */
 typedef enum  {
