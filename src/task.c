@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <sched.h>
+
 #include "litmus.h"
 #include "internal.h"
 
@@ -61,17 +63,18 @@ int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period) {
 
 int task_mode(int mode)
 {
-	int prio   = 0;
+	struct sched_param param;
 	int me     = gettid();
 	int policy = sched_getscheduler(gettid());
 	int old_mode = policy == SCHED_LITMUS ? LITMUS_RT_TASK : BACKGROUND_TASK;
 
+	param.sched_priority = 0;
 	if (old_mode == LITMUS_RT_TASK && mode == BACKGROUND_TASK) {
 		/* transition to normal task */
-		return sched_setscheduler(me, SCHED_NORMAL, &prio);
+		return sched_setscheduler(me, SCHED_NORMAL, &param);
 	} else if (old_mode == BACKGROUND_TASK && mode == LITMUS_RT_TASK) {
 		/* transition to RT task */
-		return sched_setscheduler(me, SCHED_LITMUS, &prio);
+		return sched_setscheduler(me, SCHED_LITMUS, &param);
 	} else {
 		errno = -EINVAL;
 		return -1;

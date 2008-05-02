@@ -20,6 +20,3 @@ int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg,
 
 #endif
 
-
-int sched_setscheduler(pid_t pid, int policy, int* prioriy);
-int sched_getscheduler(pid_t pid);

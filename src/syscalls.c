@@ -1,7 +1,6 @@
 /* To get syscall() we need to define _GNU_SOURCE
  * in modern glibc versions.
  */
-#define _GNU_SOURCE
 #include <unistd.h>
 #include <linux/unistd.h>
 #include <sys/types.h>

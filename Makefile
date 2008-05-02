@@ -11,7 +11,7 @@ else
 endif
 
 
-CFLAGS=-Wall -Wdeclaration-after-statement ${INC} ${CPU} -g  -D_XOPEN_SOURCE=600
+CFLAGS=-Wall -Wdeclaration-after-statement ${INC} ${CPU} -g  -D_XOPEN_SOURCE=600 -D_GNU_SOURCE
 CPPFLAGS=-Wall -g
 
 LIBS= ./liblitmus.a
