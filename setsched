@@ -4,6 +4,7 @@
 
 ADIR=/proc/litmus/active_plugin
 PDIR=/proc/litmus/plugins
+DIALOG=`which dialog`
 
 CHOICE=$1
 
@@ -16,9 +17,15 @@ fi
 ACTIVE=`cat $ADIR`
 
 if [ -z "$1" ]; then
+    # Check for presence of dialog, some distros don't install it by default.
+    if [ -z "$DIALOG" ]; then
+	echo "Error: The dialog utility cannot be found."
+	echo "       Please install the required package (dialog on Ubuntu)."
+	exit 2
+    fi
     TMP=`mktemp`
     (awk "{print \$1 \" 'Plugin'\"}" $PDIR | \
-    xargs  dialog --title "Select Plugin" --backtitle "Current: $ACTIVE"  \
+    xargs $DIALOG --title "Select Plugin" --backtitle "Current: $ACTIVE"  \
 	--cancel-label "Cancel" --ok-label "Select Plugin" \
 	--menu "Select a new plugin to run: " 15 60 6) 2> $TMP
     OK=$?
@@ -31,7 +38,8 @@ if [ -z "$1" ]; then
 fi
 
 
-echo "$CHOICE" > $ADIR
+echo "$CHOICE" > $ADIR 2> /dev/null || \
+    echo "Error: Cannot write to $ADIR. Do you have root privileges?"
 
 ACTIVE=`cat $ADIR`
 
