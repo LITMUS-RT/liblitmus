@@ -10,4 +10,6 @@ typedef __u64 u64;
 
 #include <litmus/sched_trace.h>
 
+void print_all(struct st_event_record *rec, unsigned int count);
+
 #endif

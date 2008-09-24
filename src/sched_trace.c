@@ -45,3 +45,42 @@ static int map_trace(const char *name, void **start, void **end, size_t *size)
 		*end = *start + *size;
 	return ret;
 }
+
+static const char* event_names[] = {
+	"INVALID",
+        "NAME",
+	"PARAM",
+        "RELEASE",
+	"ASSIGNED",
+	"SWITCH_TO",
+	"SWITCH_FROM",
+	"COMPLETION",
+	"BLOCK",
+	"RESUME",
+	"INVALID"
+};
+
+#define ST_INVALID (ST_RESUME + 1)
+
+const char* event2name(unsigned int id)
+{
+	if (id >= ST_INVALID)
+		id = ST_INVALID;
+	return event_names[id];
+}
+
+void print_header(struct st_trace_header* hdr)
+{
+	printf("%-14s on CPU %u for %5u/%5u",
+	       event2name(hdr->type),
+	       hdr->cpu, hdr->pid, hdr->job);
+}
+
+void print_all(struct st_event_record *rec, unsigned int count)
+{
+	unsigned int i;
+	for (i = 0; i < count; i++) {
+		print_header(&rec[i].hdr);
+		printf("\n");
+	}
+}
