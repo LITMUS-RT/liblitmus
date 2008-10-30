@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -9,42 +10,6 @@
 
 #include "litmus.h"
 #include "sched_trace.h"
-
-static int map_file(const char* filename, void **addr, size_t *size)
-{
-	struct stat info;
-	int error = 0;
-	int fd;
-
-	error = stat(filename, &info);
-	if (!error) {
-		*size = info.st_size;
-		if (info.st_size > 0) {
-			fd = open(filename, O_RDONLY);
-			if (fd >= 0) {
-				*addr = mmap(NULL, *size,
-					     PROT_READ | PROT_WRITE,
-					     MAP_PRIVATE, fd, 0);
-				if (*addr == MAP_FAILED)
-					error = -1;
-				close(fd);
-			} else
-				error = fd;
-		} else
-			*addr = NULL;
-	}
-	return error;
-}
-
-static int map_trace(const char *name, void **start, void **end, size_t *size)
-{
-	int ret;
-
-	ret = map_file(name, start, size);
-	if (!ret)
-		*end = *start + *size;
-	return ret;
-}
 
 static const char* event_names[] = {
 	"INVALID",
@@ -69,6 +34,30 @@ const char* event2name(unsigned int id)
 		id = ST_INVALID;
 	return event_names[id];
 }
+
+
+u64 event_time(struct st_event_record* rec)
+{
+	u64 when;
+	switch (rec->hdr.type) {
+		/* the time stamp is encoded in the first payload u64 */
+	case ST_RELEASE:
+	case ST_ASSIGNED:
+	case ST_SWITCH_TO:
+	case ST_SWITCH_AWAY:
+	case ST_COMPLETION:
+	case ST_BLOCK:
+	case ST_RESUME:
+		when = rec->data.raw[0];
+		break;
+	default:
+		/* stuff that doesn't have a time stamp should occur "early" */
+		when = 0;
+		break;
+	};
+	return when;
+}
+
 
 void print_header(struct st_trace_header* hdr)
 {
@@ -123,9 +112,7 @@ void print_event(struct st_event_record *rec)
 	print_header(&rec->hdr);
 	print_detail[id](rec);
 	printf("\n");
-	return event_names[id];
 }
-
 
 void print_all(struct st_event_record *rec, unsigned int count)
 {
