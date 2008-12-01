@@ -22,10 +22,11 @@ static const char* event_names[] = {
 	"COMPLETION",
 	"BLOCK",
 	"RESUME",
+	"SYS_RELEASE",
 	"INVALID"
 };
 
-#define ST_INVALID (ST_RESUME + 1)
+#define ST_INVALID (ST_SYS_RELEASE + 1)
 
 
 const char* event2name(unsigned int id)
@@ -48,6 +49,7 @@ u64 event_time(struct st_event_record* rec)
 	case ST_COMPLETION:
 	case ST_BLOCK:
 	case ST_RESUME:
+	case ST_SYS_RELEASE:
 		when = rec->data.raw[0];
 		break;
 	default:
@@ -89,18 +91,24 @@ static void print_param(struct st_event_record* rec)
 	       rec->data.param.partition);
 }
 
+static void print_time_data2(struct st_event_record* rec)
+{
+	printf("%6.2fms", rec->data.raw[1] / 1000000.0);
+}
+
 static print_t print_detail[] = {
-	print_nothing,
-	print_name,
-	print_param,
-	print_nothing,
-	print_nothing,
-	print_nothing,
-	print_nothing,
-	print_nothing,
-	print_nothing,
-	print_nothing,
-	print_nothing
+	print_nothing,		/* invalid */
+	print_name,		/* NAME  */
+	print_param,		/* PARAM */
+	print_time_data2,	/* RELEASE */
+	print_nothing,		/* ASSIGNED */
+	print_nothing,		/* SWITCH_TO */
+	print_nothing,		/* SWITCH_FROM */
+	print_nothing,		/* COMPLETION */
+	print_nothing,		/* BLOCK */
+	print_nothing,		/* RESUME */
+	print_time_data2,	/* SYS_RELEASE */
+	print_nothing,		/* invalid */
 };
 
 void print_event(struct st_event_record *rec)

@@ -49,7 +49,6 @@ static void show(char* file)
 {
 	size_t s;
 	struct st_event_record *rec, *end;
-	unsigned int count;
 	if (map_trace(file, &rec, &end, &s) == 0) {
 		print_all(rec, 
 			  ((unsigned int)((char*) end - (char*) rec)) 
