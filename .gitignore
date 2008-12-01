@@ -1,7 +1,6 @@
 
 *.o
 *.a
-run
 rt_launch
 wait_test
 np_test
@@ -10,3 +9,5 @@ mode_test
 base_task
 base_mt_task
 release_ts
+showst
+rtspin
