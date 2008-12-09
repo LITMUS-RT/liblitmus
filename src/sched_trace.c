@@ -75,6 +75,11 @@ static void print_nothing(struct st_event_record* _)
 {
 }
 
+static void print_raw(struct st_event_record* rec)
+{
+	printf(" type=%u", rec->hdr.type);
+}
+
 static void print_name(struct st_event_record* rec)
 {
 	/* terminate in all cases */
@@ -97,7 +102,7 @@ static void print_time_data2(struct st_event_record* rec)
 }
 
 static print_t print_detail[] = {
-	print_nothing,		/* invalid */
+	print_raw,		/* invalid */
 	print_name,		/* NAME  */
 	print_param,		/* PARAM */
 	print_time_data2,	/* RELEASE */
@@ -108,7 +113,7 @@ static print_t print_detail[] = {
 	print_nothing,		/* BLOCK */
 	print_nothing,		/* RESUME */
 	print_time_data2,	/* SYS_RELEASE */
-	print_nothing,		/* invalid */
+	print_raw,		/* invalid */
 };
 
 void print_event(struct st_event_record *rec)
