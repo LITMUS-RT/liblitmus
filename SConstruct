@@ -50,8 +50,8 @@ mtrt.Append(LINKFLAGS = '-pthread')
 # Targets: liblitmus
 # All the files in src/ are part of the library.
 env.Library('litmus',
-            ['src/kernel_iface.c', 'src/litmus.c', 'src/sched_trace.c',
-             'src/syscalls.c',   'src/task.c'])
+            ['src/kernel_iface.c', 'src/litmus.c',
+             'src/syscalls.c', 'src/task.c'])
 
 # #####################################################################
 # Targets: simple tools that do not depend on liblitmus
@@ -67,4 +67,4 @@ rt.Program('np_test', 'bin/np_test.c')
 rt.Program('rt_launch', ['bin/rt_launch.c', 'bin/common.c'])
 rt.Program('rtspin', ['bin/rtspin.c', 'bin/common.c'])
 rt.Program('release_ts', 'bin/release_ts.c')
-rt.Program('showst', 'bin/showst.c')
+rt.Program('showst', ['bin/showst.c', 'src/sched_trace.c'])
