@@ -31,7 +31,8 @@ env = Environment(
 
 if arch == 'sparc64':
     # build 64 bit sparc v9 binaries
-    env.Append(CCFLAGS = Split('-mcpu=v9 -m64'))
+    v9 = Split('-mcpu=v9 -m64')
+    env.Append(CCFLAGS = v9, LINKFLAGS = v9)
 
 # link with lib libtmus
 rt = env.Clone(
