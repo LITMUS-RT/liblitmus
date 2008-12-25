@@ -48,7 +48,9 @@ mtrt.Append(LINKFLAGS = '-pthread')
 # #####################################################################
 # Targets: liblitmus
 # All the files in src/ are part of the library.
-env.Library('litmus', Glob('src/*.c'))
+env.Library('litmus',
+            ['src/kernel_iface.c', 'src/litmus.c', 'src/sched_trace.c',
+             'src/syscalls.c',   'src/task.c'])
 
 # #####################################################################
 # Targets: simple tools that do not depend on liblitmus
