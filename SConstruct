@@ -7,7 +7,24 @@ LITMUS_KERNEL = '../litmus2008'
 DEBUG_FLAGS  = '-Wall -g -Wdeclaration-after-statement'
 API_FLAGS    = '-D_XOPEN_SOURCE=600 -D_GNU_SOURCE'
 
-INCLUDE_DIRS = 'include/  %s/include/' % LITMUS_KERNEL
+KERNEL_INCLUDE = '%s/include/' % LITMUS_KERNEL
+INCLUDE_DIRS = 'include/ ' + KERNEL_INCLUDE
+
+# #####################################################################
+# Build checks.
+
+nrSrc = """#include <linux/unistd.h>
+int main(int argc, char **argv)
+{
+  return __NR_set_rt_task_param;
+}
+"""
+
+def CheckASMLink(context):
+    context.Message('Checking for asm/ link in kernel include/... ')
+    result = context.TryLink(nrSrc, '.c')
+    context.Result(result)
+    return result
 
 # #####################################################################
 # Build configuration.
@@ -33,6 +50,22 @@ if arch == 'sparc64':
     # build 64 bit sparc v9 binaries
     v9 = Split('-mcpu=v9 -m64')
     env.Append(CCFLAGS = v9, LINKFLAGS = v9)
+
+# Check compile environment
+if not env.GetOption('clean'):
+    # Check for kernel headers.
+    conf = Configure(env, custom_tests = {'CheckASMLink' : CheckASMLink})
+    if not conf.CheckCHeader('litmus/rt_param.h'):
+        print "Error: Canot find kernel headers in '%s'." % LITMUS_KERNEL
+        print "Please ensure that LITMUS_KERNEL in SConstruct", \
+            "contains a valid path."
+        Exit(1)
+    if not conf.CheckASMLink():
+        print "Error: The LITMUS^RT syscall numbers are not available."
+        print "Please ensure sure that the kernel in '%s' is configured." \
+            % LITMUS_KERNEL
+        Exit(1)
+    env = conf.Finish()
 
 # link with libst
 st = env.Clone(
