@@ -28,15 +28,21 @@ def CheckASMLink(context):
 
 # #####################################################################
 # Build configuration.
-from os import uname
+from os import uname, environ
 
 # sanity check
-(os, _, _, _, arch) = uname()
-if os != 'Linux':
+(ostype, _, _, _, arch) = uname()
+if ostype != 'Linux':
     print 'Error: Building liblitmus is only supported on Linux.'
     Exit(1)
 
-if arch not in ('sparc64', 'i686'):
+# override arch if ARCH is set in environment or command line
+if 'ARCH' in ARGUMENTS:
+    arch = ARGUMENTS['ARCH']
+elif 'ARCH' in environ:
+    arch = environ['ARCH']
+
+if not GetOption('clean') and arch not in ('sparc64', 'i686', 'x86', 'i386'):
     print 'Error: Building liblitmus is only supported on i686 and sparc64.'
     Exit(1)
 
@@ -50,6 +56,10 @@ if arch == 'sparc64':
     # build 64 bit sparc v9 binaries
     v9 = Split('-mcpu=v9 -m64')
     env.Append(CCFLAGS = v9, LINKFLAGS = v9)
+
+if arch in ('i386', 'x86', 'i686'):
+   x86flags = Split('-m32')
+   env.Append(CCFLAGS = x86flags, LINKFLAGS = x86flags)
 
 # Check compile environment
 if not env.GetOption('clean'):
@@ -89,7 +99,6 @@ rtm.Append(LIBS = ['m'])
 # multithreaded real-time tasks
 mtrt = rt.Clone()
 mtrt.Append(LINKFLAGS = '-pthread')
-
 
 # #####################################################################
 # Targets: liblitmus libst
