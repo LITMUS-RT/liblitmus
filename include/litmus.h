@@ -4,6 +4,8 @@
 #include <litmus/rt_param.h>
 #include <sys/types.h>
 
+#include "cycles.h" /* for null_call() */
+
 typedef int pid_t;	 /* PID of a task */
 
 /* obtain the PID of a thread */
@@ -101,5 +103,7 @@ static inline int open_srp_sem(int fd, int name)
 }
 
 
+/* syscall overhead measuring */
+int null_call(cycles_t *timestamp);
 
 #endif

@@ -100,3 +100,8 @@ int release_ts(lt_t *delay)
 {
 	return syscall(__NR_release_ts, delay);
 }
+
+int null_call(cycles_t *timestamp)
+{
+	return syscall(__NR_null_call, timestamp);
+}
