@@ -73,12 +73,18 @@ st = env.Clone(
     LIBPATH  = '.'
 )
 
+
 # link with liblitmus
 rt = env.Clone(
     LIBS     = 'litmus',
     LIBPATH  = '.'
 )
 rt.Append(LINKFLAGS = '-static')
+
+
+# link with math lib
+rtm = rt.Clone()
+rtm.Append(LIBS = ['m'])
 
 # multithreaded real-time tasks
 mtrt = rt.Clone()
@@ -107,4 +113,5 @@ rt.Program('np_test', 'bin/np_test.c')
 rt.Program('rt_launch', ['bin/rt_launch.c', 'bin/common.c'])
 rt.Program('rtspin', ['bin/rtspin.c', 'bin/common.c'])
 rt.Program('release_ts', 'bin/release_ts.c')
+rtm.Program('measure_syscall', 'bin/null_call.c')
 st.Program('showst', 'bin/showst.c')
