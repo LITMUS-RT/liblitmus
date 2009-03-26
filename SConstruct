@@ -6,6 +6,15 @@ LITMUS_KERNEL = '../litmus2008'
 # Internal configuration.
 DEBUG_FLAGS  = '-Wall -g -Wdeclaration-after-statement'
 API_FLAGS    = '-D_XOPEN_SOURCE=600 -D_GNU_SOURCE'
+X86_32_FLAGS = '-m32'
+X86_64_FLAGS = '-m64'
+V9_FLAGS     = '-mcpu=v9 -m64'
+SUPPORTED_ARCHS = {
+    'sparc64' : V9_FLAGS,
+    'i686'    : X86_32_FLAGS,
+    'i386'    : X86_32_FLAGS,
+    'x86_64'  : X86_64_FLAGS,
+}
 
 KERNEL_INCLUDE = '%s/include/' % LITMUS_KERNEL
 INCLUDE_DIRS = 'include/ ' + KERNEL_INCLUDE
@@ -42,27 +51,23 @@ if 'ARCH' in ARGUMENTS:
 elif 'ARCH' in environ:
     arch = environ['ARCH']
 
-if not GetOption('clean') and arch not in ('sparc64', 'i686', 'x86', 'i386'):
-    print 'Error: Building liblitmus is only supported on i686 and sparc64.'
+if arch not in SUPPORTED_ARCHS:
+    print 'Error: Building ft_tools is only supported for the following', \
+        'architectures: %s.' % ', '.join(sorted(SUPPORTED_ARCHS))
     Exit(1)
+else:
+    arch_flags = Split(SUPPORTED_ARCHS[arch])
 
 env = Environment(
     CC = 'gcc',
     CPPPATH = Split(INCLUDE_DIRS),
-    CCFLAGS = Split(DEBUG_FLAGS) + Split(API_FLAGS)
+    CCFLAGS = Split(DEBUG_FLAGS) + Split(API_FLAGS) + arch_flags,
+    LINKFLAGS = arch_flags,
 )
-
-if arch == 'sparc64':
-    # build 64 bit sparc v9 binaries
-    v9 = Split('-mcpu=v9 -m64')
-    env.Append(CCFLAGS = v9, LINKFLAGS = v9)
-
-if arch in ('i386', 'x86', 'i686'):
-   x86flags = Split('-m32')
-   env.Append(CCFLAGS = x86flags, LINKFLAGS = x86flags)
 
 # Check compile environment
 if not env.GetOption('clean'):
+    print 'Building %s binaries.' % arch
     # Check for kernel headers.
     conf = Configure(env, custom_tests = {'CheckASMLink' : CheckASMLink})
     if not conf.CheckCHeader('litmus/rt_param.h'):
