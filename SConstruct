@@ -91,7 +91,7 @@ st = env.Clone(
 
 # link with liblitmus
 rt = env.Clone(
-    LIBS     = 'litmus',
+    LIBS     = Split('litmus rt'),
     LIBPATH  = '.'
 )
 rt.Append(LINKFLAGS = '-static')

@@ -10,6 +10,16 @@
 #include "common.h"
 
 
+static double cputime()
+{
+	struct timespec ts;
+	int err;
+	err = clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
+	if (err != 0)
+		perror("clock_gettime");
+	return (ts.tv_sec + 1E-9 * ts.tv_nsec);
+}
+
 static double wctime()
 {
 	struct timeval tv;
@@ -40,11 +50,20 @@ static int loop_once(void)
 static int loop_for(double exec_time)
 {
 	double t = 0;
-	int tmp = 0;
-	while (t + loop_length < exec_time) {
+	int tmp = 0;	
+/*	while (t + loop_length < exec_time) {
 		tmp += loop_once();
 		t += loop_length;
 	}
+*/
+	double start = cputime();
+	double now = cputime();
+	while (now + loop_length < start + exec_time) {
+		tmp += loop_once();
+		t += loop_length;
+		now = cputime();
+	}
+
 	return tmp;
 }
 
@@ -106,7 +125,7 @@ static int job(double exec_time)
 	return 0;
 }
 
-#define OPTSTR "p:c:wl"
+#define OPTSTR "p:c:wld:"
 
 int main(int argc, char** argv) 
 {
@@ -118,6 +137,7 @@ int main(int argc, char** argv)
 	int opt;
 	int wait = 0;
 	int test_loop = 0;
+	int skip_config = 0;
 	double duration, start;
 	task_class_t class = RT_CLASS_HARD;
 
@@ -138,6 +158,10 @@ int main(int argc, char** argv)
 		case 'l':
 			test_loop = 1;
 			break;
+		case 'd':
+			loop_length = atof(optarg) / 1000000;			
+			skip_config = 1;
+			break;
 		case ':':
 			usage("Argument missing.");
 			break;
@@ -148,8 +172,9 @@ int main(int argc, char** argv)
 		}
 	}
 
-
-	configure_loop();
+	
+	if (!skip_config)
+		configure_loop();
 
 	if (test_loop) {
 		debug_delay_loop();
