@@ -13,4 +13,4 @@ showst
 rtspin
 cycles
 .sconsign.dblite
-
+.sconf_temp/*
