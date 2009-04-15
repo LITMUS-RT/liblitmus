@@ -82,13 +82,6 @@ if not env.GetOption('clean'):
         Exit(1)
     env = conf.Finish()
 
-# link with libst
-st = env.Clone(
-    LIBS     = 'st',
-    LIBPATH  = '.'
-)
-
-
 # link with liblitmus
 rt = env.Clone(
     LIBS     = Split('litmus rt'),
@@ -111,7 +104,6 @@ mtrt.Append(LINKFLAGS = '-pthread')
 env.Library('litmus',
             ['src/kernel_iface.c', 'src/litmus.c',
              'src/syscalls.c', 'src/task.c'])
-env.Library('st', ['src/sched_trace.c'])
 
 # #####################################################################
 # Targets: simple tools that do not depend on liblitmus
@@ -128,4 +120,3 @@ rt.Program('rt_launch', ['bin/rt_launch.c', 'bin/common.c'])
 rt.Program('rtspin', ['bin/rtspin.c', 'bin/common.c'])
 rt.Program('release_ts', 'bin/release_ts.c')
 rtm.Program('measure_syscall', 'bin/null_call.c')
-st.Program('showst', 'bin/showst.c')
