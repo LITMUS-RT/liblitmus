@@ -18,9 +18,13 @@ int set_rt_task_param(pid_t pid, struct rt_task* param);
 int get_rt_task_param(pid_t pid, struct rt_task* param);
 
 /* setup helper */
-/* times are givin in ms */
+/* times are given in ms */
 int sporadic_task(lt_t e, lt_t p, lt_t phase,
 		  int partition, task_class_t cls, int set_cpu_set);
+
+/* times are given in ns */
+int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
+		     int cpu, task_class_t cls, int set_cpu_set);
 
 #define sporadic_global(e, p) \
 	sporadic_task(e, p, 0, 0, RT_CLASS_SOFT, 0)

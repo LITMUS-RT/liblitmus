@@ -44,10 +44,17 @@ int be_migrate_to(int target_cpu)
 int sporadic_task(lt_t e, lt_t p, lt_t phase,
 		  int cpu, task_class_t cls, int set_cpu_set)
 {
+	return sporadic_task_ns(e * NS_PER_MS, p * NS_PER_MS, phase * NS_PER_MS,
+				cpu, cls, set_cpu_set);
+}
+
+int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
+		     int cpu, task_class_t cls, int set_cpu_set)
+{
 	struct rt_task param;
 	int ret;
-	param.exec_cost = e * NS_PER_MS;
-	param.period    = p * NS_PER_MS;
+	param.exec_cost = e;
+	param.period    = p;
 	param.cpu       = cpu;
 	param.cls       = cls;
 	param.phase	= phase;
