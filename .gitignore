@@ -1,6 +1,8 @@
-
+# object files
 *.o
 *.a
+
+# executables
 rt_launch
 wait_test
 np_test
@@ -12,6 +14,9 @@ release_ts
 showst
 rtspin
 cycles
+measure_syscall
+
+# scons files
 .sconsign.dblite
 .sconf_temp/*
-measure_syscall
+config.log
