@@ -210,9 +210,7 @@ int main(int argc, char** argv)
 	if (ret < 0)
 		bail_out("could not become rt tasks.");
 
-	ret = init_litmus();
-	if (ret < 0)
-		perror("init_litmus()");
+	init_litmus();
 
 	ret = task_mode(LITMUS_RT_TASK);
 	if (ret != 0)
