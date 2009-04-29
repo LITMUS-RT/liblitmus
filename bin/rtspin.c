@@ -132,6 +132,7 @@ int main(int argc, char** argv)
 	int ret;
 	lt_t wcet;
 	lt_t period;
+	double wcet_ms, period_ms;
 	int migrate = 0;
 	int cpu = 0;
 	int opt;
@@ -183,9 +184,11 @@ int main(int argc, char** argv)
 
 	if (argc - optind < 3)
 		usage("Arguments missing.");       
-	wcet     = atoi(argv[optind + 0]);
-	period   = atoi(argv[optind + 1]);
-	duration = atof(argv[optind + 2]);
+	wcet_ms   = atof(argv[optind + 0]);
+	period_ms = atof(argv[optind + 1]);
+	duration  = atof(argv[optind + 2]);
+	wcet   = wcet_ms * __NS_PER_MS;
+	period = period_ms * __NS_PER_MS;
 	if (wcet <= 0)
 		usage("The worst-case execution time must be a "
 		      "positive number.");
@@ -202,7 +205,7 @@ int main(int argc, char** argv)
 			bail_out("could not migrate to target partition");
 	}
 
-	ret = sporadic_task(wcet, period, 0, cpu, class, migrate);
+	ret = sporadic_task_ns(wcet, period, 0, cpu, class, migrate);
 	
 	if (ret < 0)
 		bail_out("could not become rt tasks.");
@@ -225,7 +228,7 @@ int main(int argc, char** argv)
 	start = wctime();
 
 	while (start + duration > wctime()) {
-		job(wcet * 0.0009); /* 90% wcet, in seconds */
+		job(wcet_ms * 0.0009); /* 90% wcet, in seconds */
 	}
 
 	return 0;
