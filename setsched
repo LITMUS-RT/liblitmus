@@ -10,7 +10,8 @@ CHOICE=$1
 
 if [ ! -e $ADIR ]; then
     KERN=`uname -s -r`
-    echo "Error: LITMUS^RT not found on $KERN!" 
+    echo "Error: LITMUS^RT interface not found on $KERN!"
+    echo "Are you sure you booted the correct kernel?"
     exit 1
 fi
 
