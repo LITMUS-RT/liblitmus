@@ -37,7 +37,7 @@ struct thread_context {
 /* The real-time thread program. Doesn't have to be the same for
  * all threads. Here, we only have one that will invoke job().
  */
-void* rt_thread(struct thread_context* ctx);
+void* rt_thread(void *tcontext);
 
 /* Declare the periodically invoked job. 
  * Returns 1 -> task should exit.
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
 	 */
 	for (i = 0; i < NUM_THREADS; i++) {
 		ctx[i].id = i;
-		pthread_create(task + i, NULL, rt_thread, ctx + i);
+		pthread_create(task + i, NULL, rt_thread, (void *) (ctx + i));
 	}
 
 	
@@ -118,9 +118,10 @@ int main(int argc, char** argv)
  * real-time app. Notice, that init_rt_thread() is called to initialized per-thread
  * data structures of the LITMUS^RT user space libary.
  */
-void* rt_thread(struct thread_context* ctx)
+void* rt_thread(void *tcontext)
 {
 	int do_exit;
+	struct thread_context *ctx = (struct thread_context *) tcontext;
 
 	/* Make presence visible. */
 	printf("RT Thread %d active.\n", ctx->id);
