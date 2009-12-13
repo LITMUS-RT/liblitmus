@@ -1,6 +1,6 @@
 # #####################################################################
 # User configuration.
-LITMUS_KERNEL = '../litmus2008'
+LITMUS_KERNEL = '../litmus2010'
 
 # #####################################################################
 # Internal configuration.
@@ -10,10 +10,9 @@ X86_32_FLAGS = '-m32'
 X86_64_FLAGS = '-m64'
 V9_FLAGS     = '-mcpu=v9 -m64'
 SUPPORTED_ARCHS = {
-    'sparc64' : V9_FLAGS,
-    'i686'    : X86_32_FLAGS,
-    'i386'    : X86_32_FLAGS,
-    'x86_64'  : X86_64_FLAGS,
+    'sparc64'	: V9_FLAGS,
+    'x86'	: X86_32_FLAGS,
+    'x86_64'	: X86_64_FLAGS,
 }
 
 KERNEL_INCLUDE = '%s/include/' % LITMUS_KERNEL
@@ -58,6 +57,11 @@ if arch not in SUPPORTED_ARCHS:
 else:
     arch_flags = Split(SUPPORTED_ARCHS[arch])
 
+# add architecture dependent include search path
+KERNEL_ARCH_INCLUDE = '%s/arch/%s/include' % (LITMUS_KERNEL, arch)
+INCLUDE_DIRS = INCLUDE_DIRS + ' ' + KERNEL_ARCH_INCLUDE
+
+# Set Environment
 env = Environment(
     CC = 'gcc',
     CPPPATH = Split(INCLUDE_DIRS),
@@ -71,11 +75,15 @@ if not env.GetOption('clean'):
     # Check for kernel headers.
     conf = Configure(env, custom_tests = {'CheckASMLink' : CheckASMLink})
     if not conf.CheckCHeader('litmus/rt_param.h'):
+	print 'Env CCFLAGS = %s' % env['CCFLAGS']
+	print 'Env CPPPATH = %s' % env['CPPPATH']
         print "Error: Canot find kernel headers in '%s'." % LITMUS_KERNEL
         print "Please ensure that LITMUS_KERNEL in SConstruct", \
             "contains a valid path."
         Exit(1)
     if not conf.CheckASMLink():
+	print 'Env CCFLAGS = %s' % env['CCFLAGS']
+	print 'Env CPPPATH = %s' % env['CPPPATH']
         print "Error: The LITMUS^RT syscall numbers are not available."
         print "Please ensure sure that the kernel in '%s' is configured." \
             % LITMUS_KERNEL
