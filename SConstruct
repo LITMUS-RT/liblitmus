@@ -58,7 +58,12 @@ else:
     arch_flags = Split(SUPPORTED_ARCHS[arch])
 
 # add architecture dependent include search path
-KERNEL_ARCH_INCLUDE = '%s/arch/%s/include' % (LITMUS_KERNEL, arch)
+if arch in ['x86','x86_64']:
+    include_arch = 'x86'
+else:
+    include_arch = 'sparc'
+
+KERNEL_ARCH_INCLUDE = '%s/arch/%s/include' % (LITMUS_KERNEL, include_arch)
 INCLUDE_DIRS = INCLUDE_DIRS + ' ' + KERNEL_ARCH_INCLUDE
 
 # Set Environment
