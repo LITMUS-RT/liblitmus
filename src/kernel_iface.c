@@ -29,17 +29,20 @@ static __thread struct np_flag np_flag;
 int init_kernel_iface(void)
 {
 	int ret = 0;
+#ifdef FALSE
 #ifndef __sparc__ /* currently not supported in sparc64 */
 	np_flag.preemptivity = RT_PREEMPTIVE;
 	np_flag.ctr = 0;
 	ret = register_np_flag(&np_flag);
 	check("register_np_flag()");
 #endif
+#endif
 	return ret;
 }
 
 void enter_np(void)
 {
+#ifdef FALSE
 #ifndef __sparc__
 	if (++np_flag.ctr == 1)
 	{
@@ -50,11 +53,13 @@ void enter_np(void)
 #else
 	fprintf(stderr, "enter_np: not implemented!\n");
 #endif
+#endif
 }
 
 
 void exit_np(void)
 {
+#ifdef FALSE
 #ifndef __sparc__
 	if (--np_flag.ctr == 0)
 	{
@@ -65,6 +70,7 @@ void exit_np(void)
 	}
 #else
 	fprintf(stderr, "exit_np: not implemented!\n");
+#endif
 #endif
 }
 
