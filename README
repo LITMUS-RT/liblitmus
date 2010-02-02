@@ -1,7 +1,7 @@
 LITMUS^RT User-Space Library: liblitmus
 =======================================
 
-  Copyright (c) 2007, 2008
+  Copyright (c) 2007, 2008, 2009, 2010
   The University of North Carolina at Chapel Hill
   Department of Computer Science
   Real-Time Systems Group
@@ -9,7 +9,7 @@ LITMUS^RT User-Space Library: liblitmus
   http://www.cs.unc.edu/~anderson/litmus-rt/
 
 Released as open source under the terms of the GNU General Public License
-(GPL2). 
+(GPL2).
 
 Overview
 ========
@@ -18,8 +18,8 @@ LITMUS^RT. Real-time tasks should link against this library. The header file
 "litmus.h" contains all necessary system calls and definitions to interact with
 the kernel services provided for real-time tasks.
 
-Tools
-=====
+Tools and Programs
+==================
 
 * setsched
   Select active scheduler. Must be run as root.
@@ -28,16 +28,44 @@ Tools
   Print the name of the currently active scheduler. Schedulers are selected at
   boot time with the "rtsched=<NAME>" kernel parameter.
 
-* rt_launch {-p <PROCESSOR>} <WCET> <PERIOD> <PROGRAM> <ARGS>...
+* rt_launch [-p <PARTITION>] <WCET> <PERIOD> <PROGRAM> <ARGS>...
   Launch the program <PROGRAM> as a real-time task provisioned with the given
   worst-case execution time and priod. Any additional parameters are passed on
   to the real-time task.
 
+* rtspin [-w] [-p <PARTITION>] [-c CLASS] WCET PERIOD DURATION
+  rtspin -l
+  A simple spin loop for emulating purely CPU-bound workloads.
+  Not very realistic, but a good tool for debugging.
+    -l   Start a little calibration loop.
+    -w   Wait for task-system release.
+
+* release_ts
+  Release the task system. This allows for synchronous task system releases.
+
+* measure_syscall
+  A simple tool that measures the cost of a system call.
+
+* cycles
+  Display cycles per time interval.
+
+* base_task
+  Example real-time task. Can be used as a basis for the development
+  of single-threaded real-time tasks.
+
+* base_mt_task
+  Example multi-threaded real-time task. Use as a basis for development.
+
+
 Install
 =======
-The library and the included tools  must be compiled from source. Currently,
-the library and all tools are compiled by issuing the
-command:
+The library and the included tools  must be compiled from source.
+Liblitmus uses SCons as the build system. For details see:
 
-        $ make
+	  http://www.scons.org/
 
+To compile the library just execute the command 'scons' without
+arguments.
+
+x86_64->ia32 cross compilation is possible by specifying ARCH=i386 on the
+command line or in the environment.
