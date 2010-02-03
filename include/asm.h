@@ -3,9 +3,10 @@
 #ifndef ASM_H
 #define ASM_H
 
-#ifdef __i386__
-#include "asm_i386.h"
+#if defined(__i386__) || defined(__x86_64__)
+#include "asm_x86.h"
 #endif
+
 
 #ifdef __sparc__
 #include "asm_sparc.h"

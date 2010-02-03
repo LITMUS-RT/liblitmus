@@ -8,13 +8,16 @@
 
 static inline void barrier(void)
 {
-	__asm__ __volatile__("sfence": : :"memory");
+	__asm__ __volatile__("mfence": : :"memory");
 }
 
 static __inline__ void cpu_relax(void)
 {
 	__asm__ __volatile("pause");
 }
+
+
+#ifdef __i386__
 
 typedef struct { int counter; } atomic_t;
 
@@ -66,3 +69,4 @@ static __inline__ int atomic_add_return(int i, atomic_t *v)
 #define atomic_inc_return(v)  (atomic_add_return(1,v))
 
 
+#endif
