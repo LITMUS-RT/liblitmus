@@ -1,7 +1,12 @@
 #ifndef LITMUS_H
 #define LITMUS_H
 
+/* Include kernel header.
+ * This is required for the rt_param
+ * and control_page structures.
+ */
 #include <litmus/rt_param.h>
+
 #include <sys/types.h>
 
 #include "cycles.h" /* for null_call() */

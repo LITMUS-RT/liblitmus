@@ -1,76 +1,74 @@
+#include <sys/mman.h>
+#include <sys/fcntl.h> /* for O_RDWR */
+#include <sys/unistd.h>
+#include <sched.h> /* for sched_yield() */
+
+
 #include <stdio.h>
 
 #include "litmus.h"
 #include "internal.h"
 #include "asm.h"
 
-/* per real-time thread kernel <-> user space flags */
+#define LITMUS_CTRL_DEVICE "/dev/litmus/ctrl"
+#define CTRL_PAGES 1
+
+static int map_file(const char* filename, void **addr, size_t size)
+{
+	int error = 0;
+	int fd;
 
 
-struct np_flag {
-	#define RT_PREEMPTIVE 		0x2050 /* = NP */
-	#define RT_NON_PREEMPTIVE 	0x4e50 /* =  P */
-	unsigned short preemptivity;
+	if (size > 0) {
+		fd = open(filename, O_RDWR);
+		if (fd >= 0) {
+			*addr = mmap(NULL, size,
+				     PROT_READ | PROT_WRITE,
+				     MAP_PRIVATE,
+				     fd, 0);
+			if (*addr == MAP_FAILED)
+				error = -1;
+			close(fd);
+		} else
+			error = fd;
+	} else
+		*addr = NULL;
+	return error;
+}
 
-	#define RT_EXIT_NP_REQUESTED	0x5251 /* = RQ */
-	unsigned short request;
-
-	unsigned int ctr;
-};
-
-int register_np_flag(struct np_flag* flag);
-int signal_exit_np(void);
-
-
-#ifndef __sparc__
-static __thread struct np_flag np_flag;
-#endif
+/* thread-local pointer to control page */
+static __thread struct control_page *ctrl_page;
 
 int init_kernel_iface(void)
 {
-	int ret = 0;
-#ifdef FALSE
-#ifndef __sparc__ /* currently not supported in sparc64 */
-	np_flag.preemptivity = RT_PREEMPTIVE;
-	np_flag.ctr = 0;
-	ret = register_np_flag(&np_flag);
-	check("register_np_flag()");
-#endif
-#endif
-	return ret;
+	int err = 0;
+	long page_size = sysconf(_SC_PAGESIZE);
+
+	err = map_file(LITMUS_CTRL_DEVICE, (void**) &ctrl_page, CTRL_PAGES * page_size);
+	if (err) {
+		fprintf(stderr, "%s: cannot open LITMUS^RT control page (%m)\n",
+			__FUNCTION__);
+	}
+
+	return err;
 }
 
 void enter_np(void)
 {
-#ifdef FALSE
-#ifndef __sparc__
-	if (++np_flag.ctr == 1)
-	{
-		np_flag.request = 0;
-		barrier();
-		np_flag.preemptivity = RT_NON_PREEMPTIVE;
-	}
-#else
-	fprintf(stderr, "enter_np: not implemented!\n");
-#endif
-#endif
+	if (likely(ctrl_page != NULL) || init_kernel_iface() == 0)
+		ctrl_page->np_flag++;
+	else
+		fprintf(stderr, "enter_np: control page not mapped!\n");
 }
 
 
 void exit_np(void)
 {
-#ifdef FALSE
-#ifndef __sparc__
-	if (--np_flag.ctr == 0)
-	{
-		np_flag.preemptivity = RT_PREEMPTIVE;
+	if (likely(ctrl_page != NULL) && --ctrl_page->np_flag == 0) {
+		/* became preemptive, let's check for delayed preemptions */
 		barrier();
-		if (np_flag.request == RT_EXIT_NP_REQUESTED)
-			signal_exit_np();
+		if (ctrl_page->delayed_preemption)
+			sched_yield();
 	}
-#else
-	fprintf(stderr, "exit_np: not implemented!\n");
-#endif
-#endif
 }
 

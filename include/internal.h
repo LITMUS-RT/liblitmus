@@ -18,5 +18,8 @@ int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg,
 	}
 
 
+#define likely(x)   __builtin_expect((x), 1)
+#define unlikely(x) __builtin_expect((x), 0)
+
 #endif
 

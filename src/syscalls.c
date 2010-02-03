@@ -31,18 +31,6 @@ int sleep_next_period(void)
 	return syscall(__NR_complete_job);
 }
 
-#ifdef false
-int register_np_flag(struct np_flag *flag)
-{
-	return syscall(__NR_register_np_flag, flag);
-}
-
-int signal_exit_np(void)
-{
-	return syscall(__NR_exit_np);
-}
-#endif
-
 int od_openx(int fd, obj_type_t type, int obj_id, void *config)
 {
 	return syscall(__NR_od_open, fd, type, obj_id, config);
