@@ -130,3 +130,15 @@ rt.Program('rt_launch', ['bin/rt_launch.c', 'bin/common.c'])
 rt.Program('rtspin', ['bin/rtspin.c', 'bin/common.c'])
 rt.Program('release_ts', 'bin/release_ts.c')
 rtm.Program('measure_syscall', 'bin/null_call.c')
+
+
+# #####################################################################
+# Test suite.
+
+mkc = Builder(action = 'tests/make_catalog.py $SOURCE > $TARGET')
+test = mtrt.Clone()
+test.Append(BUILDERS = {'TestCatalog' : mkc})
+test.Append(CPPPATH = ['tests/'])
+
+catalog = test.TestCatalog('tests/__test_catalog.inc', Glob('tests/*.c'))
+test.Program('runtests', Glob('tests/*.c'))
