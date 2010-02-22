@@ -1,6 +1,10 @@
 #ifndef LITMUS_H
 #define LITMUS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Include kernel header.
  * This is required for the rt_param
  * and control_page structures.
@@ -115,4 +119,7 @@ static inline int open_srp_sem(int fd, int name)
 /* syscall overhead measuring */
 int null_call(cycles_t *timestamp);
 
+#ifdef __cplusplus
+}
+#endif
 #endif
