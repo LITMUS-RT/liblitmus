@@ -2,7 +2,11 @@
 *.o
 *.a
 
+# generated files
+tests/__test_catalog.inc
+
 # executables
+runtests
 rt_launch
 wait_test
 np_test
