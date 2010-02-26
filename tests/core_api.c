@@ -37,3 +37,15 @@ TESTCASE(set_rt_task_param_invalid_params, ALL,
 	/* now try correct params */
 	SYSCALL( set_rt_task_param(gettid(), &params) );
 }
+
+TESTCASE(job_control_non_rt, ALL,
+	 "reject job control for non-rt tasks")
+{
+	unsigned int job_no;
+
+	SYSCALL_FAILS( EINVAL, sleep_next_period() );
+
+	SYSCALL_FAILS( EINVAL, wait_for_job_release(0) );
+
+	SYSCALL_FAILS( EPERM, get_job_no(&job_no) );
+}
