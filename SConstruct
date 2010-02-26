@@ -135,7 +135,7 @@ rtm.Program('measure_syscall', 'bin/null_call.c')
 # #####################################################################
 # Test suite.
 
-mkc = Builder(action = 'tests/make_catalog.py $SOURCE > $TARGET')
+mkc = Builder(action = 'tests/make_catalog.py $SOURCES > $TARGET')
 test = mtrt.Clone()
 test.Append(BUILDERS = {'TestCatalog' : mkc})
 test.Append(CPPPATH = ['tests/'])
