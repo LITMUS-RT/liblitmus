@@ -54,12 +54,13 @@ static inline int od_open(int fd, obj_type_t type, int obj_id)
 	return od_openx(fd, type, obj_id, 0);
 }
 
-/* FMLP support */
+/* FMLP binary semaphore support */
 int fmlp_down(int od);
 int fmlp_up(int od);
+
+/* SRP binary semaphore support */
 int srp_down(int od);
 int srp_up(int od);
-int reg_task_srp_sem(int od);
 
 /* job control*/
 int get_job_no(unsigned int* job_no);
