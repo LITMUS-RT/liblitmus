@@ -43,6 +43,13 @@ TESTCASE(invalid_od, ALL,
 	SYSCALL_FAILS( EINVAL, od_close(-1) );
 }
 
+TESTCASE(invalid_obj_type, ALL,
+	 "reject invalid object types")
+{
+	SYSCALL_FAILS( EINVAL, od_open(0, -1, 0) );
+	SYSCALL_FAILS( EINVAL, od_open(0, 10, 0) );
+}
+
 TESTCASE(not_inherit_od, GSN_EDF | PSN_EDF,
 	 "don't inherit FDSO handles across fork")
 {
