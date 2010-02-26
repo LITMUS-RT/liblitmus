@@ -10,3 +10,30 @@ TESTCASE(set_rt_task_param_invalid_pointer, ALL,
 
 	SYSCALL_FAILS( EFAULT, set_rt_task_param(gettid(), (void*) 0x123 ));
 }
+
+TESTCASE(set_rt_task_param_invalid_params, ALL,
+	 "reject invalid rt_task values")
+{
+	struct rt_task params;
+	params.cpu        = 0;
+	params.period     = 100;
+	params.phase      = 0;
+	params.cls        = RT_CLASS_HARD;
+
+	/* over utilize */
+	params.exec_cost  = 110;
+	SYSCALL_FAILS( EINVAL, set_rt_task_param(gettid(), &params) );
+
+	/* bad CPU */
+	params.exec_cost = 90;
+	params.cpu       = -1;
+	SYSCALL_FAILS( EINVAL, set_rt_task_param(gettid(), &params) );
+
+	/* bad task */
+	params.cpu  = 0;
+	SYSCALL_FAILS( EINVAL, set_rt_task_param(-1, &params) );
+
+
+	/* now try correct params */
+	SYSCALL( set_rt_task_param(gettid(), &params) );
+}
