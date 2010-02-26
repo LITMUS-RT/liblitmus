@@ -19,16 +19,19 @@
 			fail("%s", #predicate);			\
 	} while (0)
 
-#define SYSCALL(call)					\
-	do {						\
-		if ((call) < 0)				\
-			fail("%s, %m", #call);		\
+#define SYSCALL(call)							\
+	do {								\
+		int __test_ret = (call);				\
+		if (__test_ret < 0)					\
+			fail("%s -> %d, %m", #call, __test_ret);	\
 	} while (0)
 
 #define SYSCALL_FAILS(expected, call)					\
 	do {								\
-		if ((call) == 0 || errno != (expected))			\
-			fail("%s, %m (expected: %s)", #call, #expected); \
+		int __test_ret = (call);				\
+		if (__test_ret == 0 || errno != (expected))		\
+			fail("%s -> %d, %m (expected: %s)",		\
+			     #call, __test_ret, #expected);		\
 	} while (0)
 
 
