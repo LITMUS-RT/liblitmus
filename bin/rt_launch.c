@@ -29,17 +29,14 @@ int launch(void *task_info_p) {
 }
 
 void usage(char *error) {
-	fprintf(stderr, "%s\nUsage: \nlaunch_rt supports one of two modes:\n"
-		"\n\tlaunch_rt <SPORADIC OPTIONS> <wcet> <period> program arg1 arg2 ...\n"
-		"\nwhere:"
-		"\n\t <SPORADIC OPTIONS> = "
-		"[-c {hrt|srt|be}] [-p <cpu>]\n"
-		"\nExamples:"
-		"\n\trt_launch -p 2 10 100 cpu_job"
-		"\n\t  => Launch cpu_job a hard real-time task with "
-		"\n\t     period 100ms and weight 0.1 on CPU 2.\n"
-		"\n\n",
-		error);
+	fprintf(stderr, "%s\nUsage: rt_launch [-w][-v][-p cpu][-c hrt | srt | be] wcet period program [arg1 arg2 ...]\n"
+			"\t-w\tSynchronous release\n"
+			"\t-v\tVerbose\n"
+			"\t-p\tcpu (or initial cpu)\n"
+			"\t-c\tClass\n"
+			"\twcet, period in ms\n"
+			"\tprogram to be launched\n",
+			error);
 	exit(1);
 }
 
