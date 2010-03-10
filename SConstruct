@@ -51,7 +51,7 @@ elif 'ARCH' in environ:
     arch = environ['ARCH']
 
 if arch not in SUPPORTED_ARCHS:
-    print 'Error: Building ft_tools is only supported for the following', \
+    print 'Error: Building liblitmus is only supported for the following', \
         'architectures: %s.' % ', '.join(sorted(SUPPORTED_ARCHS))
     Exit(1)
 else:
