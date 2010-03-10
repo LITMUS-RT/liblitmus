@@ -38,6 +38,7 @@ void usage(char *error) {
 #define NUMS 4096
 static int num[NUMS];
 static double loop_length = 1.0;
+static char* progname;
 
 static int loop_once(void)
 {
@@ -100,10 +101,17 @@ static void configure_loop(void)
 	fine_tune(0.1);
 }
 
+static void show_loop_length(void)
+{
+	printf("%s/%d: loop_length=%f (%ldus)\n",
+	       progname, getpid(), loop_length,
+	       (long) (loop_length * 1000000));
+}
+
 static void debug_delay_loop(void)
 {
 	double start, end, delay;
-	printf("loop_length=%f\n", loop_length);
+	show_loop_length();
 	while (1) {
 		for (delay = 0.5; delay > 0.01; delay -= 0.01) {
 			start = wctime();
@@ -125,7 +133,7 @@ static int job(double exec_time)
 	return 0;
 }
 
-#define OPTSTR "p:c:wld:"
+#define OPTSTR "p:c:wld:v"
 
 int main(int argc, char** argv) 
 {
@@ -139,8 +147,11 @@ int main(int argc, char** argv)
 	int wait = 0;
 	int test_loop = 0;
 	int skip_config = 0;
+	int verbose = 0;
 	double duration, start;
 	task_class_t class = RT_CLASS_HARD;
+
+	progname = argv[0];
 
 	while ((opt = getopt(argc, argv, OPTSTR)) != -1) {
 		switch (opt) {
@@ -160,8 +171,13 @@ int main(int argc, char** argv)
 			test_loop = 1;
 			break;
 		case 'd':
-			loop_length = atof(optarg) / 1000000;			
+			/* manually configure delay per loop iteration 
+			 * unit: microseconds */
+			loop_length = atof(optarg) / 1000000;
 			skip_config = 1;
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case ':':
 			usage("Argument missing.");
@@ -173,7 +189,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-	
+
 	if (!skip_config)
 		configure_loop();
 
@@ -183,7 +199,7 @@ int main(int argc, char** argv)
 	}
 
 	if (argc - optind < 3)
-		usage("Arguments missing.");       
+		usage("Arguments missing.");
 	wcet_ms   = atof(argv[optind + 0]);
 	period_ms = atof(argv[optind + 1]);
 	duration  = atof(argv[optind + 2]);
@@ -206,22 +222,24 @@ int main(int argc, char** argv)
 	}
 
 	ret = sporadic_task_ns(wcet, period, 0, cpu, class, migrate);
-	
+
 	if (ret < 0)
-		bail_out("could not become rt tasks.");
+		bail_out("could not setup rt task params");
+
+	if (verbose)
+		show_loop_length();
 
 	init_litmus();
 
 	ret = task_mode(LITMUS_RT_TASK);
 	if (ret != 0)
-		bail_out("task_mode()");
+		bail_out("could not become RT task");
 
 	if (wait) {
 		ret = wait_for_ts_release();
 		if (ret != 0)
 			bail_out("wait_for_ts_release()");
 	}
-
 
 	start = wctime();
 
