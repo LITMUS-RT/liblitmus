@@ -9,10 +9,15 @@ API_FLAGS    = '-D_XOPEN_SOURCE=600 -D_GNU_SOURCE'
 X86_32_FLAGS = '-m32'
 X86_64_FLAGS = '-m64'
 V9_FLAGS     = '-mcpu=v9 -m64'
+
 SUPPORTED_ARCHS = {
     'sparc64'	: V9_FLAGS,
     'x86'	: X86_32_FLAGS,
     'x86_64'	: X86_64_FLAGS,
+}
+
+ARCH_ALIAS = {
+    'i686'      : 'x86'
 }
 
 KERNEL_INCLUDE = '%s/include/' % LITMUS_KERNEL
@@ -50,8 +55,12 @@ if 'ARCH' in ARGUMENTS:
 elif 'ARCH' in environ:
     arch = environ['ARCH']
 
+# replace if the arch has an alternative name
+if arch in ARCH_ALIAS:
+    arch = ARCH_ALIAS[arch]
+
 if arch not in SUPPORTED_ARCHS:
-    print 'Error: Building ft_tools is only supported for the following', \
+    print 'Error: Building liblitmus is only supported for the following', \
         'architectures: %s.' % ', '.join(sorted(SUPPORTED_ARCHS))
     Exit(1)
 else:
