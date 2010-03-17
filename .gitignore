@@ -24,3 +24,4 @@ measure_syscall
 .sconsign.dblite
 .sconf_temp/*
 config.log
+.config
