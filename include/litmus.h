@@ -120,6 +120,13 @@ static inline int open_srp_sem(int fd, int name)
 /* syscall overhead measuring */
 int null_call(cycles_t *timestamp);
 
+/*
+ * get control page:
+ * atm it is used only by preemption migration overhead code
+ * but it is very general and can be used for different purposes
+ */
+struct control_page* get_ctrl_page(void);
+
 #ifdef __cplusplus
 }
 #endif

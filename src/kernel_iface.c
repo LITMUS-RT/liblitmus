@@ -72,3 +72,16 @@ void exit_np(void)
 	}
 }
 
+/* init and return a ptr to the control page for
+ * preemption and migration overhead analysis
+ *
+ * FIXME it may be desirable to have a RO control page here
+ */
+struct control_page* get_ctrl_page(void)
+{
+	if((ctrl_page != NULL) || init_kernel_iface() == 0)
+		return ctrl_page;
+	else
+		return NULL;
+}
+
