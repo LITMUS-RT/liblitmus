@@ -1,4 +1,4 @@
-/* Intel ia32 assembly. 
+/* Intel ia32 assembly.
  * Don't include directly, use asm.h instead.
  *
  * Most of this code comes straight out of the Linux kernel.
@@ -16,6 +16,16 @@ static __inline__ void cpu_relax(void)
 	__asm__ __volatile("pause");
 }
 
+/* please, use these only if you _really_ know what you're doing
+ * ... and remember iopl(3) first!! (include sys/io.h)
+ */
+static inline void cli(void) {
+	asm volatile("cli": : :"memory");
+}
+
+static inline void sti(void) {
+	asm volatile("sti": : :"memory");
+}
 
 #ifdef __i386__
 
@@ -26,18 +36,18 @@ typedef struct { int counter; } atomic_t;
 /**
  * atomic_read - read atomic variable
  * @v: pointer of type atomic_t
- * 
+ *
  * Atomically reads the value of @v.
- */ 
+ */
 #define atomic_read(v)		((v)->counter)
 
 /**
  * atomic_set - set atomic variable
  * @v: pointer of type atomic_t
  * @i: required value
- * 
+ *
  * Atomically sets the value of @v to @i.
- */ 
+ */
 #define atomic_set(v,i)		(((v)->counter) = (i))
 
 static __inline__ void atomic_add(int i, atomic_t *v)
@@ -65,7 +75,7 @@ static __inline__ int atomic_add_return(int i, atomic_t *v)
 		: : "memory");
 	return i + __i;
 }
- 
+
 #define atomic_inc_return(v)  (atomic_add_return(1,v))
 
 
