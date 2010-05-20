@@ -42,14 +42,16 @@ int be_migrate_to(int target_cpu)
 }
 
 int sporadic_task(lt_t e, lt_t p, lt_t phase,
-		  int cpu, task_class_t cls, int set_cpu_set)
+		  int cpu, task_class_t cls,
+		  budget_policy_t budget_policy, int set_cpu_set)
 {
 	return sporadic_task_ns(e * NS_PER_MS, p * NS_PER_MS, phase * NS_PER_MS,
-				cpu, cls, set_cpu_set);
+				cpu, cls, budget_policy, set_cpu_set);
 }
 
 int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
-		     int cpu, task_class_t cls, int set_cpu_set)
+			int cpu, task_class_t cls,
+			budget_policy_t budget_policy, int set_cpu_set)
 {
 	struct rt_task param;
 	int ret;
@@ -58,6 +60,8 @@ int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
 	param.cpu       = cpu;
 	param.cls       = cls;
 	param.phase	= phase;
+	param.budget_policy = budget_policy;
+
 	if (set_cpu_set) {	       
 		ret = be_migrate_to(cpu);
 		check("migrate to cpu");

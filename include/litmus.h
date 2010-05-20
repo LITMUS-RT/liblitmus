@@ -27,18 +27,24 @@ int set_rt_task_param(pid_t pid, struct rt_task* param);
 int get_rt_task_param(pid_t pid, struct rt_task* param);
 
 /* setup helper */
+
 /* times are given in ms */
-int sporadic_task(lt_t e, lt_t p, lt_t phase,
-		  int partition, task_class_t cls, int set_cpu_set);
+int sporadic_task(
+		lt_t e, lt_t p, lt_t phase,
+		int partition, task_class_t cls,
+		budget_policy_t budget_policy, int set_cpu_set);
 
 /* times are given in ns */
-int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
-		     int cpu, task_class_t cls, int set_cpu_set);
+int sporadic_task_ns(
+		lt_t e, lt_t p, lt_t phase,
+		int cpu, task_class_t cls,
+		budget_policy_t budget_policy, int set_cpu_set);
 
+/* budget enforcement off by default in these macros */
 #define sporadic_global(e, p) \
-	sporadic_task(e, p, 0, 0, RT_CLASS_SOFT, 0)
+	sporadic_task(e, p, 0, 0, RT_CLASS_SOFT, NO_ENFORCEMENT, 0)
 #define sporadic_partitioned(e, p, cpu) \
-	sporadic_task(e, p, 0, cpu, RT_CLASS_SOFT, 1)
+	sporadic_task(e, p, 0, cpu, RT_CLASS_SOFT, NO_ENFORCEMENT, 1)
 
 /* file descriptor attached shared objects support */
 typedef enum  {
@@ -75,6 +81,7 @@ void exit_litmus(void);
 /* A real-time program. */
 typedef int (*rt_fn_t)(void*);
 
+/* These two functions configure the RT task to use enforced exe budgets */
 int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
 int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet,
 		     int period, task_class_t cls);

@@ -49,6 +49,9 @@ int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period,
 	params.exec_cost = wcet;
 	params.cls       = class;
 	params.phase     = 0;
+	/* enforce budget for tasks that might not use sleep_next_period() */
+	params.budget_policy = QUANTUM_ENFORCEMENT;
+
 	return __launch_rt_task(rt_prog, arg,
 				(rt_setup_fn_t) set_rt_task_param, &params);
 }

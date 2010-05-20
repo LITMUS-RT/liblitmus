@@ -221,7 +221,7 @@ int main(int argc, char** argv)
 			bail_out("could not migrate to target partition");
 	}
 
-	ret = sporadic_task_ns(wcet, period, 0, cpu, class, migrate);
+	ret = sporadic_task_ns(wcet, period, 0, cpu, class, NO_ENFORCEMENT, migrate);
 
 	if (ret < 0)
 		bail_out("could not setup rt task params");
