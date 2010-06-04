@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # showsched: show the currently active plugin and exit.
 
