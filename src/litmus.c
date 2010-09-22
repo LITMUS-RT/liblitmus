@@ -10,14 +10,14 @@
 #include "litmus.h"
 #include "internal.h"
 
-void show_rt_param(struct rt_task* tp) 
+void show_rt_param(struct rt_task* tp)
 {
 	printf("rt params:\n\t"
 	       "exec_cost:\t%llu\n\tperiod:\t\t%llu\n\tcpu:\t%d\n",
 	       tp->exec_cost, tp->period, tp->cpu);
 }
 
-task_class_t str2class(const char* str) 
+task_class_t str2class(const char* str)
 {
 	if      (!strcmp(str, "hrt"))
 		return RT_CLASS_HARD;
@@ -55,6 +55,12 @@ int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
 {
 	struct rt_task param;
 	int ret;
+
+	/* Zero out first --- this is helpful when we add plugin-specific
+	 * parameters during development.
+	 */
+	memset(&param, 0, sizeof(param));
+
 	param.exec_cost = e;
 	param.period    = p;
 	param.cpu       = cpu;
@@ -62,7 +68,7 @@ int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
 	param.phase	= phase;
 	param.budget_policy = budget_policy;
 
-	if (set_cpu_set) {	       
+	if (set_cpu_set) {
 		ret = be_migrate_to(cpu);
 		check("migrate to cpu");
 	}
