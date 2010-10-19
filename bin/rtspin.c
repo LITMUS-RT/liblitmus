@@ -133,7 +133,7 @@ static int job(double exec_time)
 	return 0;
 }
 
-#define OPTSTR "p:c:wld:v"
+#define OPTSTR "p:c:wld:ve"
 
 int main(int argc, char** argv) 
 {
@@ -148,6 +148,7 @@ int main(int argc, char** argv)
 	int test_loop = 0;
 	int skip_config = 0;
 	int verbose = 0;
+	int want_enforcement = 0;
 	double duration, start;
 	task_class_t class = RT_CLASS_HARD;
 
@@ -166,6 +167,9 @@ int main(int argc, char** argv)
 			class = str2class(optarg);
 			if (class == -1)
 				usage("Unknown task class.");
+			break;
+		case 'e':
+			want_enforcement = 1;
 			break;
 		case 'l':
 			test_loop = 1;
@@ -221,7 +225,10 @@ int main(int argc, char** argv)
 			bail_out("could not migrate to target partition");
 	}
 
-	ret = sporadic_task_ns(wcet, period, 0, cpu, class, NO_ENFORCEMENT, migrate);
+	ret = sporadic_task_ns(wcet, period, 0, cpu, class,
+			       want_enforcement ? PRECISE_ENFORCEMENT
+			                        : NO_ENFORCEMENT,
+			       migrate);
 
 	if (ret < 0)
 		bail_out("could not setup rt task params");
