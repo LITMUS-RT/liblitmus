@@ -3,7 +3,7 @@
 # setsched: facilitate changing the active scheduler plugin.
 
 ADIR=/proc/litmus/active_plugin
-PDIR=/proc/litmus/plugins
+PDIR=/proc/litmus/plugins/loaded
 DIALOG=`which dialog`
 
 CHOICE=$1
