@@ -48,6 +48,8 @@ int main(int argc, char **argv)
 			"%lus and %luns.\n",
 			(unsigned long) sleep_time.tv_sec,
 			(unsigned long) sleep_time.tv_nsec);
+		fprintf(stderr, "%10s, %10s, %10s, %10s, %10s, %10s\n",
+			"pre", "in kernel", "post", "entry", "exit", "total");
 		do {
 			time_null_call();
 		} while (nanosleep(&sleep_time, NULL) == 0);
