@@ -1,6 +1,7 @@
-/* Intel ia32 assembly.
- * Don't include directly, use asm.h instead.
- *
+#ifndef ASM_ATOMIC_H
+#define ASM_ATOMIC_H
+
+/*
  * Most of this code comes straight out of the Linux kernel.
  *
  * The terms of the GPL v2 apply.
@@ -14,17 +15,6 @@ static inline void barrier(void)
 static __inline__ void cpu_relax(void)
 {
 	__asm__ __volatile("pause");
-}
-
-/* please, use these only if you _really_ know what you're doing
- * ... and remember iopl(3) first!! (include sys/io.h)
- */
-static inline void cli(void) {
-	asm volatile("cli": : :"memory");
-}
-
-static inline void sti(void) {
-	asm volatile("sti": : :"memory");
 }
 
 typedef struct { int counter; } atomic_t;
@@ -140,5 +130,7 @@ static inline int atomic_add_return(int i, atomic_t *v)
 }
 
 #define atomic_inc_return(v)  (atomic_add_return(1, v))
+
+#endif
 
 #endif

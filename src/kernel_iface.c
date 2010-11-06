@@ -8,7 +8,7 @@
 
 #include "litmus.h"
 #include "internal.h"
-#include "asm.h"
+#include "asm/atomic.h"
 
 #define LITMUS_CTRL_DEVICE "/dev/litmus/ctrl"
 #define CTRL_PAGES 1

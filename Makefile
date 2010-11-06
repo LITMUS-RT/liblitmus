@@ -149,8 +149,6 @@ obj-runtests = $(patsubst tests/%.c,%.o,${src-runtests})
 test_catalog.inc: $(filter-out tests/runner.c,${src-runtests})
 	tests/make_catalog.py $+ > $@
 
-.SECONDARY: test_catalog.inc
-
 tests/runner.c: test_catalog.inc
 
 

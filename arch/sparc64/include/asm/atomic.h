@@ -1,5 +1,7 @@
+#ifndef ASM_ATOMIC_H
+#define ASM_ATOMIC_H
+
 /* sparc64 assembly.
- * Don't include directly, use asm.h instead.
  *
  * Most of this code comes straight out of the Linux kernel.
  *
@@ -46,18 +48,18 @@ typedef struct { int counter; } atomic_t;
 /**
  * atomic_read - read atomic variable
  * @v: pointer of type atomic_t
- * 
+ *
  * Atomically reads the value of @v.
- */ 
+ */
 #define atomic_read(v)		((v)->counter)
 
 /**
  * atomic_set - set atomic variable
  * @v: pointer of type atomic_t
  * @i: required value
- * 
+ *
  * Atomically sets the value of @v to @i.
- */ 
+ */
 #define atomic_set(v,i)		(((v)->counter) = (i))
 
 
@@ -70,18 +72,18 @@ typedef struct { int counter; } atomic_t;
  */
 static __inline__ int atomic_add_return(int i, atomic_t *v)
 {
-	int old; 
+	int old;
 	int ret;
 	goto first;
 	do {
 		cpu_relax();
 	first:
 		old = atomic_read(v);
-		ret = cmpxchg(&v->counter, old, old + i);		
+		ret = cmpxchg(&v->counter, old, old + i);
 	} while (ret != old);
 	return old + i;
 }
- 
+
 static __inline__ void atomic_add(int i, atomic_t *v)
 {
 	atomic_add_return(i, v);
@@ -90,3 +92,4 @@ static __inline__ void atomic_add(int i, atomic_t *v)
 #define atomic_inc_return(v)  (atomic_add_return(1,v))
 
 
+#endif
