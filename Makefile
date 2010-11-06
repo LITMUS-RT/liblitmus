@@ -201,6 +201,31 @@ MAKECMDGOALS += all
 endif
 
 ifneq ($(filter-out dump-config clean,$(MAKECMDGOALS)),)
+
+# Pull in dependencies.
 -include ${obj-all:.o=.d}
+
+# Let's make sure the kernel header path is ok.
+config-ok  := $(shell test -d "${LITMUS_KERNEL}" || echo invalid path. )
+config-ok  += $(shell test -f "${LITMUS_KERNEL}/${word 1,${litmus-headers}}" \
+	|| echo cannot find header. )
+ifneq ($(strip $(config-ok)),)
+$(info (!!) Could not find a LITMUS^RT kernel at ${LITMUS_KERNEL}: ${config-ok})
+$(info (!!) Are you sure the path is correct?)
+$(info (!!) Run 'make dump-config' to see the build configuration.)
+$(info (!!) Edit the file .config to override the default configuration.)
+$(error Cannot build without access to the LITMUS^RT kernel source)
+endif
+
+config-ok  := $(shell test -f "${LITMUS_KERNEL}/${word 1,${unistd-headers}}" \
+	|| echo fail )
+ifneq ($(config-ok),)
+$(info (!!) Could not find the architecture-specifc Linux headers.)
+$(info (!!) Are you sure ARCH=${ARCH} is correct?)
+$(info (!!) Run 'make dump-config' to see the build configuration.)
+$(info (!!) Edit the file '.config' to override the default configuration.)
+$(error Cannot build without access to the architecture-specific files)
+endif
+
 endif
 
