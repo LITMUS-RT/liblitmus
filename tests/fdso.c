@@ -1,3 +1,5 @@
+#include <sys/wait.h> /* for waitpid() */
+
 #include <fcntl.h>
 #include <unistd.h>
 
