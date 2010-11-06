@@ -8,7 +8,6 @@
 
 #include "litmus.h"
 #include "internal.h"
-#include "asm/atomic.h"
 
 #define LITMUS_CTRL_DEVICE "/dev/litmus/ctrl"
 #define CTRL_PAGES 1
@@ -66,7 +65,7 @@ void exit_np(void)
 {
 	if (likely(ctrl_page != NULL) && --ctrl_page->np_flag == 0) {
 		/* became preemptive, let's check for delayed preemptions */
-		barrier();
+		__sync_synchronize();
 		if (ctrl_page->delayed_preemption)
 			sched_yield();
 	}
