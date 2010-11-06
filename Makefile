@@ -19,9 +19,8 @@ LITMUS_KERNEL ?= ../litmus2010
 # Internal configuration.
 
 # compiler flags
-flags-debug    = -Wall -g -Wdeclaration-after-statement
+flags-debug    = -Wall -Werror -g -Wdeclaration-after-statement
 flags-api      = -D_XOPEN_SOURCE=600 -D_GNU_SOURCE
-flags-link-rt  = -static
 
 # architecture-specific flags
 flags-i386     = -m32
@@ -36,13 +35,17 @@ include-sparc64  = sparc
 # default: the arch name
 include-${ARCH} ?= ${ARCH}
 
+# name of the file(s) that holds the actual system call numbers
+unistd-i386      = unistd.h unistd_32.h
+unistd-x86_64    = unistd.h unistd_64.h
+# default: unistd.h
+unistd-${ARCH}  ?= unistd.h
+
 # where to find header files
-headers = -Iinclude \
-	-I${LITMUS_KERNEL}/include/ \
-	-I${LITMUS_KERNEL}/arch/${include-${ARCH}}/include
+headers = -Iinclude -Iarch/${include-${ARCH}}/include
 
 # combine options
-CPPFLAGS = ${flags-api} ${flags-${ARCH}} ${headers}
+CPPFLAGS = ${flags-api} ${flags-${ARCH}} -DARCH=${ARCH} ${headers}
 CFLAGS   = ${flags-debug}
 LDFLAGS  = ${flags-${ARCH}}
 
@@ -78,6 +81,7 @@ dump-config:
 		LITMUS_KERNEL "${LITMUS_KERNEL}" \
 		CROSS_COMPILE "${CROSS_COMPILE}" \
 		headers "${headers}" \
+		"kernel headers" "${imported-headers}" \
 		CFLAGS "${CFLAGS}" \
 		LDFLAGS "${LDFLAGS}" \
 		CPPFLAGS "${CPPFLAGS}" \
@@ -90,7 +94,35 @@ dump-config:
 clean:
 	rm -f ${rt-apps}
 	rm -f *.o *.d *.a test_catalog.inc
+	rm -f ${imported-headers}
 
+# ##############################################################################
+# Kernel headers.
+# The kernel does not like being #included directly, so let's
+# copy out the parts that we need.
+
+# Litmus headers
+include/litmus/%.h: ${LITMUS_KERNEL}/include/litmus/%.h
+	@mkdir -p ${dir $@}
+	cp $< $@
+
+# asm headers
+arch/${include-${ARCH}}/include/asm/%.h: \
+	${LITMUS_KERNEL}/arch/${include-${ARCH}}/include/asm/%.h
+	@mkdir -p ${dir $@}
+	cp $< $@
+
+litmus-headers = include/litmus/rt_param.h include/litmus/unistd_32.h \
+	include/litmus/unistd_64.h
+
+unistd-headers = \
+  $(foreach file,${unistd-${ARCH}},arch/${include-${ARCH}}/include/asm/$(file))
+
+
+imported-headers = ${litmus-headers} ${unistd-headers}
+
+# Let's not copy these twice.
+.SECONDARY: ${imported-headers}
 
 # ##############################################################################
 # liblitmus
@@ -159,8 +191,8 @@ vpath %.c bin/ src/ tests/
 
 obj-all = ${sort ${foreach target,${all},${obj-${target}}}}
 
-# rule to generate dependency files (straight from make manual)
-%.d: %.c
+# rule to generate dependency files
+%.d: %.c ${imported-headers}
 	@set -e; rm -f $@; \
 		$(CC) -MM $(CPPFLAGS) $< > $@.$$$$; \
 		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \

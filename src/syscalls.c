@@ -1,13 +1,16 @@
 /* To get syscall() we need to define _GNU_SOURCE
  * in modern glibc versions.
  */
+
+/* imported from the kernel source tree */
+#include "asm/unistd.h"
+
+/* for syscall() */
 #include <unistd.h>
-#include <linux/unistd.h>
-#include <sys/types.h>
+
+//#include <sys/types.h>
 
 #include "litmus.h"
-
-struct np_flag;
 
 /*	Syscall stub for setting RT mode and scheduling options */
 
