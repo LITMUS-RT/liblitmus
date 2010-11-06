@@ -48,10 +48,10 @@ static int loop_once(void)
 	return j;
 }
 
-static int loop_for(double exec_time)
+static int loop_for(double exec_time, double emergency_exit)
 {
 	double t = 0;
-	int tmp = 0;	
+	int tmp = 0;
 /*	while (t + loop_length < exec_time) {
 		tmp += loop_once();
 		t += loop_length;
@@ -63,6 +63,13 @@ static int loop_for(double exec_time)
 		tmp += loop_once();
 		t += loop_length;
 		now = cputime();
+		if (emergency_exit && wctime() > emergency_exit) {
+			/* Oops --- this should only be possible if the execution time tracking
+			 * is broken in the LITMUS^RT kernel. */
+			fprintf(stderr, "!!! rtspin/%d emergency exit!\n", getpid());
+			fprintf(stderr, "Something is seriously wrong! Do not ignore this.\n");
+			break;
+		}
 	}
 
 	return tmp;
@@ -73,7 +80,7 @@ static void fine_tune(double interval)
 	double start, end, delta;
 
 	start = wctime();
-	loop_for(interval);
+	loop_for(interval, 0);
 	end = wctime();
 	delta = (end - start - interval) / interval;
 	if (delta != 0)
@@ -115,7 +122,7 @@ static void debug_delay_loop(void)
 	while (1) {
 		for (delay = 0.5; delay > 0.01; delay -= 0.01) {
 			start = wctime();
-			loop_for(delay);
+			loop_for(delay, 0);
 			end = wctime();
 			printf("%6.4fs: looped for %10.8fs, delta=%11.8fs, error=%7.4f%%\n",
 			       delay,
@@ -126,11 +133,15 @@ static void debug_delay_loop(void)
 	}
 }
 
-static int job(double exec_time)
+static int job(double exec_time, double program_end)
 {
-	loop_for(exec_time);
-	sleep_next_period();
-	return 0;
+	if (wctime() > program_end)
+		return 0;
+	else {
+		loop_for(exec_time, program_end + 1);
+		sleep_next_period();
+		return 1;
+	}
 }
 
 #define OPTSTR "p:c:wld:ve"
@@ -250,9 +261,8 @@ int main(int argc, char** argv)
 
 	start = wctime();
 
-	while (start + duration > wctime()) {
-		job(wcet_ms * 0.0009); /* 90% wcet, in seconds */
-	}
+	/* 90% wcet, in seconds */
+	while (job(wcet_ms * 0.0009, start + duration));
 
 	return 0;
 }
