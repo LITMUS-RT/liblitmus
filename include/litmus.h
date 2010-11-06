@@ -13,7 +13,7 @@ extern "C" {
  */
 #include "litmus/rt_param.h"
 
-#include "cycles.h" /* for null_call() */
+#include "asm/cycles.h" /* for null_call() */
 
 typedef int pid_t;	 /* PID of a task */
 

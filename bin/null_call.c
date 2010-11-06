@@ -5,7 +5,6 @@
 #include <math.h>
 
 #include "litmus.h"
-#include "cycles.h"
 
 static void time_null_call(void)
 {

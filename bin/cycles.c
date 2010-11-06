@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "cycles.h"
+#include "asm/cycles.h"
 
 int main(int argc, char** argv)
 {
