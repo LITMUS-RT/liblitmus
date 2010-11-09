@@ -264,5 +264,9 @@ int main(int argc, char** argv)
 	/* 90% wcet, in seconds */
 	while (job(wcet_ms * 0.0009, start + duration));
 
+	ret = task_mode(BACKGROUND_TASK);
+	if (ret != 0)
+		bail_out("could not become regular task (huh?)");
+
 	return 0;
 }
