@@ -41,8 +41,11 @@ unistd-x86_64    = unistd.h unistd_64.h
 # default: unistd.h
 unistd-${ARCH}  ?= unistd.h
 
+# by default we use the local version
+LIBLITMUS ?= .
+
 # where to find header files
-headers = -Iinclude -Iarch/${include-${ARCH}}/include
+headers = -I${LIBLITMUS}/include -I${LIBLITMUS}/arch/${include-${ARCH}}/include
 
 # combine options
 CPPFLAGS = ${flags-api} ${flags-${ARCH}} -DARCH=${ARCH} ${headers}
@@ -50,7 +53,7 @@ CFLAGS   = ${flags-debug}
 LDFLAGS  = ${flags-${ARCH}}
 
 # how to link against liblitmus
-liblitmus-flags = -L. -llitmus
+liblitmus-flags = -L${LIBLITMUS} -llitmus
 
 # Force gcc instead of cc, but let the user specify a more specific version if
 # desired.
@@ -72,7 +75,24 @@ rt-apps = cycles base_task rt_launch rtspin release_ts measure_syscall \
 
 .PHONY: all lib clean dump-config
 
-all: ${all}
+all: ${all} inc/config.makefile
+
+# Write a distilled version of the flags for clients of the library. Ideally,
+# this should depend on liblitmus.a, but that requires LIBLITMUS to be a
+# private override. Private overrides are only supported starting with make
+# 3.82, which is not yet in common use.
+inc/config.makefile: LIBLITMUS = $${LIBLITMUS}
+inc/config.makefile: Makefile
+	@printf "%-15s= %-20s\n" \
+		ARCH ${ARCH} \
+		CFLAGS '${CFLAGS}' \
+		LDFLAGS '${LDFLAGS}' \
+		LDLIBS '${liblitmus-flags}' \
+		CPPFLAGS '${CPPFLAGS}' \
+		CC '${shell which ${CC}}' \
+		LD '${shell which ${LD}}' \
+		AR '${shell which ${AR}}' \
+	> $@
 
 dump-config:
 	@echo Build configuration:
@@ -95,6 +115,7 @@ clean:
 	rm -f ${rt-apps}
 	rm -f *.o *.d *.a test_catalog.inc
 	rm -f ${imported-headers}
+	rm -f inc/config.makefile
 
 # ##############################################################################
 # Kernel headers.
