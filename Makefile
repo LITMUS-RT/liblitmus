@@ -73,7 +73,7 @@ all     = lib ${rt-apps}
 rt-apps = cycles base_task rt_launch rtspin release_ts measure_syscall \
 	  base_mt_task runtests
 
-.PHONY: all lib clean dump-config
+.PHONY: all lib clean dump-config TAGS tags
 
 all: ${all} inc/config.makefile
 
@@ -116,6 +116,17 @@ clean:
 	rm -f *.o *.d *.a test_catalog.inc
 	rm -f ${imported-headers}
 	rm -f inc/config.makefile
+	rm -f tags TAGS
+
+# Emacs Tags
+TAGS:
+	@echo TAGS
+	@find . -type f -and  -iname '*.[ch]' | xargs etags
+
+# Vim Tags
+tags:
+	@echo tags
+	@find . -type f -and  -iname '*.[ch]' | xargs ctags
 
 # ##############################################################################
 # Kernel headers.
