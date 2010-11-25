@@ -54,18 +54,5 @@ Tools and Programs
   of single-threaded real-time tasks.
 
 * base_mt_task
-  Example multi-threaded real-time task. Use as a basis for development.
-
-
-Install
-=======
-The library and the included tools  must be compiled from source.
-Liblitmus uses SCons as the build system. For details see:
-
-	  http://www.scons.org/
-
-To compile the library just execute the command 'scons' without
-arguments.
-
-x86_64->ia32 cross compilation is possible by specifying ARCH=i386 on the
-command line or in the environment.
+  Example multi-threaded real-time task. Use as a basis for the development of
+  multithreaded real-time tasks.

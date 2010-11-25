@@ -1,0 +1,56 @@
+
+Liblitmus Installation Instructions
+===================================
+
+Dependencies
+------------
+
+Liblitmus has no dependencies besides the kernel. During compilation, the
+Makefile will attempt to copy required headers from the kernel source tree into
+the library source tree.
+
+
+Configuration
+-------------
+
+The build system reads a local configuration file named '.config' (just like the
+kernel, but much simpler). There are three variables that affect the
+compilation process:
+
+	LITMUS_KERNEL --- Path (relative or absolute) to the LITMUS^RT kernel
+	                  source tree. The default value is
+	                  '../litmus2010'. Set this variable if you extracted
+	                  the kernel somewhere else.
+
+	ARCH          --- The target architecture. Currently, liblitmus can be
+	                  build for i386, x86_64, sparc64, and arm.  The default
+	                  value is the host architecture.
+
+	CROSS_COMPILE --- A prefix for the compiler and linker to use. Works
+	                  exactly like cross-compiling the kernel. By default,
+	                  this variable is not set.
+
+Makefile Targets
+----------------
+
+	all         --- Build the library, all tools, and all tests. This is
+	                the default.
+
+	lib         --- Build only the library.
+
+	help	    --- Display this help.
+
+	dump-config --- Report the build configuration. Use this to debug
+	                build problems.
+
+	clean       --- Remove all build files and binaries.
+
+	TAGS        --- Create a TAGS file for emacs. (Requires etags to be
+	                installed.)
+
+	tags        --- Create a tags file for vim. (Requires ctags to be
+	                installed.)
+
+	cscope      --- Create a symbol database for cscope. (Requires cscope
+	                to be installed.)
+

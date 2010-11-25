@@ -73,7 +73,7 @@ all     = lib ${rt-apps}
 rt-apps = cycles base_task rt_launch rtspin release_ts measure_syscall \
 	  base_mt_task runtests
 
-.PHONY: all lib clean dump-config TAGS tags cscope
+.PHONY: all lib clean dump-config TAGS tags cscope help
 
 all: ${all} inc/config.makefile
 
@@ -110,6 +110,9 @@ dump-config:
 		LD "${LD}" \
 		AR "${AR}" \
 		obj-all "${obj-all}"
+
+help:
+	@cat INSTALL
 
 clean:
 	rm -f ${rt-apps}
