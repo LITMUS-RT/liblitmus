@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <assert.h>
 
 
 #include "litmus.h"
@@ -27,12 +28,86 @@ static double wctime()
 	return (tv.tv_sec + 1E-6 * tv.tv_usec);
 }
 
-void usage(char *error) {
+static void usage(char *error) {
 	fprintf(stderr, "Error: %s\n", error);
 	fprintf(stderr,
-		"Usage: rt_spin [-w] [-p PARTITION] [-c CLASS] WCET PERIOD DURATION\n"
-		"       rt_spin -l\n");
-	exit(1);
+		"Usage:\n"
+		"	rt_spin [COMMON-OPTS] WCET PERIOD DURATION\n"
+		"	rt_spin [COMMON-OPTS] -f FILE [-o COLUMN] WCET PERIOD\n"
+		"	rt_spin -l\n"
+		"\n"
+		"COMMON-OPTS = [-w] [-p PARTITION] [-c CLASS] [-s SCALE]\n"
+		"\n"
+		"WCET and PERIOD are milliseconds, DURATION is seconds.\n");
+	exit(EXIT_FAILURE);
+}
+
+/*
+ * returns the character that made processing stop, newline or EOF
+ */
+static int skip_to_next_line(FILE *fstream)
+{
+	int ch;
+	for (ch = fgetc(fstream); ch != EOF && ch != '\n'; ch = fgetc(fstream));
+	return ch;
+}
+
+static void skip_comments(FILE *fstream)
+{
+	int ch;
+	for (ch = fgetc(fstream); ch == '#'; ch = fgetc(fstream))
+		skip_to_next_line(fstream);
+	ungetc(ch, fstream);
+}
+
+static void get_exec_times(const char *file, const int column,
+			   int *num_jobs,    double **exec_times)
+{
+	FILE *fstream;
+	int  cur_job, cur_col, ch;
+	*num_jobs = 0;
+
+	fstream = fopen(file, "r");
+	if (!fstream)
+		bail_out("could not open execution time file");
+
+	/* figure out the number of jobs */
+	do {
+		skip_comments(fstream);
+		ch = skip_to_next_line(fstream);
+		if (ch != EOF)
+			++(*num_jobs);
+	} while (ch != EOF);
+
+	if (-1 == fseek(fstream, 0L, SEEK_SET))
+		bail_out("rewinding file failed");
+
+	/* allocate space for exec times */
+	*exec_times = calloc(*num_jobs, sizeof(*exec_times));
+	if (!*exec_times)
+		bail_out("couldn't allocate memory");
+
+	for (cur_job = 0; cur_job < *num_jobs && !feof(fstream); ++cur_job) {
+
+		skip_comments(fstream);
+
+		for (cur_col = 1; cur_col < column; ++cur_col) {
+			/* discard input until we get to the column we want */
+			fscanf(fstream, "%*s,");
+		}
+
+		/* get the desired exec. time */
+		if (1 != fscanf(fstream, "%lf", (*exec_times)+cur_job)) {
+			fprintf(stderr, "invalid execution time near line %d\n",
+					cur_job);
+			exit(EXIT_FAILURE);
+		}
+
+		skip_to_next_line(fstream);
+	}
+
+	assert(cur_job == *num_jobs);
+	fclose(fstream);
 }
 
 #define NUMS 4096
@@ -144,7 +219,7 @@ static int job(double exec_time, double program_end)
 	}
 }
 
-#define OPTSTR "p:c:wld:ve"
+#define OPTSTR "p:c:wld:veo:f:s:"
 
 int main(int argc, char** argv) 
 {
@@ -159,9 +234,14 @@ int main(int argc, char** argv)
 	int test_loop = 0;
 	int skip_config = 0;
 	int verbose = 0;
+	int column = 1;
+	const char *file = NULL;
 	int want_enforcement = 0;
-	double duration, start;
+	double duration = 0, start;
+	double *exec_times = NULL;
+	double scale = 1.0;
 	task_class_t class = RT_CLASS_HARD;
+	int cur_job, num_jobs;
 
 	progname = argv[0];
 
@@ -194,6 +274,15 @@ int main(int argc, char** argv)
 		case 'v':
 			verbose = 1;
 			break;
+		case 'o':
+			column = atoi(optarg);
+			break;
+		case 'f':
+			file = optarg;
+			break;
+		case 's':
+			scale = atof(optarg);
+			break;
 		case ':':
 			usage("Argument missing.");
 			break;
@@ -213,22 +302,44 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (argc - optind < 3)
-		usage("Arguments missing.");
+	if (file) {
+		get_exec_times(file, column, &num_jobs, &exec_times);
+
+		if (argc - optind < 2)
+			usage("Arguments missing.");
+
+		for (cur_job = 0; cur_job < num_jobs; ++cur_job) {
+			/* convert the execution time to seconds */
+			duration += exec_times[cur_job] * 0.001;
+		}
+	} else {
+		/*
+		 * if we're not reading from the CSV file, then we need
+		 * three parameters
+		 */
+		if (argc - optind < 3)
+			usage("Arguments missing.");
+	}
+
 	wcet_ms   = atof(argv[optind + 0]);
 	period_ms = atof(argv[optind + 1]);
-	duration  = atof(argv[optind + 2]);
+
 	wcet   = wcet_ms * __NS_PER_MS;
 	period = period_ms * __NS_PER_MS;
 	if (wcet <= 0)
 		usage("The worst-case execution time must be a "
-		      "positive number.");
+				"positive number.");
 	if (period <= 0)
 		usage("The period must be a positive number.");
-	if (wcet > period) {
+	if (!file && wcet > period) {
 		usage("The worst-case execution time must not "
-		      "exceed the period.");
+				"exceed the period.");
 	}
+
+	if (!file)
+		duration  = atof(argv[optind + 2]);
+	else if (file && num_jobs > 1)
+		duration += period_ms * 0.001 * (num_jobs - 1);
 
 	if (migrate) {
 		ret = be_migrate_to(cpu);
@@ -240,7 +351,6 @@ int main(int argc, char** argv)
 			       want_enforcement ? PRECISE_ENFORCEMENT
 			                        : NO_ENFORCEMENT,
 			       migrate);
-
 	if (ret < 0)
 		bail_out("could not setup rt task params");
 
@@ -261,12 +371,24 @@ int main(int argc, char** argv)
 
 	start = wctime();
 
-	/* 90% wcet, in seconds */
-	while (job(wcet_ms * 0.0009, start + duration));
+	if (file) {
+		/* use times read from the CSV file */
+		for (cur_job = 0; cur_job < num_jobs; ++cur_job) {
+			/* convert job's length to seconds */
+			job(exec_times[cur_job] * 0.001 * scale,
+					start + duration);
+		}
+	} else {
+		/* conver to seconds and scale */
+		while (job(wcet_ms * 0.001 * scale, start + duration));
+	}
 
 	ret = task_mode(BACKGROUND_TASK);
 	if (ret != 0)
 		bail_out("could not become regular task (huh?)");
+
+	if (file)
+		free(exec_times);
 
 	return 0;
 }
