@@ -241,7 +241,7 @@ ifeq ($(MAKECMDGOALS),)
 MAKECMDGOALS += all
 endif
 
-ifneq ($(filter-out dump-config clean,$(MAKECMDGOALS)),)
+ifneq ($(filter-out dump-config clean help,$(MAKECMDGOALS)),)
 
 # Pull in dependencies.
 -include ${obj-all:.o=.d}
