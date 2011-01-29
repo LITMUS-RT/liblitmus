@@ -1,5 +1,8 @@
-#include "tests.h"
+#include <sys/wait.h> /* for waitpid() */
+#include <unistd.h>
+#include <stdio.h>
 
+#include "tests.h"
 #include "litmus.h"
 
 
@@ -48,4 +51,41 @@ TESTCASE(job_control_non_rt, ALL,
 	SYSCALL_FAILS( EINVAL, wait_for_job_release(0) );
 
 	SYSCALL_FAILS( EPERM, get_job_no(&job_no) );
+}
+
+
+TESTCASE(rt_fork_non_rt, C_EDF | GSN_EDF | PSN_EDF | PFAIR,
+	 "children of RT tasks are not automatically RT tasks")
+{
+	unsigned int pid, job_no;
+	int status;
+
+	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+	pid = fork();
+
+	ASSERT( pid != -1 );
+
+	if (pid == 0) {
+		/* child */
+
+		SYSCALL_FAILS( EINVAL, sleep_next_period() );
+		SYSCALL_FAILS( EINVAL, wait_for_job_release(0) );
+		SYSCALL_FAILS( EPERM, get_job_no(&job_no) );
+
+		exit(0);
+	} else {
+		/* parent */
+
+		SYSCALL( sleep_next_period() );
+		SYSCALL( wait_for_job_release(20) );
+		SYSCALL( get_job_no(&job_no) );
+
+		SYSCALL( task_mode(BACKGROUND_TASK) );
+
+		SYSCALL( waitpid(pid, &status, 0) );
+
+		ASSERT(WEXITSTATUS(status) == 0);
+	}
 }
