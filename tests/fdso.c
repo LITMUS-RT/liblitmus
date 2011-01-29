@@ -31,16 +31,16 @@ TESTCASE(fmlp_not_active, C_EDF | PFAIR | LINUX,
 TESTCASE(invalid_od, ALL,
 	 "reject invalid object descriptors")
 {
-	SYSCALL_FAILS( EINVAL, fmlp_down(3) );
+	SYSCALL_FAILS( EINVAL, litmus_lock(3) );
 
-	SYSCALL_FAILS( EINVAL, fmlp_up(3) );
+	SYSCALL_FAILS( EINVAL, litmus_unlock(3) );
 
 	SYSCALL_FAILS( EINVAL, od_close(3) );
 
 
-	SYSCALL_FAILS( EINVAL, fmlp_down(-1) );
+	SYSCALL_FAILS( EINVAL, litmus_lock(-1) );
 
-	SYSCALL_FAILS( EINVAL, fmlp_up(-1) );
+	SYSCALL_FAILS( EINVAL, litmus_unlock(-1) );
 
 	SYSCALL_FAILS( EINVAL, od_close(-1) );
 }
@@ -61,9 +61,9 @@ TESTCASE(not_inherit_od, GSN_EDF | PSN_EDF,
 
 	SYSCALL( od = open_fmlp_sem(fd, 0) );
 
-	SYSCALL( fmlp_down(od) );
+	SYSCALL( litmus_lock(od) );
 
-	SYSCALL( fmlp_up(od) );
+	SYSCALL( litmus_unlock(od) );
 
 	pid = fork();
 
@@ -71,12 +71,12 @@ TESTCASE(not_inherit_od, GSN_EDF | PSN_EDF,
 
 	if (pid == 0) {
 		/* child */
-		SYSCALL_FAILS(EINVAL, fmlp_down(od) );
-	        SYSCALL_FAILS(EINVAL, fmlp_up(od) );
+		SYSCALL_FAILS(EINVAL, litmus_lock(od) );
+	        SYSCALL_FAILS(EINVAL, litmus_unlock(od) );
 		exit(0);
 	} else {
-		SYSCALL( fmlp_down(od) );
-		SYSCALL( fmlp_up(od) );
+		SYSCALL( litmus_lock(od) );
+		SYSCALL( litmus_unlock(od) );
 		SYSCALL( waitpid(pid, &status, 0) );
 		ASSERT(WEXITSTATUS(status) == 0);
 	}

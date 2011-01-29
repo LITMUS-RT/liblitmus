@@ -44,24 +44,14 @@ int od_close(int od)
 	return syscall(__NR_od_close, od);
 }
 
-int fmlp_down(int od)
+int litmus_lock(int od)
 {
-	return syscall(__NR_fmlp_down, od);
+	return syscall(__NR_litmus_lock, od);
 }
 
-int fmlp_up(int od)
+int litmus_unlock(int od)
 {
-	return syscall(__NR_fmlp_up, od);
-}
-
-int srp_down(int od)
-{
-	return syscall(__NR_srp_down, od);
-}
-
-int srp_up(int od)
-{
-	return syscall(__NR_srp_up, od);
+	return syscall(__NR_litmus_unlock, od);
 }
 
 int get_job_no(unsigned int *job_no)
