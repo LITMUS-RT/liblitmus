@@ -63,6 +63,7 @@ def create_tc_tables(out=sys.stdout):
             plugins.add(p)
 
     plugins.discard('ALL')
+    plugins.discard('LITMUS')
 
     _('#include "tests.h"')
 
@@ -78,7 +79,9 @@ def create_tc_tables(out=sys.stdout):
         count = 0
         _('int %s_TESTS[] = {' % p)
         for (i, tc) in enumerate(tests):
-            if p in tc.plugins or 'ALL' in tc.plugins:
+            if p in tc.plugins or \
+                    'ALL' in tc.plugins or \
+                    'LITMUS' in tc.plugins and p != 'LINUX':
                 _('\t%d,' % i)
                 count += 1
         _('};')

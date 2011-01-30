@@ -54,7 +54,7 @@ TESTCASE(job_control_non_rt, ALL,
 }
 
 
-TESTCASE(rt_fork_non_rt, C_EDF | GSN_EDF | PSN_EDF | PFAIR,
+TESTCASE(rt_fork_non_rt, LITMUS,
 	 "children of RT tasks are not automatically RT tasks")
 {
 	unsigned int pid, job_no;
