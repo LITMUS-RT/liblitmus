@@ -111,6 +111,12 @@ static inline lt_t ms2lt(unsigned long milliseconds)
 	return __NS_PER_MS * milliseconds;
 }
 
+/* CPU time consumed so far in seconds */
+double cputime(void);
+
+/* wall-clock time in seconds */
+double wctime(void);
+
 /* semaphore allocation */
 
 static inline int open_fmlp_sem(int fd, int name)
