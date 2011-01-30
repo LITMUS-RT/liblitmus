@@ -112,7 +112,6 @@ static void get_exec_times(const char *file, const int column,
 
 #define NUMS 4096
 static int num[NUMS];
-static double loop_length = 1.0;
 static char* progname;
 
 static int loop_once(void)
@@ -125,19 +124,17 @@ static int loop_once(void)
 
 static int loop_for(double exec_time, double emergency_exit)
 {
-	double t = 0;
+	double last_loop = 0, loop_start;
 	int tmp = 0;
-/*	while (t + loop_length < exec_time) {
-		tmp += loop_once();
-		t += loop_length;
-	}
-*/
+
 	double start = cputime();
 	double now = cputime();
-	while (now + loop_length < start + exec_time) {
+
+	while (now + last_loop < start + exec_time) {
+		loop_start = now;
 		tmp += loop_once();
-		t += loop_length;
 		now = cputime();
+		last_loop = loop_start - now;
 		if (emergency_exit && wctime() > emergency_exit) {
 			/* Oops --- this should only be possible if the execution time tracking
 			 * is broken in the LITMUS^RT kernel. */
@@ -150,50 +147,11 @@ static int loop_for(double exec_time, double emergency_exit)
 	return tmp;
 }
 
-static void fine_tune(double interval)
-{
-	double start, end, delta;
-
-	start = wctime();
-	loop_for(interval, 0);
-	end = wctime();
-	delta = (end - start - interval) / interval;
-	if (delta != 0)
-		loop_length = loop_length / (1 - delta);
-}
-
-static void configure_loop(void)
-{
-	double start;
-
-	/* prime cache */
-	loop_once();
-	loop_once();
-	loop_once();
-
-	/* measure */
-	start = wctime();
-	loop_once(); /* hope we didn't get preempted  */
-	loop_length = wctime();
-	loop_length -= start;
-
-	/* fine tune */
-	fine_tune(0.1);
-	fine_tune(0.1);
-	fine_tune(0.1);
-}
-
-static void show_loop_length(void)
-{
-	printf("%s/%d: loop_length=%f (%ldus)\n",
-	       progname, getpid(), loop_length,
-	       (long) (loop_length * 1000000));
-}
 
 static void debug_delay_loop(void)
 {
 	double start, end, delay;
-	show_loop_length();
+
 	while (1) {
 		for (delay = 0.5; delay > 0.01; delay -= 0.01) {
 			start = wctime();
@@ -219,9 +177,9 @@ static int job(double exec_time, double program_end)
 	}
 }
 
-#define OPTSTR "p:c:wld:veo:f:s:"
+#define OPTSTR "p:c:wlveo:f:s:"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
 	int ret;
 	lt_t wcet;
@@ -232,8 +190,6 @@ int main(int argc, char** argv)
 	int opt;
 	int wait = 0;
 	int test_loop = 0;
-	int skip_config = 0;
-	int verbose = 0;
 	int column = 1;
 	const char *file = NULL;
 	int want_enforcement = 0;
@@ -265,15 +221,6 @@ int main(int argc, char** argv)
 		case 'l':
 			test_loop = 1;
 			break;
-		case 'd':
-			/* manually configure delay per loop iteration 
-			 * unit: microseconds */
-			loop_length = atof(optarg) / 1000000;
-			skip_config = 1;
-			break;
-		case 'v':
-			verbose = 1;
-			break;
 		case 'o':
 			column = atoi(optarg);
 			break;
@@ -292,10 +239,6 @@ int main(int argc, char** argv)
 			break;
 		}
 	}
-
-
-	if (!skip_config)
-		configure_loop();
 
 	if (test_loop) {
 		debug_delay_loop();
@@ -353,9 +296,6 @@ int main(int argc, char** argv)
 			       migrate);
 	if (ret < 0)
 		bail_out("could not setup rt task params");
-
-	if (verbose)
-		show_loop_length();
 
 	init_litmus();
 
