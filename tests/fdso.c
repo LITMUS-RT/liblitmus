@@ -20,7 +20,7 @@ TESTCASE(fmlp_not_active, C_EDF | PFAIR | LINUX,
 
 	ASSERT(fd != -1);
 
-	SYSCALL_FAILS(EBUSY, open_fmlp_sem(fd, 0) );
+	SYSCALL_FAILS(ENXIO, open_fmlp_sem(fd, 0) );
 
 	SYSCALL( close(fd) );
 
@@ -61,23 +61,34 @@ TESTCASE(not_inherit_od, GSN_EDF | PSN_EDF,
 
 	SYSCALL( od = open_fmlp_sem(fd, 0) );
 
-	SYSCALL( litmus_lock(od) );
-
-	SYSCALL( litmus_unlock(od) );
-
 	pid = fork();
 
 	ASSERT( pid != -1 );
+
+	/* must be an RT task to lock at all */
+	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 	if (pid == 0) {
 		/* child */
 		SYSCALL_FAILS(EINVAL, litmus_lock(od) );
 	        SYSCALL_FAILS(EINVAL, litmus_unlock(od) );
+
+		SYSCALL( task_mode(BACKGROUND_TASK) );
+
 		exit(0);
 	} else {
+
 		SYSCALL( litmus_lock(od) );
 		SYSCALL( litmus_unlock(od) );
+
+		SYSCALL( litmus_lock(od) );
+		SYSCALL( litmus_unlock(od) );
+
+		SYSCALL( task_mode(BACKGROUND_TASK) );
+
 		SYSCALL( waitpid(pid, &status, 0) );
+
 		ASSERT(WEXITSTATUS(status) == 0);
 	}
 
