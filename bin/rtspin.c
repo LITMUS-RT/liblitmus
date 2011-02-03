@@ -134,7 +134,7 @@ static int loop_for(double exec_time, double emergency_exit)
 		loop_start = now;
 		tmp += loop_once();
 		now = cputime();
-		last_loop = loop_start - now;
+		last_loop = now - loop_start;
 		if (emergency_exit && wctime() > emergency_exit) {
 			/* Oops --- this should only be possible if the execution time tracking
 			 * is broken in the LITMUS^RT kernel. */
