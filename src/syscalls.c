@@ -8,8 +8,6 @@
 /* for syscall() */
 #include <unistd.h>
 
-//#include <sys/types.h>
-
 #include "litmus.h"
 
 /*	Syscall stub for setting RT mode and scheduling options */
