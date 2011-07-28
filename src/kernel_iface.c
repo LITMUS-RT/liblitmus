@@ -43,6 +43,8 @@ int init_kernel_iface(void)
 	int err = 0;
 	long page_size = sysconf(_SC_PAGESIZE);
 
+	BUILD_BUG_ON(sizeof(union np_flag) != sizeof(uint32_t));
+
 	err = map_file(LITMUS_CTRL_DEVICE, (void**) &ctrl_page, CTRL_PAGES * page_size);
 	if (err) {
 		fprintf(stderr, "%s: cannot open LITMUS^RT control page (%m)\n",
@@ -55,7 +57,7 @@ int init_kernel_iface(void)
 void enter_np(void)
 {
 	if (likely(ctrl_page != NULL) || init_kernel_iface() == 0)
-		ctrl_page->np_flag++;
+		ctrl_page->sched.np.flag++;
 	else
 		fprintf(stderr, "enter_np: control page not mapped!\n");
 }
@@ -63,12 +65,19 @@ void enter_np(void)
 
 void exit_np(void)
 {
-	if (likely(ctrl_page != NULL) && --ctrl_page->np_flag == 0) {
+	if (likely(ctrl_page != NULL) &&
+	    ctrl_page->sched.np.flag &&
+	    !(--ctrl_page->sched.np.flag)) {
 		/* became preemptive, let's check for delayed preemptions */
 		__sync_synchronize();
-		if (ctrl_page->delayed_preemption)
+		if (ctrl_page->sched.np.preempt)
 			sched_yield();
 	}
+}
+
+int requested_to_preempt(void)
+{
+	return (likely(ctrl_page != NULL) && ctrl_page->sched.np.preempt);
 }
 
 /* init and return a ptr to the control page for

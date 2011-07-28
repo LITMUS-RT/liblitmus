@@ -18,8 +18,13 @@ int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg,
 	}
 
 
+/* taken from the kernel */
+
 #define likely(x)   __builtin_expect((x), 1)
 #define unlikely(x) __builtin_expect((x), 0)
+
+#define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
+#define BUILD_BUG_ON(condition) ((void)BUILD_BUG_ON_ZERO(condition))
 
 #endif
 

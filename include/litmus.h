@@ -96,6 +96,7 @@ task_class_t str2class(const char* str);
 /* non-preemptive section support */
 void enter_np(void);
 void exit_np(void);
+int  requested_to_preempt(void);
 
 /* task system support */
 int wait_for_ts_release(void);
