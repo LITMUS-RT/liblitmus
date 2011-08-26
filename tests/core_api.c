@@ -22,6 +22,7 @@ TESTCASE(set_rt_task_param_invalid_params, ALL,
 	params.period     = 100;
 	params.phase      = 0;
 	params.cls        = RT_CLASS_HARD;
+	params.budget_policy = NO_ENFORCEMENT;
 
 	/* over utilize */
 	params.exec_cost  = 110;
