@@ -12,7 +12,7 @@ host-arch := $(shell uname -m | \
 ARCH ?= ${host-arch}
 
 # LITMUS_KERNEL -- where to find the litmus kernel?
-LITMUS_KERNEL ?= ../litmus2010
+LITMUS_KERNEL ?= ../litmus-rt
 
 
 # ##############################################################################
@@ -276,4 +276,3 @@ $(error Cannot build without access to the architecture-specific files)
 endif
 
 endif
-
