@@ -32,26 +32,36 @@ int get_rt_task_param(pid_t pid, struct rt_task* param);
 /* times are given in ms */
 int sporadic_task(
 		lt_t e, lt_t p, lt_t phase,
-		int partition, task_class_t cls,
+		int partition, unsigned int priority,
+		task_class_t cls,
 		budget_policy_t budget_policy, int set_cpu_set);
 
 /* times are given in ns */
 int sporadic_task_ns(
 		lt_t e, lt_t p, lt_t phase,
-		int cpu, task_class_t cls,
+		int cpu, unsigned int priority,
+		task_class_t cls,
 		budget_policy_t budget_policy, int set_cpu_set);
 
 /* budget enforcement off by default in these macros */
 #define sporadic_global(e, p) \
-	sporadic_task(e, p, 0, 0, RT_CLASS_SOFT, NO_ENFORCEMENT, 0)
+	sporadic_task(e, p, 0, 0, LITMUS_MAX_PRIORITY-1, \
+		RT_CLASS_SOFT, NO_ENFORCEMENT, 0)
 #define sporadic_partitioned(e, p, cpu) \
-	sporadic_task(e, p, 0, cpu, RT_CLASS_SOFT, NO_ENFORCEMENT, 1)
+	sporadic_task(e, p, 0, cpu, LITMUS_MAX_PRIORITY-1, \
+		RT_CLASS_SOFT, NO_ENFORCEMENT, 1)
 
 /* file descriptor attached shared objects support */
 typedef enum  {
 	FMLP_SEM	= 0,
 	SRP_SEM		= 1,
+	MPCP_SEM	= 2,
+	MPCP_VS_SEM	= 3,
+	DPCP_SEM	= 4,
 } obj_type_t;
+
+int lock_protocol_for_name(const char* name);
+const char* name_for_lock_protocol(int id);
 
 int od_openx(int fd, obj_type_t type, int obj_id, void* config);
 int od_close(int od);
@@ -96,6 +106,7 @@ task_class_t str2class(const char* str);
 /* non-preemptive section support */
 void enter_np(void);
 void exit_np(void);
+int exit_np_trace(void);
 int  requested_to_preempt(void);
 
 /* task system support */

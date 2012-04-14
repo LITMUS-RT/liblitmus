@@ -6,7 +6,7 @@
 #include "litmus.h"
 
 
-TESTCASE(not_lock_fmlp_be, GSN_EDF | PSN_EDF,
+TESTCASE(not_lock_fmlp_be, GSN_EDF | PSN_EDF | P_FP,
 	 "don't let best-effort tasks lock FMLP semaphores")
 {
 	int fd, od;
@@ -29,7 +29,7 @@ TESTCASE(not_lock_fmlp_be, GSN_EDF | PSN_EDF,
 
 }
 
-TESTCASE(not_lock_srp_be, PSN_EDF,
+TESTCASE(not_lock_srp_be, PSN_EDF | P_FP,
 	 "don't let best-effort tasks open SRP semaphores")
 {
 	int fd, od;
@@ -46,7 +46,7 @@ TESTCASE(not_lock_srp_be, PSN_EDF,
 
 }
 
-TESTCASE(lock_srp, PSN_EDF,
+TESTCASE(lock_srp, PSN_EDF | P_FP,
 	 "SRP acquisition and release")
 {
 	int fd, od;
@@ -78,7 +78,7 @@ TESTCASE(lock_srp, PSN_EDF,
 }
 
 
-TESTCASE(lock_fmlp, PSN_EDF | GSN_EDF,
+TESTCASE(lock_fmlp, PSN_EDF | GSN_EDF | P_FP,
 	 "FMLP acquisition and release")
 {
 	int fd, od;

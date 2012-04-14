@@ -10,6 +10,45 @@
 #include "litmus.h"
 #include "internal.h"
 
+#define LP(name) {name ## _SEM, #name}
+
+static struct {
+	int id;
+	const char* name;
+} protocol[] = {
+	LP(FMLP),
+	LP(SRP),
+	LP(MPCP),
+	LP(MPCP_VS),
+	{MPCP_VS_SEM, "MPCP-VS"},
+	LP(DPCP),
+};
+
+#define NUM_PROTOS (sizeof(protocol)/sizeof(protocol[0]))
+
+int lock_protocol_for_name(const char* name)
+{
+	int i;
+
+	for (i = 0; i < NUM_PROTOS; i++)
+		if (strcmp(name, protocol[i].name) == 0)
+			return protocol[i].id;
+
+	return -1;
+}
+
+const char* name_for_lock_protocol(int id)
+{
+	int i;
+
+	for (i = 0; i < NUM_PROTOS; i++)
+		if (protocol[i].id == id)
+			return protocol[i].name;
+
+	return "<UNKNOWN>";
+}
+
+
 void show_rt_param(struct rt_task* tp)
 {
 	printf("rt params:\n\t"
@@ -42,16 +81,18 @@ int be_migrate_to(int target_cpu)
 }
 
 int sporadic_task(lt_t e, lt_t p, lt_t phase,
-		  int cpu, task_class_t cls,
+		  int cpu, unsigned int priority,
+		  task_class_t cls,
 		  budget_policy_t budget_policy, int set_cpu_set)
 {
 	return sporadic_task_ns(e * NS_PER_MS, p * NS_PER_MS, phase * NS_PER_MS,
-				cpu, cls, budget_policy, set_cpu_set);
+				cpu, priority, cls, budget_policy, set_cpu_set);
 }
 
 int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
-			int cpu, task_class_t cls,
-			budget_policy_t budget_policy, int set_cpu_set)
+		     int cpu, unsigned int priority,
+		     task_class_t cls,
+		     budget_policy_t budget_policy, int set_cpu_set)
 {
 	struct rt_task param;
 	int ret;
@@ -67,6 +108,7 @@ int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
 	param.cls       = cls;
 	param.phase	= phase;
 	param.budget_policy = budget_policy;
+	param.priority  = priority;
 
 	if (set_cpu_set) {
 		ret = be_migrate_to(cpu);
