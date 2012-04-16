@@ -169,7 +169,7 @@ int main(int argc, char** argv)
 	lt_t wcet;
 	lt_t period;
 	double wcet_ms, period_ms;
-	unsigned int priority = 0;
+	unsigned int priority = LITMUS_MIN_PRIORITY;
 	int migrate = 0;
 	int cpu = 0;
 	int opt;

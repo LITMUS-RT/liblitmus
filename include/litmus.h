@@ -58,6 +58,7 @@ typedef enum  {
 	MPCP_SEM	= 2,
 	MPCP_VS_SEM	= 3,
 	DPCP_SEM	= 4,
+	PCP_SEM         = 5,
 } obj_type_t;
 
 int lock_protocol_for_name(const char* name);
@@ -106,7 +107,6 @@ task_class_t str2class(const char* str);
 /* non-preemptive section support */
 void enter_np(void);
 void exit_np(void);
-int exit_np_trace(void);
 int  requested_to_preempt(void);
 
 /* task system support */
@@ -136,6 +136,11 @@ static inline int open_fmlp_sem(int fd, int name)
 static inline int open_srp_sem(int fd, int name)
 {
 	return od_open(fd, SRP_SEM, name);
+}
+
+static inline int open_pcp_sem(int fd, int name, int cpu)
+{
+	return od_openx(fd, PCP_SEM, name, &cpu);
 }
 
 
