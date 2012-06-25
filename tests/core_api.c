@@ -141,3 +141,20 @@ TESTCASE(rt_fork_non_rt, LITMUS,
 		ASSERT(WEXITSTATUS(status) == 0);
 	}
 }
+
+TESTCASE(ctrl_page_writable, ALL,
+	 "tasks have write access to /dev/litmus/ctrl mappings")
+{
+	volatile int *ctrl_page = (volatile int*) get_ctrl_page();
+
+	/* init_litmus() should have mapped the page already  */
+	ASSERT(ctrl_page != NULL);
+
+	/* These should work without page faults. */
+	enter_np();
+	exit_np();
+
+	/* Try poking the memory directly. */
+
+	ctrl_page[32] = 0x12345678;
+}
