@@ -27,10 +27,13 @@ int run_test(struct testcase *tc) {
 	} else {
 		/* parent: wait for completion of test */
 		SYSCALL( waitpid(pid, &status, 0) );
-		if (WEXITSTATUS(status) == 0)
+		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
 			printf("ok.\n");
+		else if (WIFSIGNALED(status)) {
+			printf("failed (%s)!\n", strsignal(WTERMSIG(status)));
+		}
 	}
-	return WEXITSTATUS(status) == 0;
+	return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 }
 
 int run_tests(int* testidx, int num_tests, const char* plugin)
