@@ -21,6 +21,7 @@ TESTCASE(set_rt_task_param_invalid_params, ALL,
 	params.cpu        = 0;
 	params.period     = 100;
 	params.phase      = 0;
+	params.priority	  = LITMUS_LOWEST_PRIORITY;
 	params.cls        = RT_CLASS_HARD;
 	params.budget_policy = NO_ENFORCEMENT;
 
@@ -40,6 +41,56 @@ TESTCASE(set_rt_task_param_invalid_params, ALL,
 
 	/* now try correct params */
 	SYSCALL( set_rt_task_param(gettid(), &params) );
+}
+
+TESTCASE(reject_bad_priorities, P_FP,
+	 "reject invalid priorities")
+{
+	struct rt_task params;
+	params.cpu        = 0;
+	params.exec_cost  =  10;
+	params.period     = 100;
+	params.phase      = 0;
+	params.cls        = RT_CLASS_HARD;
+	params.budget_policy = NO_ENFORCEMENT;
+
+	SYSCALL( be_migrate_to(params.cpu) );
+
+	/* too high */
+	params.priority	  = 0;
+	SYSCALL( set_rt_task_param(gettid(), &params) );
+	SYSCALL_FAILS( EINVAL, task_mode(LITMUS_RT_TASK) );
+
+	/* too low */
+	params.priority   = LITMUS_MAX_PRIORITY;
+	SYSCALL( set_rt_task_param(gettid(), &params) );
+	SYSCALL_FAILS( EINVAL, task_mode(LITMUS_RT_TASK) );
+
+}
+
+TESTCASE(accept_valid_priorities, P_FP,
+	 "accept lowest and highest valid priorities")
+{
+	struct rt_task params;
+	params.cpu        = 0;
+	params.exec_cost  =  10;
+	params.period     = 100;
+	params.phase      = 0;
+	params.cls        = RT_CLASS_HARD;
+	params.budget_policy = NO_ENFORCEMENT;
+
+	SYSCALL( be_migrate_to(params.cpu) );
+
+	/* acceptable */
+	params.priority   = LITMUS_LOWEST_PRIORITY;
+	SYSCALL( set_rt_task_param(gettid(), &params) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
+	SYSCALL( task_mode(BACKGROUND_TASK) );
+
+	params.priority   = LITMUS_HIGHEST_PRIORITY;
+	SYSCALL( set_rt_task_param(gettid(), &params) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
+	SYSCALL( task_mode(BACKGROUND_TASK) );
 }
 
 TESTCASE(job_control_non_rt, ALL,
