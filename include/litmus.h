@@ -29,26 +29,34 @@ int get_rt_task_param(pid_t pid, struct rt_task* param);
 
 /* setup helper */
 
-/* times are given in ms */
+/* Times are given in ms. The 'priority' parameter
+ * is only relevant under fixed-priority scheduling (and
+ * ignored by other plugins). The task_class_t parameter
+ * is ignored by most plugins.
+ */
 int sporadic_task(
 		lt_t e, lt_t p, lt_t phase,
 		int partition, unsigned int priority,
 		task_class_t cls,
 		budget_policy_t budget_policy, int set_cpu_set);
 
-/* times are given in ns */
+/* Times are given in ns. The 'priority' parameter
+ * is only relevant under fixed-priority scheduling (and
+ * ignored by other plugins). The task_class_t parameter
+ * is ignored by most plugins.
+ */
 int sporadic_task_ns(
 		lt_t e, lt_t p, lt_t phase,
 		int cpu, unsigned int priority,
 		task_class_t cls,
 		budget_policy_t budget_policy, int set_cpu_set);
 
-/* budget enforcement off by default in these macros */
+/* Convenience macros. Budget enforcement off by default in these macros. */
 #define sporadic_global(e, p) \
-	sporadic_task(e, p, 0, 0, LITMUS_MAX_PRIORITY-1, \
+	sporadic_task(e, p, 0, 0, LITMUS_LOWEST_PRIORITY, \
 		RT_CLASS_SOFT, NO_ENFORCEMENT, 0)
 #define sporadic_partitioned(e, p, cpu) \
-	sporadic_task(e, p, 0, cpu, LITMUS_MAX_PRIORITY-1, \
+	sporadic_task(e, p, 0, cpu, LITMUS_LOWEST_PRIORITY, \
 		RT_CLASS_SOFT, NO_ENFORCEMENT, 1)
 
 /* file descriptor attached shared objects support */

@@ -169,7 +169,7 @@ int main(int argc, char** argv)
 	lt_t wcet;
 	lt_t period;
 	double wcet_ms, period_ms;
-	unsigned int priority = LITMUS_MIN_PRIORITY;
+	unsigned int priority = LITMUS_LOWEST_PRIORITY;
 	int migrate = 0;
 	int cpu = 0;
 	int opt;
@@ -197,7 +197,7 @@ int main(int argc, char** argv)
 			break;
 		case 'q':
 			priority = atoi(optarg);
-			if (priority == 0 || priority > LITMUS_MAX_PRIORITY)
+			if (!litmus_is_valid_fixed_prio(priority))
 				usage("Invalid priority.");
 			break;
 		case 'c':
