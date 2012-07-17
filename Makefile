@@ -221,7 +221,7 @@ lib-measure_syscall = -lm
 
 .SECONDEXPANSION:
 ${rt-apps}: $${obj-$$@} liblitmus.a
-	$(CC) -o $@ $(LDFLAGS) ${ldf-$@} $(filter-out liblitmus.a,$+) $(LOADLIBS) $(LDLIBS) ${lib-$@} ${liblitmus-flags}
+	$(CC) -o $@ $(LDFLAGS) ${ldf-$@} $(filter-out liblitmus.a,$+) $(LOADLIBS) $(LDLIBS) ${liblitmus-flags} ${lib-$@}
 
 # ##############################################################################
 # Dependency resolution.

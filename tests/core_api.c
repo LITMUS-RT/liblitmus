@@ -20,6 +20,7 @@ TESTCASE(set_rt_task_param_invalid_params, ALL,
 	struct rt_task params;
 	params.cpu        = 0;
 	params.period     = 100;
+	params.relative_deadline = params.period;
 	params.phase      = 0;
 	params.priority	  = LITMUS_LOWEST_PRIORITY;
 	params.cls        = RT_CLASS_HARD;
@@ -50,6 +51,7 @@ TESTCASE(reject_bad_priorities, P_FP,
 	params.cpu        = 0;
 	params.exec_cost  =  10;
 	params.period     = 100;
+	params.relative_deadline = params.period;
 	params.phase      = 0;
 	params.cls        = RT_CLASS_HARD;
 	params.budget_policy = NO_ENFORCEMENT;
@@ -75,6 +77,7 @@ TESTCASE(accept_valid_priorities, P_FP,
 	params.cpu        = 0;
 	params.exec_cost  =  10;
 	params.period     = 100;
+	params.relative_deadline = params.period;
 	params.phase      = 0;
 	params.cls        = RT_CLASS_HARD;
 	params.budget_policy = NO_ENFORCEMENT;

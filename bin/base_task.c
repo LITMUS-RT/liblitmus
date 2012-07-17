@@ -12,6 +12,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Second, we include the LITMUS^RT user space library header.
  * This header, part of liblitmus, provides the user space API of
@@ -22,9 +23,14 @@
 /* Next, we define period and execution cost to be constant. 
  * These are only constants for convenience in this example, they can be
  * determined at run time, e.g., from command line parameters.
+ *
+ * These are in milliseconds.
  */
-#define PERIOD		100
-#define EXEC_COST	 10
+#define PERIOD            100
+#define RELATIVE_DEADLINE 100
+#define EXEC_COST         10
+
+#define NS_PER_MS         1e6
 
 /* Catch errors.
  */
@@ -60,6 +66,15 @@ int job(void);
 int main(int argc, char** argv)
 {
 	int do_exit;
+	struct rt_task param;
+
+	/* Setup task parameters */
+	memset(&param, 0, sizeof(param));
+	param.exec_cost = EXEC_COST * NS_PER_MS;
+	param.period = PERIOD * NS_PER_MS;
+	param.relative_deadline = RELATIVE_DEADLINE * NS_PER_MS;
+	param.cls = RT_CLASS_SOFT;
+	param.budget_policy = NO_ENFORCEMENT;
 
 	/* The task is in background mode upon startup. */		
 
@@ -85,16 +100,16 @@ int main(int argc, char** argv)
 	 *    to the first partition (since partitioning is performed offline).
 	 */
 	CALL( init_litmus() );
-	CALL( sporadic_global(EXEC_COST, PERIOD) );
 
-	/* To specify a partition, use sporadic_partitioned().
-	 * Example:
+	/* To specify a partition, do
 	 *
-	 *		sporadic_partitioned(EXEC_COST, PERIOD, CPU);
+	 * param.cpu = CPU;
+	 * be_migrate_to(CPU);
 	 *
-	 * where CPU ranges from 0 to "Number of CPUs" - 1.
+	 * where CPU ranges from 0 to "Number of CPUs" - 1 before calling
+	 * set_rt_task_param().
 	 */
-
+	CALL( set_rt_task_param(gettid(), &param) );
 
 
 	/*****

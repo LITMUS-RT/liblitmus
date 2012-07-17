@@ -105,6 +105,7 @@ int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
 
 	param.exec_cost = e;
 	param.period    = p;
+	param.relative_deadline = p; /* implicit deadline */
 	param.cpu       = cpu;
 	param.cls       = cls;
 	param.phase	= phase;

@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Include gettid() */
 #include <sys/types.h>
@@ -21,8 +22,11 @@
 /* Include the LITMUS^RT API.*/
 #include "litmus.h"
 
-#define PERIOD		100
-#define EXEC_COST	 10
+#define PERIOD            100
+#define RELATIVE_DEADLINE 100
+#define EXEC_COST         10
+
+#define NS_PER_MS         1e6
 
 /* Let's create 10 threads in the example, 
  * for a total utilization of 1.
@@ -122,6 +126,15 @@ void* rt_thread(void *tcontext)
 {
 	int do_exit;
 	struct thread_context *ctx = (struct thread_context *) tcontext;
+	struct rt_task param;
+
+	/* Set up task parameters */
+	memset(&param, 0, sizeof(param));
+	param.exec_cost = EXEC_COST * NS_PER_MS;
+	param.period = PERIOD * NS_PER_MS;
+	param.relative_deadline = RELATIVE_DEADLINE * NS_PER_MS;
+	param.cls = RT_CLASS_SOFT;
+	param.budget_policy = NO_ENFORCEMENT;
 
 	/* Make presence visible. */
 	printf("RT Thread %d active.\n", ctx->id);
@@ -130,7 +143,16 @@ void* rt_thread(void *tcontext)
 	 * 1) Initialize real-time settings.
 	 */
 	CALL( init_rt_thread() );
-	CALL( sporadic_global(EXEC_COST, PERIOD) );
+
+	/* To specify a partition, do
+	 *
+	 * param.cpu = CPU;
+	 * be_migrate_to(CPU);
+	 *
+	 * where CPU ranges from 0 to "Number of CPUs" - 1 before calling
+	 * set_rt_task_param().
+	 */
+	CALL( set_rt_task_param(gettid(), &param) );
 
 	/*****
 	 * 2) Transition to real-time mode.
