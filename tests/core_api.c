@@ -35,8 +35,13 @@ TESTCASE(set_rt_task_param_invalid_params, ALL,
 	params.cpu       = -1;
 	SYSCALL_FAILS( EINVAL, set_rt_task_param(gettid(), &params) );
 
-	/* bad task */
+	/* infeasible density */
 	params.cpu  = 0;
+	params.relative_deadline = 30;
+	SYSCALL_FAILS( EINVAL, set_rt_task_param(gettid(), &params) );
+
+	/* bad task */
+	params.relative_deadline = params.period;
 	SYSCALL_FAILS( EINVAL, set_rt_task_param(-1, &params) );
 
 
