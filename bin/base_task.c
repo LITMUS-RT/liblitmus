@@ -73,10 +73,17 @@ int main(int argc, char** argv)
 	param.exec_cost = EXEC_COST * NS_PER_MS;
 	param.period = PERIOD * NS_PER_MS;
 	param.relative_deadline = RELATIVE_DEADLINE * NS_PER_MS;
-	param.cls = RT_CLASS_SOFT;
+
+	/* What to do in the case of budget overruns? */
 	param.budget_policy = NO_ENFORCEMENT;
 
-	/* The task is in background mode upon startup. */		
+	/* The task class parameter is ignored by most plugins. */
+	param.cls = RT_CLASS_SOFT;
+
+	/* The priority parameter is only used by fixed-priority plugins. */
+	param.priority = LITMUS_LOWEST_PRIORITY;
+
+	/* The task is in background mode upon startup. */
 
 
 	/*****
@@ -84,7 +91,7 @@ int main(int argc, char** argv)
 	 */
 
 
-       
+
 	/*****
 	 * 2) Work environment (e.g., global data structures, file data, etc.) would
 	 *    be setup here.
