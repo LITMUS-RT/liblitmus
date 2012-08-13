@@ -25,3 +25,9 @@ measure_syscall
 
 # build system files
 .config
+inc/config.makefile
+test_catalog.inc
+
+# files copied in from the kernel tree
+include/litmus
+arch/*/include/asm
