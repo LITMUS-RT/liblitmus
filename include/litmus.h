@@ -151,6 +151,16 @@ static inline int open_pcp_sem(int fd, int name, int cpu)
 	return od_openx(fd, PCP_SEM, name, &cpu);
 }
 
+static inline int open_mpcp_sem(int fd, int name)
+{
+	return od_open(fd, MPCP_SEM, name);
+}
+
+static inline int open_dpcp_sem(int fd, int name, int cpu)
+{
+	return od_openx(fd, DPCP_SEM, name, &cpu);
+}
+
 
 /* syscall overhead measuring */
 int null_call(cycles_t *timestamp);
