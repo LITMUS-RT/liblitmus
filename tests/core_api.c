@@ -139,7 +139,7 @@ TESTCASE(rt_fork_non_rt, LITMUS,
 		/* parent */
 
 		SYSCALL( sleep_next_period() );
-		SYSCALL( wait_for_job_release(20) );
+		SYSCALL( wait_for_job_release(3) );
 		SYSCALL( get_job_no(&job_no) );
 
 		SYSCALL( task_mode(BACKGROUND_TASK) );
