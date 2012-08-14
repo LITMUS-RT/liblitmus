@@ -3,6 +3,8 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include "litmus.h"
+
 /* CPU time consumed so far in seconds */
 double cputime(void)
 {
@@ -20,4 +22,13 @@ double wctime(void)
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return (tv.tv_sec + 1E-6 * tv.tv_usec);
+}
+
+int lt_sleep(lt_t timeout)
+{
+	struct timespec delay;
+
+	delay.tv_sec  = timeout / 1000000000L;
+	delay.tv_nsec = timeout % 1000000000L;
+	return nanosleep(&delay, NULL);
 }

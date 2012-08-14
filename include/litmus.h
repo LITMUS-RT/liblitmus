@@ -129,6 +129,9 @@ static inline lt_t ms2lt(unsigned long milliseconds)
 	return __NS_PER_MS * milliseconds;
 }
 
+/* sleep for some number of nanoseconds */
+int lt_sleep(lt_t timeout);
+
 /* CPU time consumed so far in seconds */
 double cputime(void);
 
