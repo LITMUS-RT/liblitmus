@@ -185,6 +185,7 @@ vpath %.c tests/
 
 src-runtests = $(wildcard tests/*.c)
 obj-runtests = $(patsubst tests/%.c,%.o,${src-runtests})
+lib-runtests = -lrt
 
 # generate list of tests automatically
 test_catalog.inc: $(filter-out tests/runner.c,${src-runtests})

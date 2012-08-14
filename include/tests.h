@@ -50,4 +50,6 @@ struct testsuite {
 
 #define TESTCASE(function, plugins, description) void test_ ## function (void)
 
+#define FORK_TASK(code) ({int __pid = fork(); if (__pid == 0) {code; exit(0);}; __pid;})
+
 #endif
