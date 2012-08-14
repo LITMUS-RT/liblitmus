@@ -12,6 +12,8 @@
 #define LITMUS_CTRL_DEVICE "/dev/litmus/ctrl"
 #define CTRL_PAGES 1
 
+#define LITMUS_STATS_FILE "/proc/litmus/stats"
+
 static int map_file(const char* filename, void **addr, size_t size)
 {
 	int error = 0;
@@ -33,6 +35,43 @@ static int map_file(const char* filename, void **addr, size_t size)
 	} else
 		*addr = NULL;
 	return error;
+}
+
+ssize_t read_file(const char* fname, void* buf, size_t maxlen)
+{
+	int fd;
+	ssize_t n = 0;
+	size_t got = 0;
+
+	fd = open(fname, O_RDONLY);
+	if (fd == -1)
+		return -1;
+
+	while (got < maxlen && (n = read(fd, buf + got, maxlen - got)) > 0)
+		got += n;
+	close(fd);
+	if (n < 0)
+		return -1;
+	else
+		return got;
+}
+
+int get_nr_ts_release_waiters(void)
+{
+	int ready = 0, all = 0;
+	char buf[100];
+	ssize_t len;
+
+	len = read_file(LITMUS_STATS_FILE, buf, sizeof(buf) - 1);
+	if (len >= 0)
+		len = sscanf(buf,
+			     "real-time tasks   = %d\n"
+			     "ready for release = %d\n",
+			     &all, &ready);
+	if (len == 2)
+		return ready;
+	else
+		return len;
 }
 
 /* thread-local pointer to control page */

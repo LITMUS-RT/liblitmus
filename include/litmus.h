@@ -120,6 +120,7 @@ int  requested_to_preempt(void);
 /* task system support */
 int wait_for_ts_release(void);
 int release_ts(lt_t *delay);
+int get_nr_ts_release_waiters(void);
 
 #define __NS_PER_MS 1000000
 

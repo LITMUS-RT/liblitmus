@@ -26,5 +26,8 @@ int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg,
 #define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
 #define BUILD_BUG_ON(condition) ((void)BUILD_BUG_ON_ZERO(condition))
 
+/* I/O convenience function */
+ssize_t read_file(const char* fname, void* buf, size_t maxlen);
+
 #endif
 

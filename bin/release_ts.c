@@ -7,6 +7,7 @@
 #include <fcntl.h>
 
 #include "litmus.h"
+#include "internal.h"
 
 #define OPTSTR "d:wf:"
 #define NS_PER_MS 1000000
@@ -25,25 +26,6 @@ void usage(char *error) {
 		"\n",
 		error);
 	exit(1);
-}
-
-ssize_t read_file(const char* fname, void* buf, size_t maxlen)
-{
-	int fd;
-	ssize_t n = 0;
-	size_t got = 0;
-
-	fd = open(fname, O_RDONLY);
-	if (fd == -1)
-		return -1;
-	
-	while (got < maxlen && (n = read(fd, buf + got, maxlen - got)) > 0)
-		got += n;
-	close(fd);
-	if (n < 0)
-		return -1;
-	else
-		return got;
 }
 
 void wait_until_ready(int expected)
