@@ -82,7 +82,16 @@ int init_kernel_iface(void)
 	int err = 0;
 	long page_size = sysconf(_SC_PAGESIZE);
 
-	BUILD_BUG_ON(sizeof(union np_flag) != sizeof(uint32_t));
+	BUILD_BUG_ON(sizeof(union np_flag) != sizeof(uint64_t));
+
+	BUILD_BUG_ON(offsetof(struct control_page, sched.raw)
+		     != LITMUS_CP_OFFSET_SCHED);
+	BUILD_BUG_ON(offsetof(struct control_page, irq_count)
+		     != LITMUS_CP_OFFSET_IRQ_COUNT);
+	BUILD_BUG_ON(offsetof(struct control_page, ts_syscall_start)
+		     != LITMUS_CP_OFFSET_TS_SC_START);
+	BUILD_BUG_ON(offsetof(struct control_page, irq_syscall_start)
+		     != LITMUS_CP_OFFSET_IRQ_SC_START);
 
 	err = map_file(LITMUS_CTRL_DEVICE, (void**) &ctrl_page, CTRL_PAGES * page_size);
 	if (err) {

@@ -23,6 +23,8 @@ int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg,
 #define likely(x)   __builtin_expect((x), 1)
 #define unlikely(x) __builtin_expect((x), 0)
 
+#define offsetof(s, x) __builtin_offsetof(s, x)
+
 #define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
 #define BUILD_BUG_ON(condition) ((void)BUILD_BUG_ON_ZERO(condition))
 
