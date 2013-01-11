@@ -31,35 +31,14 @@ void usage(char *error) {
 void wait_until_ready(int expected)
 {
 	int ready = 0, all = 0;
-	char buf[100];
 	int loops = 0;
-	ssize_t len;
-	
 
 	do {
 		if (loops++ > 0)
 			sleep(1);
-		len = read_file(LITMUS_STATS_FILE, buf, sizeof(buf) - 1);
-		if (len < 0) {
-			fprintf(stderr,
-				"(EE) Error while reading '%s': %m.\n"
-				"(EE) Ignoring -w option.\n",
-				LITMUS_STATS_FILE);
-			break;
-		} else {
-			len = sscanf(buf,
-				     "real-time tasks   = %d\n"
-				     "ready for release = %d\n",
-				     &all, &ready);
-			if (len != 2) {
-				fprintf(stderr, 
-					"(EE) Could not parse '%s'.\n"
-					"(EE) Ignoring -w option.\n",
-					LITMUS_STATS_FILE);
-				break;
-			}
-		}
-	} while (expected > ready || ready < all);
+		if (!read_litmus_stats(&ready, &all))
+			perror("read_litmus_stats");
+	} while (expected > ready || (!expected && ready < all));
 }
 
 int main(int argc, char** argv)
@@ -79,6 +58,7 @@ int main(int argc, char** argv)
 			wait = 1;
 			break;
 		case 'f':
+			wait = 1;
 			expected = atoi(optarg);
 			break;
 		case ':':

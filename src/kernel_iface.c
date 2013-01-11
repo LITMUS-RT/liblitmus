@@ -56,9 +56,8 @@ ssize_t read_file(const char* fname, void* buf, size_t maxlen)
 		return got;
 }
 
-int get_nr_ts_release_waiters(void)
+int read_litmus_stats(int *ready, int *all)
 {
-	int ready = 0, all = 0;
 	char buf[100];
 	ssize_t len;
 
@@ -67,11 +66,17 @@ int get_nr_ts_release_waiters(void)
 		len = sscanf(buf,
 			     "real-time tasks   = %d\n"
 			     "ready for release = %d\n",
-			     &all, &ready);
-	if (len == 2)
+			     all, ready);
+	return len == 2;
+}
+
+int get_nr_ts_release_waiters(void)
+{
+	int ready, all;
+	if (read_litmus_stats(&ready, &all))
 		return ready;
 	else
-		return len;
+		return -1;
 }
 
 /* thread-local pointer to control page */
