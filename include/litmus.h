@@ -98,9 +98,9 @@ void exit_litmus(void);
 typedef int (*rt_fn_t)(void*);
 
 /* These two functions configure the RT task to use enforced exe budgets */
-int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet, int period);
-int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, int wcet,
-		     int period, task_class_t cls);
+int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, lt_t wcet, lt_t period, unsigned int prio);
+int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, lt_t wcet,
+		     lt_t period, unsigned int priority, task_class_t cls);
 
 /*	per-task modes */
 enum rt_task_mode_t {
