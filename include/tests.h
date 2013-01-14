@@ -7,8 +7,11 @@
 
 #define fail(fmt, args...)						\
 	do {								\
-		fprintf(stderr, "\n!! TEST FAILURE " fmt "\n   at %s:%d (%s)\n", \
-			## args, __FILE__, __LINE__, __FUNCTION__);	\
+		fprintf(stderr, "\n!! TEST FAILURE " fmt		\
+			"\n   at %s:%d (%s)"				\
+			"\n   in task PID=%d\n",			\
+			## args, __FILE__, __LINE__, __FUNCTION__,	\
+			getpid());					\
 		fflush(stderr);						\
 		exit(200);						\
 	} while (0)
