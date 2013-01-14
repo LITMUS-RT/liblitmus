@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 #include <assert.h>
 
 
@@ -21,8 +22,10 @@ static void usage(char *error) {
 		"	rt_spin -l\n"
 		"\n"
 		"COMMON-OPTS = [-w] [-p PARTITION] [-c CLASS] [-s SCALE]\n"
+		"              [-X LOCKING-PROTOCOL] [-L CRITICAL SECTION LENGTH] [-Q RESOURCE-ID]"
 		"\n"
-		"WCET and PERIOD are milliseconds, DURATION is seconds.\n");
+		"WCET and PERIOD are milliseconds, DURATION is seconds.\n"
+		"CRITICAL SECTION LENGTH is in milliseconds.\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -150,18 +153,37 @@ static void debug_delay_loop(void)
 	}
 }
 
-static int job(double exec_time, double program_end)
+static int job(double exec_time, double program_end, int lock_od, double cs_length)
 {
+	double chunk1, chunk2;
+
 	if (wctime() > program_end)
 		return 0;
 	else {
-		loop_for(exec_time, program_end + 1);
+		if (lock_od >= 0) {
+			/* simulate critical section somewhere in the middle */
+			chunk1 = drand48() * (exec_time - cs_length);
+			chunk2 = exec_time - cs_length - chunk1;
+
+			/* non-critical section */
+			loop_for(chunk1, program_end + 1);
+
+			/* critical section */
+			litmus_lock(lock_od);
+			loop_for(cs_length, program_end + 1);
+			litmus_unlock(lock_od);
+
+			/* non-critical section */
+			loop_for(chunk2, program_end + 2);
+		} else {
+			loop_for(exec_time, program_end + 1);
+		}
 		sleep_next_period();
 		return 1;
 	}
 }
 
-#define OPTSTR "p:c:wlveo:f:s:q:"
+#define OPTSTR "p:c:wlveo:f:s:q:X:L:Q:"
 
 int main(int argc, char** argv)
 {
@@ -183,6 +205,13 @@ int main(int argc, char** argv)
 	double scale = 1.0;
 	task_class_t class = RT_CLASS_HARD;
 	int cur_job, num_jobs;
+
+	/* locking */
+	int lock_od = -1;
+	int resource_id = 0;
+	const char *lock_namespace = "./rtspin-locks";
+	int protocol = -1;
+	double cs_length = 1; /* millisecond */
 
 	progname = argv[0];
 
@@ -220,6 +249,21 @@ int main(int argc, char** argv)
 		case 's':
 			scale = atof(optarg);
 			break;
+		case 'X':
+			protocol = lock_protocol_for_name(optarg);
+			if (protocol < 0)
+				usage("Unknown locking protocol specified.");
+			break;
+		case 'L':
+			cs_length = atof(optarg);
+			if (cs_length <= 0)
+				usage("Invalid critical section length.");
+			break;
+		case 'Q':
+			resource_id = atoi(optarg);
+			if (resource_id <= 0 && strcmp(optarg, "0"))
+				usage("Invalid resource ID.");
+			break;
 		case ':':
 			usage("Argument missing.");
 			break;
@@ -234,6 +278,8 @@ int main(int argc, char** argv)
 		debug_delay_loop();
 		return 0;
 	}
+
+	srand(getpid());
 
 	if (file) {
 		get_exec_times(file, column, &num_jobs, &exec_times);
@@ -293,6 +339,15 @@ int main(int argc, char** argv)
 	if (ret != 0)
 		bail_out("could not become RT task");
 
+	if (protocol >= 0) {
+		/* open reference to semaphore */
+		lock_od = litmus_open_lock(protocol, resource_id, lock_namespace, &cpu);
+		if (lock_od < 0) {
+			perror("litmus_open_lock");
+			usage("Could not open lock.");
+		}
+	}
+
 	if (wait) {
 		ret = wait_for_ts_release();
 		if (ret != 0)
@@ -306,11 +361,13 @@ int main(int argc, char** argv)
 		for (cur_job = 0; cur_job < num_jobs; ++cur_job) {
 			/* convert job's length to seconds */
 			job(exec_times[cur_job] * 0.001 * scale,
-					start + duration);
+			    start + duration,
+			    lock_od, cs_length * 0.001);
 		}
 	} else {
-		/* conver to seconds and scale */
-		while (job(wcet_ms * 0.001 * scale, start + duration));
+		/* convert to seconds and scale */
+		while (job(wcet_ms * 0.001 * scale, start + duration,
+			   lock_od, cs_length * 0.001));
 	}
 
 	ret = task_mode(BACKGROUND_TASK);

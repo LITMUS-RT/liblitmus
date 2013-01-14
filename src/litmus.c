@@ -3,7 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/types.h>
+
 
 #include <sched.h> /* for cpu sets */
 
@@ -48,6 +51,23 @@ const char* name_for_lock_protocol(int id)
 
 	return "<UNKNOWN>";
 }
+
+int litmus_open_lock(
+	obj_type_t protocol,
+	int lock_id,
+	const char* namespace,
+	void *config_param)
+{
+	int fd, od;
+
+	fd = open(namespace, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+	if (fd < 0)
+		return -1;
+	od = od_openx(fd, protocol, lock_id, config_param);
+	close(fd);
+	return od;
+}
+
 
 
 void show_rt_param(struct rt_task* tp)
