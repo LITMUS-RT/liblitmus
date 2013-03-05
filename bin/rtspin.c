@@ -21,7 +21,8 @@ static void usage(char *error) {
 		"	rt_spin [COMMON-OPTS] -f FILE [-o COLUMN] WCET PERIOD\n"
 		"	rt_spin -l\n"
 		"\n"
-		"COMMON-OPTS = [-w] [-p PARTITION] [-c CLASS] [-s SCALE]\n"
+		"COMMON-OPTS = [-w] [-s SCALE]\n"
+		"              [-p PARTITION/CLUSTER [-z CLUSTER SIZE]] [-c CLASS]\n"
 		"              [-X LOCKING-PROTOCOL] [-L CRITICAL SECTION LENGTH] [-Q RESOURCE-ID]"
 		"\n"
 		"WCET and PERIOD are milliseconds, DURATION is seconds.\n"
@@ -183,7 +184,7 @@ static int job(double exec_time, double program_end, int lock_od, double cs_leng
 	}
 }
 
-#define OPTSTR "p:c:wlveo:f:s:q:X:L:Q:"
+#define OPTSTR "p:z:c:wlveo:f:s:q:X:L:Q:"
 
 int main(int argc, char** argv)
 {
@@ -193,7 +194,8 @@ int main(int argc, char** argv)
 	double wcet_ms, period_ms;
 	unsigned int priority = LITMUS_LOWEST_PRIORITY;
 	int migrate = 0;
-	int cpu = 0;
+	int cluster = 0;
+	int cluster_size = 1;
 	int opt;
 	int wait = 0;
 	int test_loop = 0;
@@ -221,8 +223,11 @@ int main(int argc, char** argv)
 			wait = 1;
 			break;
 		case 'p':
-			cpu = atoi(optarg);
+			cluster = atoi(optarg);
 			migrate = 1;
+			break;
+		case 'z':
+			cluster_size = atoi(optarg);
 			break;
 		case 'q':
 			priority = atoi(optarg);
@@ -320,13 +325,8 @@ int main(int argc, char** argv)
 	else if (file && num_jobs > 1)
 		duration += period_ms * 0.001 * (num_jobs - 1);
 
-	if (migrate) {
-		ret = be_migrate_to_cpu(cpu);
-		if (ret < 0)
-			bail_out("could not migrate to target partition");
-	}
-
-	ret = sporadic_task_ns(wcet, period, 0, cpu, priority, class,
+	ret = sporadic_task_ns(wcet, period, 0, cluster, cluster_size,
+			       priority, class,
 			       want_enforcement ? PRECISE_ENFORCEMENT
 			                        : NO_ENFORCEMENT,
 			       migrate);
@@ -341,7 +341,7 @@ int main(int argc, char** argv)
 
 	if (protocol >= 0) {
 		/* open reference to semaphore */
-		lock_od = litmus_open_lock(protocol, resource_id, lock_namespace, &cpu);
+		lock_od = litmus_open_lock(protocol, resource_id, lock_namespace, &cluster);
 		if (lock_od < 0) {
 			perror("litmus_open_lock");
 			usage("Could not open lock.");

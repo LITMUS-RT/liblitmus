@@ -21,6 +21,13 @@ extern "C" {
 int set_rt_task_param(pid_t pid, struct rt_task* param);
 int get_rt_task_param(pid_t pid, struct rt_task* param);
 
+/* Release-master-aware functions for getting the first
+ * CPU in a particular cluster or partition. Use these
+ * to set rt_task::cpu for cluster/partitioned scheduling.
+ */
+int partition_to_cpu(int partition);
+int cluster_to_first_cpu(int cluster, int cluster_size);
+
 /* setup helper */
 
 /* Times are given in ms. The 'priority' parameter
@@ -30,9 +37,9 @@ int get_rt_task_param(pid_t pid, struct rt_task* param);
  */
 int sporadic_task(
 		lt_t e, lt_t p, lt_t phase,
-		int partition, unsigned int priority,
+		int cluster, int cluster_size, unsigned int priority,
 		task_class_t cls,
-		budget_policy_t budget_policy, int set_cpu_set);
+		budget_policy_t budget_policy, int be_migrate);
 
 /* Times are given in ns. The 'priority' parameter
  * is only relevant under fixed-priority scheduling (and
@@ -41,16 +48,19 @@ int sporadic_task(
  */
 int sporadic_task_ns(
 		lt_t e, lt_t p, lt_t phase,
-		int cpu, unsigned int priority,
+		int cluster, int cluster_size, unsigned int priority,
 		task_class_t cls,
-		budget_policy_t budget_policy, int set_cpu_set);
+		budget_policy_t budget_policy, int be_migrate);
 
 /* Convenience macros. Budget enforcement off by default in these macros. */
 #define sporadic_global(e, p) \
-	sporadic_task(e, p, 0, 0, LITMUS_LOWEST_PRIORITY, \
+	sporadic_task(e, p, 0, 0, 0, LITMUS_LOWEST_PRIORITY, \
 		RT_CLASS_SOFT, NO_ENFORCEMENT, 0)
-#define sporadic_partitioned(e, p, cpu) \
-	sporadic_task(e, p, 0, cpu, LITMUS_LOWEST_PRIORITY, \
+#define sporadic_partitioned(e, p, partition) \
+	sporadic_task(e, p, 0, partition, 1, LITMUS_LOWEST_PRIORITY, \
+		RT_CLASS_SOFT, NO_ENFORCEMENT, 1)
+#define sporadic_clustered(e, p, cluster, cluster_size) \
+	sporadic_task(e, p, 0, cluster, cluster_size, LITMUS_LOWEST_PRIORITY, \
 		RT_CLASS_SOFT, NO_ENFORCEMENT, 1)
 
 /* file descriptor attached shared objects support */
@@ -98,10 +108,14 @@ void exit_litmus(void);
 /* A real-time program. */
 typedef int (*rt_fn_t)(void*);
 
-/* These two functions configure the RT task to use enforced exe budgets */
-int create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, lt_t wcet, lt_t period, unsigned int prio);
-int __create_rt_task(rt_fn_t rt_prog, void *arg, int cpu, lt_t wcet,
-		     lt_t period, unsigned int priority, task_class_t cls);
+/* These two functions configure the RT task to use enforced exe budgets.
+ * Partitioned scheduling: cluster = desired partition, cluster_size = 1
+ * Global scheduling: cluster = 0, cluster_size = 0
+ */
+int create_rt_task(rt_fn_t rt_prog, void *arg, int cluster, int cluster_size,
+			lt_t wcet, lt_t period, unsigned int prio);
+int __create_rt_task(rt_fn_t rt_prog, void *arg, int cluster, int cluster_size,
+			lt_t wcet, lt_t period, unsigned int prio, task_class_t cls);
 
 /*	per-task modes */
 enum rt_task_mode_t {

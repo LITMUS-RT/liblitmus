@@ -29,10 +29,11 @@ int launch(void *task_info_p) {
 }
 
 void usage(char *error) {
-	fprintf(stderr, "%s\nUsage: rt_launch [-w][-v][-p cpu][-q prio][-c hrt | srt | be] wcet period program [arg1 arg2 ...]\n"
+	fprintf(stderr, "%s\nUsage: rt_launch [-w][-v][-p partition/cluster [-z cluster size]][-q prio][-c hrt | srt | be] wcet period program [arg1 arg2 ...]\n"
 			"\t-w\tSynchronous release\n"
 			"\t-v\tVerbose\n"
-			"\t-p\tcpu (or initial cpu)\n"
+			"\t-p\tpartition or cluster\n"
+			"\t-z\tsize of cluster (default = 1 for partitioned)\n"
 			"\t-c\tClass\n"
 			"\twcet, period in ms\n"
 			"\tprogram to be launched\n",
@@ -41,7 +42,7 @@ void usage(char *error) {
 }
 
 
-#define OPTSTR "p:c:vwq:"
+#define OPTSTR "p:z:c:vwq:"
 
 int main(int argc, char** argv) 
 {
@@ -49,7 +50,8 @@ int main(int argc, char** argv)
 	lt_t wcet;
 	lt_t period;
 	int migrate = 0;
-	int cpu = 0;
+	int cluster = 0;
+	int cluster_size = 1;
 	int opt;
 	int verbose = 0;
 	int wait = 0;
@@ -66,8 +68,11 @@ int main(int argc, char** argv)
 			verbose = 1;
 			break;
 		case 'p':
-			cpu = atoi(optarg);
+			cluster = atoi(optarg);
 			migrate = 1;
+			break;
+		case 'z':
+			cluster_size = atoi(optarg);
 			break;
 		case 'q':
 			priority = atoi(optarg);
@@ -109,11 +114,12 @@ int main(int argc, char** argv)
 	info.argv      = argv + optind + 2;
 	info.wait      = wait;
 	if (migrate) {
-		ret = be_migrate_to_cpu(cpu);
+		ret = be_migrate_to_cluster(cluster, cluster_size);
 		if (ret < 0)
-			bail_out("could not migrate to target partition");
+			bail_out("could not migrate to target partition or cluster");
 	}
-	ret = __create_rt_task(launch, &info, cpu, wcet, period, priority, class);
+	ret = __create_rt_task(launch, &info, cluster, cluster_size, wcet, period,
+				priority, class);
 
 
 	if (ret < 0)
