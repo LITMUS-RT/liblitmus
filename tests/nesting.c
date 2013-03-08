@@ -10,7 +10,7 @@ TESTCASE(lock_fmlp_nesting, PSN_EDF | GSN_EDF | P_FP,
 {
 	int fd, od, od2;
 
-	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( sporadic_partitioned(10, 100, 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
@@ -45,7 +45,7 @@ TESTCASE(lock_fmlp_srp_nesting, PSN_EDF | P_FP,
 {
 	int fd, od, od2;
 
-	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( sporadic_partitioned(10, 100, 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
@@ -80,7 +80,7 @@ TESTCASE(lock_srp_nesting, PSN_EDF | P_FP,
 {
 	int fd, od, od2;
 
-	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( sporadic_partitioned(10, 100, 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );

@@ -57,7 +57,7 @@ TESTCASE(pcp_inheritance, P_FP,
 	params.cls        = RT_CLASS_HARD;
 	params.budget_policy = NO_ENFORCEMENT;
 
-	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 
 	child_lo = FORK_TASK(
@@ -162,7 +162,7 @@ TESTCASE(srp_ceiling_blocking, P_FP | PSN_EDF,
 	params.cls        = RT_CLASS_HARD;
 	params.budget_policy = NO_ENFORCEMENT;
 
-	SYSCALL( fd = open(".srp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".srp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 
 	child_lo = FORK_TASK(
