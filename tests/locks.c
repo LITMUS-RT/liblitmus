@@ -11,7 +11,7 @@ TESTCASE(not_lock_fmlp_be, GSN_EDF | PSN_EDF | P_FP,
 {
 	int fd, od;
 
-	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( od = open_fmlp_sem(fd, 0) );
 
@@ -34,7 +34,7 @@ TESTCASE(not_lock_srp_be, PSN_EDF | P_FP,
 {
 	int fd, od;
 
-	SYSCALL( fd = open(".srp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".srp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	/* BE tasks may not open SRP semaphores */
 
@@ -51,7 +51,7 @@ TESTCASE(lock_srp, PSN_EDF | P_FP,
 {
 	int fd, od;
 
-	SYSCALL( fd = open(".srp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".srp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( sporadic_partitioned(10, 100, 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
@@ -83,7 +83,7 @@ TESTCASE(lock_fmlp, PSN_EDF | GSN_EDF | P_FP,
 {
 	int fd, od;
 
-	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( sporadic_partitioned(10, 100, 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );

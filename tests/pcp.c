@@ -13,7 +13,7 @@ TESTCASE(lock_pcp, P_FP,
 {
 	int fd, od, cpu = 0;
 
-	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( sporadic_partitioned(10, 100, cpu) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
@@ -250,7 +250,7 @@ TESTCASE(lock_dpcp, P_FP,
 {
 	int fd, od, cpu = 1;
 
-	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( sporadic_partitioned(10, 100, 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
@@ -281,7 +281,7 @@ TESTCASE(not_lock_pcp_be, P_FP,
 {
 	int fd, od;
 
-	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	/* BE tasks are not even allowed to open a PCP semaphore */
 	SYSCALL_FAILS(EPERM, od = open_pcp_sem(fd, 0, 1) );
@@ -303,7 +303,7 @@ TESTCASE(lock_mpcp, P_FP,
 {
 	int fd, od;
 
-	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( sporadic_partitioned(10, 100, 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );

@@ -16,7 +16,7 @@ TESTCASE(fmlp_not_active, C_EDF | PFAIR | LINUX,
 {
 	int fd;
 
-	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	ASSERT(fd != -1);
 
@@ -57,7 +57,7 @@ TESTCASE(not_inherit_od, GSN_EDF | PSN_EDF,
 {
 	int fd, od, pid, status;
 
-	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( od = open_fmlp_sem(fd, 0) );
 

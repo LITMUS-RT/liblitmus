@@ -80,7 +80,7 @@ static void get_exec_times(const char *file, const int column,
 
 		for (cur_col = 1; cur_col < column; ++cur_col) {
 			/* discard input until we get to the column we want */
-			fscanf(fstream, "%*s,");
+			int unused __attribute__ ((unused)) = fscanf(fstream, "%*s,");
 		}
 
 		/* get the desired exec. time */
@@ -200,11 +200,11 @@ int main(int argc, char** argv)
 	int column = 1;
 	const char *file = NULL;
 	int want_enforcement = 0;
-	double duration = 0, start;
+	double duration = 0, start = 0;
 	double *exec_times = NULL;
 	double scale = 1.0;
 	task_class_t class = RT_CLASS_HARD;
-	int cur_job, num_jobs;
+	int cur_job = 0, num_jobs = 0;
 
 	/* locking */
 	int lock_od = -1;
