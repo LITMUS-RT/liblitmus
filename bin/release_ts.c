@@ -10,7 +10,6 @@
 #include "internal.h"
 
 #define OPTSTR "d:wf:"
-#define NS_PER_MS 1000000
 
 #define LITMUS_STATS_FILE "/proc/litmus/stats"
 
@@ -44,7 +43,7 @@ void wait_until_ready(int expected)
 int main(int argc, char** argv)
 {
 	int released;
-	lt_t delay = ms2lt(1000);
+	lt_t delay = ms2ns(1000);
 	int wait = 0;
 	int expected = 0;
 	int opt;
@@ -52,7 +51,7 @@ int main(int argc, char** argv)
 	while ((opt = getopt(argc, argv, OPTSTR)) != -1) {
 		switch (opt) {
 		case 'd':
-			delay = ms2lt(atoi(optarg));
+			delay = ms2ns(atoi(optarg));
 			break;
 		case 'w':
 			wait = 1;

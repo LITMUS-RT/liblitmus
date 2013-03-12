@@ -119,42 +119,50 @@ task_class_t str2class(const char* str)
 
 #define NS_PER_MS 1000000
 
-int sporadic_task(lt_t e, lt_t p, lt_t phase,
-		  int cluster, int cluster_size, unsigned int priority,
-		  task_class_t cls,
-		  budget_policy_t budget_policy, int set_cpu_set)
-{
-	return sporadic_task_ns(e * NS_PER_MS, p * NS_PER_MS, phase * NS_PER_MS,
-				cluster, cluster_size, priority, cls,
-				budget_policy, set_cpu_set);
-}
-
-int sporadic_task_ns(lt_t e, lt_t p, lt_t phase,
-		     int cluster, int cluster_size, unsigned int priority,
-		     task_class_t cls,
-		     budget_policy_t budget_policy, int migrate)
+int sporadic_global(lt_t e_ns, lt_t p_ns)
 {
 	struct rt_task param;
+
+	init_rt_task_param(&param);
+	param.exec_cost = e_ns;
+	param.period = p_ns;
+
+	return set_rt_task_param(gettid(), &param);
+}
+
+int sporadic_partitioned(lt_t e_ns, lt_t p_ns, int partition)
+{
 	int ret;
+	struct rt_task param;
 
-	/* Zero out first --- this is helpful when we add plugin-specific
-	 * parameters during development.
-	 */
-	memset(&param, 0, sizeof(param));
+	ret = be_migrate_to_partition(partition);
+	check("be_migrate_to_partition()");
+	if (ret != 0)
+		return ret;
 
-	param.exec_cost = e;
-	param.period    = p;
-	param.relative_deadline = p; /* implicit deadline */
-	param.cpu       = cluster_to_first_cpu(cluster, cluster_size);
-	param.cls       = cls;
-	param.phase	= phase;
-	param.budget_policy = budget_policy;
-	param.priority  = priority;
+	init_rt_task_param(&param);
+	param.exec_cost = e_ns;
+	param.period = p_ns;
+	param.cpu = partition_to_cpu(partition);
 
-	if (migrate) {
-		ret = be_migrate_to_cluster(cluster, cluster_size);
-		check("migrate to cluster");
-	}
+	return set_rt_task_param(gettid(), &param);
+}
+
+int sporadic_clustered(lt_t e_ns, lt_t p_ns, int cluster, int cluster_size)
+{
+	int ret;
+	struct rt_task param;
+
+	ret = be_migrate_to_cluster(cluster, cluster_size);
+	check("be_migrate_to_cluster()");
+	if (ret != 0)
+		return ret;
+
+	init_rt_task_param(&param);
+	param.exec_cost = e_ns;
+	param.period = p_ns;
+	param.cpu = cluster_to_first_cpu(cluster, cluster_size);
+
 	return set_rt_task_param(gettid(), &param);
 }
 

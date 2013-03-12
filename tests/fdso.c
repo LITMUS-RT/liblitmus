@@ -66,7 +66,7 @@ TESTCASE(not_inherit_od, GSN_EDF | PSN_EDF,
 	ASSERT( pid != -1 );
 
 	/* must be an RT task to lock at all */
-	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( sporadic_partitioned(ms2ns(10), ms2ns(100), 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 	if (pid == 0) {

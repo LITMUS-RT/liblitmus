@@ -15,7 +15,7 @@ TESTCASE(lock_pcp, P_FP,
 
 	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
-	SYSCALL( sporadic_partitioned(10, 100, cpu) );
+	SYSCALL( sporadic_partitioned(ms2ns(10), ms2ns(100), cpu) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 	SYSCALL( od = open_pcp_sem(fd, 0, cpu) );
@@ -45,13 +45,14 @@ TESTCASE(pcp_inheritance, P_FP,
 	int fd, od, cpu = 0;
 
 	int child_hi, child_lo, child_middle, status, waiters;
-	lt_t delay = ms2lt(100);
+	lt_t delay = ms2ns(100);
 	double start, stop;
 
 	struct rt_task params;
+	init_rt_task_param(&params);
 	params.cpu        = 0;
-	params.exec_cost  =  ms2lt(10000);
-	params.period     = ms2lt(100000);
+	params.exec_cost  =  ms2ns(10000);
+	params.period     = ms2ns(100000);
 	params.relative_deadline = params.period;
 	params.phase      = 0;
 	params.cls        = RT_CLASS_HARD;
@@ -82,7 +83,7 @@ TESTCASE(pcp_inheritance, P_FP,
 
 	child_middle = FORK_TASK(
 		params.priority	= LITMUS_HIGHEST_PRIORITY + 1;
-		params.phase    = ms2lt(100);
+		params.phase    = ms2ns(100);
 
 		SYSCALL( set_rt_task_param(gettid(), &params) );
 		SYSCALL( be_migrate_to_cpu(params.cpu) );
@@ -99,7 +100,7 @@ TESTCASE(pcp_inheritance, P_FP,
 
 	child_hi = FORK_TASK(
 		params.priority	= LITMUS_HIGHEST_PRIORITY;
-		params.phase    = ms2lt(50);
+		params.phase    = ms2ns(50);
 
 		SYSCALL( set_rt_task_param(gettid(), &params) );
 		SYSCALL( be_migrate_to_cpu(params.cpu) );
@@ -150,13 +151,14 @@ TESTCASE(srp_ceiling_blocking, P_FP | PSN_EDF,
 	int fd, od;
 
 	int child_hi, child_lo, child_middle, status, waiters;
-	lt_t delay = ms2lt(100);
+	lt_t delay = ms2ns(100);
 	double start, stop;
 
 	struct rt_task params;
+	init_rt_task_param(&params);
 	params.cpu        = 0;
-	params.exec_cost  =  ms2lt(10000);
-	params.period     = ms2lt(100000);
+	params.exec_cost  =  ms2ns(10000);
+	params.period     = ms2ns(100000);
 	params.relative_deadline = params.period;
 	params.phase      = 0;
 	params.cls        = RT_CLASS_HARD;
@@ -185,8 +187,8 @@ TESTCASE(srp_ceiling_blocking, P_FP | PSN_EDF,
 
 	child_middle = FORK_TASK(
 		params.priority	= LITMUS_HIGHEST_PRIORITY + 1;
-		params.phase    = ms2lt(100);
-		params.relative_deadline -= ms2lt(110);
+		params.phase    = ms2ns(100);
+		params.relative_deadline -= ms2ns(110);
 
 		SYSCALL( set_rt_task_param(gettid(), &params) );
 		SYSCALL( be_migrate_to_cpu(params.cpu) );
@@ -202,8 +204,8 @@ TESTCASE(srp_ceiling_blocking, P_FP | PSN_EDF,
 
 	child_hi = FORK_TASK(
 		params.priority	= LITMUS_HIGHEST_PRIORITY;
-		params.phase    = ms2lt(50);
-		params.relative_deadline -= ms2lt(200);
+		params.phase    = ms2ns(50);
+		params.relative_deadline -= ms2ns(200);
 
 		SYSCALL( set_rt_task_param(gettid(), &params) );
 		SYSCALL( be_migrate_to_cpu(params.cpu) );
@@ -252,7 +254,7 @@ TESTCASE(lock_dpcp, P_FP,
 
 	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
-	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( sporadic_partitioned(ms2ns(10), ms2ns(100), 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 	SYSCALL( od = open_dpcp_sem(fd, 0, cpu) );
@@ -305,7 +307,7 @@ TESTCASE(lock_mpcp, P_FP,
 
 	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
-	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( sporadic_partitioned(ms2ns(10), ms2ns(100), 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 	SYSCALL( od = open_mpcp_sem(fd, 0) );

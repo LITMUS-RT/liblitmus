@@ -18,6 +18,7 @@ TESTCASE(set_rt_task_param_invalid_params, ALL,
 	 "reject invalid rt_task values")
 {
 	struct rt_task params;
+	init_rt_task_param(&params);
 	params.cpu        = 0;
 	params.period     = 100;
 	params.relative_deadline = params.period;
@@ -53,6 +54,7 @@ TESTCASE(reject_bad_priorities, P_FP,
 	 "reject invalid priorities")
 {
 	struct rt_task params;
+	init_rt_task_param(&params);
 	params.cpu        = 0;
 	params.exec_cost  =  10;
 	params.period     = 100;
@@ -79,6 +81,7 @@ TESTCASE(accept_valid_priorities, P_FP,
 	 "accept lowest and highest valid priorities")
 {
 	struct rt_task params;
+	init_rt_task_param(&params);
 	params.cpu        = 0;
 	params.exec_cost  =  10;
 	params.period     = 100;
@@ -120,7 +123,7 @@ TESTCASE(rt_fork_non_rt, LITMUS,
 	unsigned int pid, job_no;
 	int status;
 
-	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( sporadic_partitioned(ms2ns(10), ms2ns(100), 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 	pid = fork();

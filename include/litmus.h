@@ -18,7 +18,6 @@ extern "C" {
 
 #include "migration.h"
 
-
 void init_rt_task_param(struct rt_task* param);
 int set_rt_task_param(pid_t pid, struct rt_task* param);
 int get_rt_task_param(pid_t pid, struct rt_task* param);
@@ -30,40 +29,21 @@ int get_rt_task_param(pid_t pid, struct rt_task* param);
 int partition_to_cpu(int partition);
 int cluster_to_first_cpu(int cluster, int cluster_size);
 
-/* setup helper */
+/* Convenience functions for setting up real-time tasks.
+ * Default behaviors set by init_rt_task_params() used.
+ * Also sets affinity masks for clustered/partitions
+ * functions. Time units in nanoseconds. */
+int sporadic_global(lt_t e_ns, lt_t p_ns);
+int sporadic_partitioned(lt_t e_ns, lt_t p_ns, int partition);
+int sporadic_clustered(lt_t e_ns, lt_t p_ns, int cluster, int cluster_size);
 
-/* Times are given in ms. The 'priority' parameter
- * is only relevant under fixed-priority scheduling (and
- * ignored by other plugins). The task_class_t parameter
- * is ignored by most plugins.
- */
-int sporadic_task(
-		lt_t e, lt_t p, lt_t phase,
-		int cluster, int cluster_size, unsigned int priority,
-		task_class_t cls,
-		budget_policy_t budget_policy, int be_migrate);
-
-/* Times are given in ns. The 'priority' parameter
- * is only relevant under fixed-priority scheduling (and
- * ignored by other plugins). The task_class_t parameter
- * is ignored by most plugins.
- */
-int sporadic_task_ns(
-		lt_t e, lt_t p, lt_t phase,
-		int cluster, int cluster_size, unsigned int priority,
-		task_class_t cls,
-		budget_policy_t budget_policy, int be_migrate);
-
-/* Convenience macros. Budget enforcement off by default in these macros. */
-#define sporadic_global(e, p) \
-	sporadic_task(e, p, 0, 0, 0, LITMUS_LOWEST_PRIORITY, \
-		RT_CLASS_SOFT, NO_ENFORCEMENT, 0)
-#define sporadic_partitioned(e, p, partition) \
-	sporadic_task(e, p, 0, partition, 1, LITMUS_LOWEST_PRIORITY, \
-		RT_CLASS_SOFT, NO_ENFORCEMENT, 1)
-#define sporadic_clustered(e, p, cluster, cluster_size) \
-	sporadic_task(e, p, 0, cluster, cluster_size, LITMUS_LOWEST_PRIORITY, \
-		RT_CLASS_SOFT, NO_ENFORCEMENT, 1)
+/* simple time unit conversion macros */
+#define s2ns(s)   ((s)*1000000000LL)
+#define s2us(s)   ((s)*1000000LL)
+#define s2ms(s)   ((s)*1000LL)
+#define ms2ns(ms) ((ms)*1000000LL)
+#define ms2us(ms) ((ms)*1000LL)
+#define us2ns(us) ((us)*1000LL)
 
 /* file descriptor attached shared objects support */
 typedef enum  {
@@ -139,13 +119,6 @@ int wait_for_ts_release(void);
 int release_ts(lt_t *delay);
 int get_nr_ts_release_waiters(void);
 int read_litmus_stats(int *ready, int *total);
-
-#define __NS_PER_MS 1000000
-
-static inline lt_t ms2lt(unsigned long milliseconds)
-{
-	return __NS_PER_MS * milliseconds;
-}
 
 /* sleep for some number of nanoseconds */
 int lt_sleep(lt_t timeout);

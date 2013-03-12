@@ -9,13 +9,14 @@ TESTCASE(preempt_on_resume, P_FP | PSN_EDF,
 	 "preempt lower-priority task when a higher-priority task resumes")
 {
 	int child_hi, child_lo, status, waiters;
-	lt_t delay = ms2lt(100);
+	lt_t delay = ms2ns(100);
 	double start, stop;
 
 	struct rt_task params;
+	init_rt_task_param(&params);
 	params.cpu        = 0;
-	params.exec_cost  =  ms2lt(10000);
-	params.period     = ms2lt(100000);
+	params.exec_cost  = ms2ns(10000);
+	params.period     = ms2ns(100000);
 	params.relative_deadline = params.period;
 	params.phase      = 0;
 	params.cls        = RT_CLASS_HARD;
@@ -51,14 +52,14 @@ TESTCASE(preempt_on_resume, P_FP | PSN_EDF,
 			;
 
 		start = wctime();
-		SYSCALL( lt_sleep(ms2lt(100)) );
+		SYSCALL( lt_sleep(ms2ns(100)) );
 		stop = wctime();
 
 		SYSCALL( kill(child_lo, SIGUSR2) );
 
 		if (stop - start >= 0.2)
 			fprintf(stderr, "\nHi-prio delay = %fsec\n",
-				stop - start - (ms2lt(100) / 1E9));
+				stop - start - (ms2ns(100) / (float)s2ns(1)));
 
 		/* Assert we woke up 'soonish' after the sleep. */
 		ASSERT( stop - start < 0.2 );

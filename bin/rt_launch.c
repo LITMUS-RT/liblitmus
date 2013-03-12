@@ -99,8 +99,8 @@ int main(int argc, char** argv)
 
 	if (argc - optind < 3)
 		usage("Arguments missing.");
-	wcet   = ms2lt(atoi(argv[optind + 0]));
-	period = ms2lt(atoi(argv[optind + 1]));
+	wcet   = ms2ns(atoi(argv[optind + 0]));
+	period = ms2ns(atoi(argv[optind + 1]));
 	if (wcet <= 0)
 	usage("The worst-case execution time must be a "
 	      "positive number.");

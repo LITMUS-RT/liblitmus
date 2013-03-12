@@ -53,7 +53,7 @@ TESTCASE(lock_srp, PSN_EDF | P_FP,
 
 	SYSCALL( fd = open(".srp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
-	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( sporadic_partitioned(ms2ns(10), ms2ns(100), 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 	SYSCALL( od = open_srp_sem(fd, 0) );
@@ -85,7 +85,7 @@ TESTCASE(lock_fmlp, PSN_EDF | GSN_EDF | P_FP,
 
 	SYSCALL( fd = open(".fmlp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
-	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( sporadic_partitioned(ms2ns(10), ms2ns(100), 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 	SYSCALL( od = open_fmlp_sem(fd, 0) );

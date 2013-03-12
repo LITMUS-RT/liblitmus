@@ -185,7 +185,6 @@ static int job(double exec_time, double program_end, int lock_od, double cs_leng
 }
 
 #define OPTSTR "p:z:c:wlveo:f:s:q:X:L:Q:"
-
 int main(int argc, char** argv)
 {
 	int ret;
@@ -207,6 +206,7 @@ int main(int argc, char** argv)
 	double scale = 1.0;
 	task_class_t class = RT_CLASS_HARD;
 	int cur_job = 0, num_jobs = 0;
+	struct rt_task param;
 
 	/* locking */
 	int lock_od = -1;
@@ -308,8 +308,8 @@ int main(int argc, char** argv)
 	wcet_ms   = atof(argv[optind + 0]);
 	period_ms = atof(argv[optind + 1]);
 
-	wcet   = wcet_ms * __NS_PER_MS;
-	period = period_ms * __NS_PER_MS;
+	wcet   = ms2ns(wcet_ms);
+	period = ms2ns(period_ms);
 	if (wcet <= 0)
 		usage("The worst-case execution time must be a "
 				"positive number.");
@@ -325,11 +325,22 @@ int main(int argc, char** argv)
 	else if (file && num_jobs > 1)
 		duration += period_ms * 0.001 * (num_jobs - 1);
 
-	ret = sporadic_task_ns(wcet, period, 0, cluster, cluster_size,
-			       priority, class,
-			       want_enforcement ? PRECISE_ENFORCEMENT
-			                        : NO_ENFORCEMENT,
-			       migrate);
+	if (migrate) {
+		ret = be_migrate_to_cluster(cluster, cluster_size);
+		if (ret < 0)
+			bail_out("could not migrate to target partition or cluster.");
+	}
+
+	init_rt_task_param(&param);
+	param.exec_cost = wcet;
+	param.period = period;
+	param.priority = priority;
+	param.cls = class;
+	param.budget_policy = (want_enforcement) ?
+			PRECISE_ENFORCEMENT : NO_ENFORCEMENT;
+	if (migrate)
+		param.cpu = cluster_to_first_cpu(cluster, cluster_size);
+	ret = set_rt_task_param(gettid(), &param);
 	if (ret < 0)
 		bail_out("could not setup rt task params");
 

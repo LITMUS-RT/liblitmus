@@ -26,8 +26,6 @@
 #define RELATIVE_DEADLINE 100
 #define EXEC_COST         10
 
-#define NS_PER_MS         1e6
-
 /* Let's create 10 threads in the example, 
  * for a total utilization of 1.
  */
@@ -129,10 +127,10 @@ void* rt_thread(void *tcontext)
 	struct rt_task param;
 
 	/* Set up task parameters */
-	memset(&param, 0, sizeof(param));
-	param.exec_cost = EXEC_COST * NS_PER_MS;
-	param.period = PERIOD * NS_PER_MS;
-	param.relative_deadline = RELATIVE_DEADLINE * NS_PER_MS;
+	init_rt_task_param(&param);
+	param.exec_cost = ms2ns(EXEC_COST);
+	param.period = ms2ns(PERIOD);
+	param.relative_deadline = ms2ns(RELATIVE_DEADLINE);
 
 	/* What to do in the case of budget overruns? */
 	param.budget_policy = NO_ENFORCEMENT;

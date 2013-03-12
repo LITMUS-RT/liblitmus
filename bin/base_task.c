@@ -30,8 +30,6 @@
 #define RELATIVE_DEADLINE 100
 #define EXEC_COST         10
 
-#define NS_PER_MS         1e6
-
 /* Catch errors.
  */
 #define CALL( exp ) do { \
@@ -69,10 +67,10 @@ int main(int argc, char** argv)
 	struct rt_task param;
 
 	/* Setup task parameters */
-	memset(&param, 0, sizeof(param));
-	param.exec_cost = EXEC_COST * NS_PER_MS;
-	param.period = PERIOD * NS_PER_MS;
-	param.relative_deadline = RELATIVE_DEADLINE * NS_PER_MS;
+	init_rt_task_param(&param);
+	param.exec_cost = ms2ns(EXEC_COST);
+	param.period = ms2ns(PERIOD);
+	param.relative_deadline = ms2ns(RELATIVE_DEADLINE);
 
 	/* What to do in the case of budget overruns? */
 	param.budget_policy = NO_ENFORCEMENT;
