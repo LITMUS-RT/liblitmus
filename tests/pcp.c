@@ -64,7 +64,7 @@ TESTCASE(pcp_inheritance, P_FP,
 		params.priority = LITMUS_LOWEST_PRIORITY;
 		params.phase    = 0;
 		SYSCALL( set_rt_task_param(gettid(), &params) );
-		SYSCALL( be_migrate_to(params.cpu) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
 		SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 		SYSCALL( od = open_pcp_sem(fd, 0, cpu) );
@@ -85,7 +85,7 @@ TESTCASE(pcp_inheritance, P_FP,
 		params.phase    = ms2lt(100);
 
 		SYSCALL( set_rt_task_param(gettid(), &params) );
-		SYSCALL( be_migrate_to(params.cpu) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
 		SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 
@@ -102,7 +102,7 @@ TESTCASE(pcp_inheritance, P_FP,
 		params.phase    = ms2lt(50);
 
 		SYSCALL( set_rt_task_param(gettid(), &params) );
-		SYSCALL( be_migrate_to(params.cpu) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
 		SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 		SYSCALL( od = open_pcp_sem(fd, 0, cpu) );
@@ -130,7 +130,7 @@ TESTCASE(pcp_inheritance, P_FP,
 		ASSERT( waiters >= 0 );
 	} while (waiters != 3);
 
-	SYSCALL( be_migrate_to(1) );
+	SYSCALL( be_migrate_to_cpu(1) );
 
 	waiters = release_ts(&delay);
 
@@ -169,7 +169,7 @@ TESTCASE(srp_ceiling_blocking, P_FP | PSN_EDF,
 		params.priority = LITMUS_LOWEST_PRIORITY;
 		params.phase    = 0;
 		SYSCALL( set_rt_task_param(gettid(), &params) );
-		SYSCALL( be_migrate_to(params.cpu) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
 		SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 		SYSCALL( od = open_srp_sem(fd, 0) );
@@ -189,7 +189,7 @@ TESTCASE(srp_ceiling_blocking, P_FP | PSN_EDF,
 		params.relative_deadline -= ms2lt(110);
 
 		SYSCALL( set_rt_task_param(gettid(), &params) );
-		SYSCALL( be_migrate_to(params.cpu) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
 		SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 
@@ -206,7 +206,7 @@ TESTCASE(srp_ceiling_blocking, P_FP | PSN_EDF,
 		params.relative_deadline -= ms2lt(200);
 
 		SYSCALL( set_rt_task_param(gettid(), &params) );
-		SYSCALL( be_migrate_to(params.cpu) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
 		SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 		SYSCALL( od = open_srp_sem(fd, 0) );
@@ -231,7 +231,7 @@ TESTCASE(srp_ceiling_blocking, P_FP | PSN_EDF,
 		ASSERT( waiters >= 0 );
 	} while (waiters != 3);
 
-	SYSCALL( be_migrate_to(1) );
+	SYSCALL( be_migrate_to_cpu(1) );
 
 	waiters = release_ts(&delay);
 

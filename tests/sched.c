@@ -24,7 +24,7 @@ TESTCASE(preempt_on_resume, P_FP | PSN_EDF,
 	child_lo = FORK_TASK(
 		params.priority = LITMUS_LOWEST_PRIORITY;
 		SYSCALL( set_rt_task_param(gettid(), &params) );
-		SYSCALL( be_migrate_to(params.cpu) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
 		SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 		SYSCALL( wait_for_ts_release() );
@@ -40,7 +40,7 @@ TESTCASE(preempt_on_resume, P_FP | PSN_EDF,
 		params.priority	= LITMUS_HIGHEST_PRIORITY;
 		params.relative_deadline -= 1000000;
 		SYSCALL( set_rt_task_param(gettid(), &params) );
-		SYSCALL( be_migrate_to(params.cpu) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
 		SYSCALL( task_mode(LITMUS_RT_TASK) );
 
 		SYSCALL( wait_for_ts_release() );

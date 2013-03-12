@@ -61,7 +61,7 @@ TESTCASE(reject_bad_priorities, P_FP,
 	params.cls        = RT_CLASS_HARD;
 	params.budget_policy = NO_ENFORCEMENT;
 
-	SYSCALL( be_migrate_to(params.cpu) );
+	SYSCALL( be_migrate_to_cpu(params.cpu) );
 
 	/* too high */
 	params.priority	  = 0;
@@ -87,7 +87,7 @@ TESTCASE(accept_valid_priorities, P_FP,
 	params.cls        = RT_CLASS_HARD;
 	params.budget_policy = NO_ENFORCEMENT;
 
-	SYSCALL( be_migrate_to(params.cpu) );
+	SYSCALL( be_migrate_to_cpu(params.cpu) );
 
 	/* acceptable */
 	params.priority   = LITMUS_LOWEST_PRIORITY;

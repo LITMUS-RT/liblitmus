@@ -321,7 +321,7 @@ int main(int argc, char** argv)
 		duration += period_ms * 0.001 * (num_jobs - 1);
 
 	if (migrate) {
-		ret = be_migrate_to(cpu);
+		ret = be_migrate_to_cpu(cpu);
 		if (ret < 0)
 			bail_out("could not migrate to target partition");
 	}

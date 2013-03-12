@@ -16,13 +16,7 @@ extern "C" {
 
 #include "asm/cycles.h" /* for null_call() */
 
-typedef int pid_t;	 /* PID of a task */
-
-/* obtain the PID of a thread */
-pid_t gettid(void);
-
-/* migrate to partition */
-int be_migrate_to(int target_cpu);
+#include "migration.h"
 
 int set_rt_task_param(pid_t pid, struct rt_task* param);
 int get_rt_task_param(pid_t pid, struct rt_task* param);

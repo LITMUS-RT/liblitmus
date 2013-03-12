@@ -109,7 +109,7 @@ int main(int argc, char** argv)
 	info.argv      = argv + optind + 2;
 	info.wait      = wait;
 	if (migrate) {
-		ret = be_migrate_to(cpu);
+		ret = be_migrate_to_cpu(cpu);
 		if (ret < 0)
 			bail_out("could not migrate to target partition");
 	}
