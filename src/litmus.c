@@ -77,6 +77,34 @@ void show_rt_param(struct rt_task* tp)
 	       tp->exec_cost, tp->period, tp->cpu);
 }
 
+void init_rt_task_param(struct rt_task* tp)
+{
+	/* Defaults:
+	 *  - implicit deadline (t->relative_deadline == 0)
+	 *  - phase = 0
+	 *  - class = RT_CLASS_SOFT
+	 *  - budget policy = NO_ENFORCEMENT
+	 *  - fixed priority = LITMUS_LOWEST_PRIORITY
+	 *  - release policy = SPORADIC
+	 *  - cpu assignment = 0
+	 *
+	 * User must still set the following fields to non-zero values:
+	 *  - tp->exec_cost
+	 *  - tp->period
+	 *
+	 * User must set tp->cpu to the appropriate value for non-global
+	 * schedulers. For clusters, set tp->cpu to the first CPU in the
+	 * assigned cluster.
+	 */
+
+	memset(tp, 0, sizeof(*tp));
+
+	tp->cls = RT_CLASS_SOFT;
+	tp->priority = LITMUS_LOWEST_PRIORITY;
+	tp->budget_policy = NO_ENFORCEMENT;
+	tp->release_policy = SPORADIC;
+}
+
 task_class_t str2class(const char* str)
 {
 	if      (!strcmp(str, "hrt"))

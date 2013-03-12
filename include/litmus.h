@@ -18,6 +18,8 @@ extern "C" {
 
 #include "migration.h"
 
+
+void init_rt_task_param(struct rt_task* param);
 int set_rt_task_param(pid_t pid, struct rt_task* param);
 int get_rt_task_param(pid_t pid, struct rt_task* param);
 
