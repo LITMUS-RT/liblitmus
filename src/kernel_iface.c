@@ -86,6 +86,7 @@ int init_kernel_iface(void)
 {
 	int err = 0;
 	long page_size = sysconf(_SC_PAGESIZE);
+	void* mapped_at = NULL;
 
 	BUILD_BUG_ON(sizeof(union np_flag) != sizeof(uint64_t));
 
@@ -98,7 +99,13 @@ int init_kernel_iface(void)
 	BUILD_BUG_ON(offsetof(struct control_page, irq_syscall_start)
 		     != LITMUS_CP_OFFSET_IRQ_SC_START);
 
-	err = map_file(LITMUS_CTRL_DEVICE, (void**) &ctrl_page, CTRL_PAGES * page_size);
+	err = map_file(LITMUS_CTRL_DEVICE, &mapped_at, CTRL_PAGES * page_size);
+
+	/* Assign ctrl_page indirectly to avoid GCC warnings about aliasing
+	 * related to type pruning.
+	 */
+	ctrl_page = mapped_at;
+
 	if (err) {
 		fprintf(stderr, "%s: cannot open LITMUS^RT control page (%m)\n",
 			__FUNCTION__);
