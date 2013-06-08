@@ -229,3 +229,63 @@ TESTCASE(suspended_admission, LITMUS,
 	SYSCALL( waitpid(child_rt, &status, 0) );
 	ASSERT( status == 0 );
 }
+
+TESTCASE(running_admission, LITMUS,
+	 "admission control handles running tasks correctly")
+{
+	int child_rt,  status;
+	struct sched_param param;
+
+	int pipefd[2], err, token = 0, scheduler;
+	struct rt_task params;
+
+        SYSCALL( pipe(pipefd) );
+
+	child_rt = FORK_TASK(
+		child_rt  = gettid();
+		/* make sure we are on the right CPU */
+		be_migrate_to_cpu(0);
+
+		/* unblock parent */
+		token = 1234;
+		ASSERT( write(pipefd[1], &token, sizeof(token)) == sizeof(token) );
+
+		scheduler = -1;
+
+		while (scheduler != SCHED_LITMUS) {
+			SYSCALL( scheduler = sched_getscheduler(child_rt) );
+		}
+
+		SYSCALL( sleep_next_period() );
+		SYSCALL( sleep_next_period() );
+
+		exit(0);
+		);
+
+	/* carry out a blocking read to suspend */
+	err = read(pipefd[0], &token, sizeof(token));
+	ASSERT(err = sizeof(token));
+	ASSERT(token == 1234);
+
+	/* give child some time to run */
+	SYSCALL( lt_sleep(ms2ns(10)) );
+
+	init_rt_task_param(&params);
+	params.cpu        = 0;
+	params.exec_cost  = ms2ns(10);
+	params.period     = ms2ns(100);
+
+	/* configure parameters of child */
+	SYSCALL( set_rt_task_param(child_rt, &params) );
+
+	/* make it a real-time task */
+	param.sched_priority = 0;
+	SYSCALL( sched_setscheduler(child_rt, SCHED_LITMUS, &param) );
+
+	/* should be a real-time task now */
+	ASSERT( sched_getscheduler(child_rt) == SCHED_LITMUS );
+
+	/* wait for child to exit */
+	SYSCALL( waitpid(child_rt, &status, 0) );
+	ASSERT( status == 0 );
+}
