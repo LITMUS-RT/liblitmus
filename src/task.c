@@ -66,7 +66,6 @@ int create_rt_task(rt_fn_t rt_prog, void *arg, int cluster, int cluster_size,
 
 
 #define SCHED_NORMAL 0
-#define SCHED_LITMUS 6
 
 int task_mode(int mode)
 {
