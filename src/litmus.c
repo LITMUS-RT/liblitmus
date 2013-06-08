@@ -85,7 +85,7 @@ void init_rt_task_param(struct rt_task* tp)
 	 *  - class = RT_CLASS_SOFT
 	 *  - budget policy = NO_ENFORCEMENT
 	 *  - fixed priority = LITMUS_LOWEST_PRIORITY
-	 *  - release policy = SPORADIC
+	 *  - release policy = TASK_SPORADIC
 	 *  - cpu assignment = 0
 	 *
 	 * User must still set the following fields to non-zero values:
@@ -102,7 +102,7 @@ void init_rt_task_param(struct rt_task* tp)
 	tp->cls = RT_CLASS_SOFT;
 	tp->priority = LITMUS_LOWEST_PRIORITY;
 	tp->budget_policy = NO_ENFORCEMENT;
-	tp->release_policy = SPORADIC;
+	tp->release_policy = TASK_SPORADIC;
 }
 
 task_class_t str2class(const char* str)
