@@ -11,7 +11,7 @@ extern ssize_t read_file(const char* fname, void* buf, size_t maxlen);
 int release_master()
 {
 	static const char NO_CPU[] = "NO_CPU";
-	char buf[5] = {0}; /* up to 9999 CPUs */
+	char buf[7] = {0}; /* up to 999999 CPUs */
 	int master = -1;
 
 	int ret = read_file("/proc/litmus/release_master", &buf, sizeof(buf)-1);
