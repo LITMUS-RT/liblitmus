@@ -36,16 +36,18 @@ include-sparc64  = sparc
 include-${ARCH} ?= ${ARCH}
 
 # name of the file(s) that holds the actual system call numbers
-unistd-i386      = unistd.h unistd_32.h
-unistd-x86_64    = unistd.h unistd_64.h
+unistd-i386      = uapi/asm/unistd.h generated/uapi/asm/unistd_32.h
+unistd-x86_64    = uapi/asm/unistd.h generated/uapi/asm/unistd_64.h
 # default: unistd.h
-unistd-${ARCH}  ?= unistd.h
+unistd-${ARCH}  ?= uapi/asm/unistd.h
 
 # by default we use the local version
 LIBLITMUS ?= .
 
 # where to find header files
-headers = -I${LIBLITMUS}/include -I${LIBLITMUS}/arch/${include-${ARCH}}/include
+headers =  -I${LIBLITMUS}/include -I${LIBLITMUS}/arch/${include-${ARCH}}/include
+headers += -I${LIBLITMUS}/arch/${include-${ARCH}}/include/uapi
+headers += -I${LIBLITMUS}/arch/${include-${ARCH}}/include/generated/uapi
 
 # combine options
 CPPFLAGS = ${flags-api} ${flags-${ARCH}} -DARCH=${ARCH} ${headers}
@@ -148,8 +150,13 @@ include/litmus/%.h: ${LITMUS_KERNEL}/include/litmus/%.h
 	cp $< $@
 
 # asm headers
-arch/${include-${ARCH}}/include/asm/%.h: \
-	${LITMUS_KERNEL}/arch/${include-${ARCH}}/include/asm/%.h
+arch/${include-${ARCH}}/include/uapi/asm/%.h: \
+	${LITMUS_KERNEL}/arch/${include-${ARCH}}/include/uapi/asm/%.h
+	@mkdir -p ${dir $@}
+	cp $< $@
+
+arch/${include-${ARCH}}/include/generated/uapi/asm/%.h: \
+	${LITMUS_KERNEL}/arch/${include-${ARCH}}/include/generated/uapi/asm/%.h
 	@mkdir -p ${dir $@}
 	cp $< $@
 
@@ -160,7 +167,7 @@ litmus-headers = \
 	include/litmus/unistd_64.h
 
 unistd-headers = \
-  $(foreach file,${unistd-${ARCH}},arch/${include-${ARCH}}/include/asm/$(file))
+  $(foreach file,${unistd-${ARCH}},arch/${include-${ARCH}}/include/$(file))
 
 
 imported-headers = ${litmus-headers} ${unistd-headers}
@@ -266,7 +273,7 @@ $(error Cannot build without access to the LITMUS^RT kernel source)
 endif
 
 kernel-unistd-hdrs := $(foreach file,${unistd-headers},${LITMUS_KERNEL}/$(file))
-hdr-ok     := $(shell egrep '\#include ["<]litmus/unistd' ${kernel-unistd-hdrs} )
+hdr-ok     := $(shell egrep '\#include ["<]litmus/unistd|__NR_litmus_lock' ${kernel-unistd-hdrs} )
 ifeq ($(strip $(hdr-ok)),)
 $(info (!!) Could not find LITMUS^RT system calls in ${kernel-unistd-hdrs}.)
 $(error Your kernel headers do not seem to be LITMUS^RT headers)
