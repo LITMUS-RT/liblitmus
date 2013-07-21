@@ -88,7 +88,7 @@ int init_kernel_iface(void)
 	long page_size = sysconf(_SC_PAGESIZE);
 	void* mapped_at = NULL;
 
-	BUILD_BUG_ON(sizeof(union np_flag) != sizeof(uint64_t));
+	BUILD_BUG_ON(sizeof(union np_flag) != sizeof(uint32_t));
 
 	BUILD_BUG_ON(offsetof(struct control_page, sched.raw)
 		     != LITMUS_CP_OFFSET_SCHED);
