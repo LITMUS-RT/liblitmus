@@ -71,7 +71,7 @@ static inline int od_open(int fd, obj_type_t type, int obj_id)
 int litmus_open_lock(
 	obj_type_t protocol,	/* which locking protocol to use, e.g., FMLP_SEM */
 	int lock_id,		/* numerical id of the lock, user-specified */
-	const char* namespace,	/* path to a shared file */
+	const char* name_space,	/* path to a shared file */
 	void *config_param);	/* any extra info needed by the protocol (such
 				 * as CPU under SRP and PCP), may be NULL */
 
