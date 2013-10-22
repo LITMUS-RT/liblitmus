@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <sys/fcntl.h>
 #include <sys/mman.h>
+#include <inttypes.h>
 
 /* Test tool for validating Litmus's uncache device.     */
 /* Tool also capable basic cache vs. sysmem statistics.  */
@@ -209,7 +210,7 @@ int do_data(int do_uncache, int64_t* time)
 	}
 	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 	elapsed = timespec_to_us(timespec_sub(end, start));
-	printf("%s Time: %ldus\n", (do_uncache) ?
+	printf("%s Time: %"PRIi64"us\n", (do_uncache) ?
 					"Uncache" : "Cache", elapsed);
 
 	munmap((char*)data, size);
@@ -304,7 +305,7 @@ int do_max_alloc(void)
 	free(maps);
 	close(fd);
 
-	printf("Maxed out allocs with %d mmaps of %lu pages in size.\n",
+	printf("Maxed out allocs with %d mmaps of %"PRIu64" pages in size.\n",
 		count, mmap_size/PAGE_SIZE);
 
 	return 0;
