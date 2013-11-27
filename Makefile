@@ -75,7 +75,7 @@ all     = lib ${rt-apps}
 rt-apps = cycles base_task rt_launch rtspin release_ts measure_syscall \
 	  base_mt_task uncache runtests
 
-.PHONY: all lib clean dump-config TAGS tags cscope help
+.PHONY: all lib clean dump-config TAGS tags cscope help doc
 
 all: ${all} inc/config.makefile
 
@@ -116,12 +116,16 @@ dump-config:
 help:
 	@cat INSTALL
 
+doc:
+	doxygen Doxyfile
+
 clean:
 	rm -f ${rt-apps}
 	rm -f *.o *.d *.a test_catalog.inc
 	rm -f ${imported-headers}
 	rm -f inc/config.makefile
 	rm -f tags TAGS cscope.files cscope.out
+	rm -r -f docs
 
 # Emacs Tags
 TAGS:
