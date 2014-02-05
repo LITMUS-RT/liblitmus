@@ -27,31 +27,48 @@ int num_online_cpus()
 	return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
-int partition_to_cpu(int partition)
+static int read_mapping(int idx, const char* which, unsigned long long int* mask)
 {
-	int cpu = partition;
-	int master = release_master();
-	if (master != -1 && master <= cpu) {
-		++cpu; /* skip over the release master */
+	int	ret = -1;
+	char buf[129] = {0};
+	char fname[80] = {0};
+
+	if (num_online_cpus() > 64) {
+		/* XXX: Support more than 64 CPUs.
+		 * User can still set appropriate values directly. */
+		goto out;
 	}
-	return cpu;
+
+	snprintf(fname, sizeof(fname), "/proc/litmus/%s/%d", which, idx);
+
+	ret = read_file(fname, &buf, sizeof(buf)-1);
+	if (ret <= 0)
+		goto out;
+
+	*mask = strtoull(buf, NULL, 16);
+	ret = 0;
+
+out:
+	return ret;
 }
 
-int cluster_to_first_cpu(int cluster, int cluster_sz)
+int domain_to_cpus(int domain, unsigned long long int* mask)
 {
-	int first_cpu;
-	int master;
+	return read_mapping(domain, "domains", mask);
+}
 
-	if (cluster_sz == 1)
-		return partition_to_cpu(cluster);
+int cpu_to_domains(int cpu, unsigned long long int* mask)
+{
+	return read_mapping(cpu, "cpus", mask);
+}
 
-	master = release_master();
-	first_cpu = cluster * cluster_sz;
-
-	if (master == first_cpu)
-		++first_cpu;
-
-	return first_cpu;
+int domain_to_first_cpu(int domain)
+{
+	unsigned long long int mask;
+	int ret = domain_to_cpus(domain, &mask);
+	if(ret == 0)
+		return (ffsll(mask)-1);
+	return ret;
 }
 
 int be_migrate_thread_to_cpu(pid_t tid, int target_cpu)
@@ -89,44 +106,29 @@ int be_migrate_thread_to_cpu(pid_t tid, int target_cpu)
 	return ret;
 }
 
-int be_migrate_thread_to_cluster(pid_t tid, int cluster, int cluster_sz)
+int be_migrate_thread_to_domain(pid_t tid, int domain)
 {
-	return __be_migrate_thread_to_cluster(tid, cluster, cluster_sz, 0);
-}
-
-int __be_migrate_thread_to_cluster(pid_t tid, int cluster, int cluster_sz,
-						 int ignore_rm)
-{
-	int first_cpu = cluster * cluster_sz; /* first CPU in cluster */
-	int last_cpu = first_cpu + cluster_sz - 1;
-	int master;
-	int num_cpus;
+	int	ret, num_cpus;
 	cpu_set_t *cpu_set;
 	size_t sz;
-	int i;
-	int ret;
+	unsigned long long int mask;
 
-	/* TODO: Error check to make sure that tid is not a real-time task. */
+	ret = domain_to_cpus(domain, &mask);
+	if (ret != 0)
+		return ret;
 
-	if (cluster_sz == 1) {
-		/* we're partitioned */
-		return be_migrate_thread_to_partition(tid, cluster);
-	}
-
-	master = (ignore_rm) ? -1 : release_master();
 	num_cpus = num_online_cpus();
-
-	if (num_cpus == -1 || last_cpu >= num_cpus || first_cpu < 0)
+	if (num_cpus == -1)
 		return -1;
 
 	cpu_set = CPU_ALLOC(num_cpus);
 	sz = CPU_ALLOC_SIZE(num_cpus);
 	CPU_ZERO_S(sz, cpu_set);
 
-	for (i = first_cpu; i <= last_cpu; ++i) {
-		if (i != master) {
-			CPU_SET_S(i, sz, cpu_set);
-		}
+	while(mask) {
+		int idx = ffsll(mask) - 1;
+		CPU_SET_S(idx, sz, cpu_set);
+		mask &= ~(1ull<<idx);
 	}
 
 	/* apply to caller */
@@ -140,23 +142,30 @@ int __be_migrate_thread_to_cluster(pid_t tid, int cluster, int cluster_sz,
 	return ret;
 }
 
-int be_migrate_thread_to_partition(pid_t tid, int partition)
-{
-	return be_migrate_thread_to_cpu(tid, partition_to_cpu(partition));
-}
-
-
 int be_migrate_to_cpu(int target_cpu)
 {
 	return be_migrate_thread_to_cpu(0, target_cpu);
 }
 
-int be_migrate_to_cluster(int cluster, int cluster_sz)
+int be_migrate_to_domain(int domain)
 {
-	return be_migrate_thread_to_cluster(0, cluster, cluster_sz);
+	return be_migrate_thread_to_domain(0, domain);
 }
 
-int be_migrate_to_partition(int partition)
+
+/* deprecated functions. */
+
+int be_migrate_to_cluster(int cluster, int cluster_size)
 {
-	return be_migrate_thread_to_partition(0, partition);
+	return be_migrate_to_domain(cluster);
+}
+
+int cluster_to_first_cpu(int cluster, int cluster_size)
+{
+	return domain_to_first_cpu(cluster);
+}
+
+int partition_to_cpu(int partition)
+{
+	return domain_to_first_cpu(partition);
 }

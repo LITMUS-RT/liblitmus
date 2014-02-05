@@ -135,7 +135,7 @@ int sporadic_partitioned(lt_t e_ns, lt_t p_ns, int partition)
 	int ret;
 	struct rt_task param;
 
-	ret = be_migrate_to_partition(partition);
+	ret = be_migrate_to_domain(partition);
 	check("be_migrate_to_partition()");
 	if (ret != 0)
 		return ret;
@@ -143,17 +143,17 @@ int sporadic_partitioned(lt_t e_ns, lt_t p_ns, int partition)
 	init_rt_task_param(&param);
 	param.exec_cost = e_ns;
 	param.period = p_ns;
-	param.cpu = partition_to_cpu(partition);
+	param.cpu = domain_to_first_cpu(partition);
 
 	return set_rt_task_param(gettid(), &param);
 }
 
-int sporadic_clustered(lt_t e_ns, lt_t p_ns, int cluster, int cluster_size)
+int sporadic_clustered(lt_t e_ns, lt_t p_ns, int cluster)
 {
 	int ret;
 	struct rt_task param;
 
-	ret = be_migrate_to_cluster(cluster, cluster_size);
+	ret = be_migrate_to_domain(cluster);
 	check("be_migrate_to_cluster()");
 	if (ret != 0)
 		return ret;
@@ -161,7 +161,7 @@ int sporadic_clustered(lt_t e_ns, lt_t p_ns, int cluster, int cluster_size)
 	init_rt_task_param(&param);
 	param.exec_cost = e_ns;
 	param.period = p_ns;
-	param.cpu = cluster_to_first_cpu(cluster, cluster_size);
+	param.cpu = domain_to_first_cpu(cluster);
 
 	return set_rt_task_param(gettid(), &param);
 }

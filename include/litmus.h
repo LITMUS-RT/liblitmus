@@ -51,6 +51,7 @@ extern "C" {
  * @param param Pointer to the struct to initialise
  */
 void init_rt_task_param(struct rt_task* param);
+
 /**
  * Set real-time task parameters for given process
  * @param pid PID of process
@@ -58,6 +59,7 @@ void init_rt_task_param(struct rt_task* param);
  * @return 0 on success
  */
 int set_rt_task_param(pid_t pid, struct rt_task* param);
+
 /**
  * Get real-time task parameters for given process
  * @param pid PID of process
@@ -74,20 +76,26 @@ int get_rt_task_param(pid_t pid, struct rt_task* param);
  *  Release-master-aware functions for getting the first
  * CPU in a particular cluster or partition. Use these
  * to set rt_task::cpu for cluster/partitioned scheduling.
+ *
+ * \deprecated{Use domain_to_first_cpu() in new code.}
  */
 int partition_to_cpu(int partition);
+
 /**
  * For given cluster, return the identifier for the first associated CPU
  * @param cluster Identifier of the cluster
  * @param cluster_size Size for this cluster
  * @return Identifier for the first associated CPU
+ *
+ * \deprecated{Use domain_to_first_cpu() in new code.}
  */
 int cluster_to_first_cpu(int cluster, int cluster_size);
 
-/* Convenience functions for setting up real-time tasks.
- * Default behaviors set by init_rt_task_params() used.
- * Also sets affinity masks for clustered/partitions
- * functions. Time units in nanoseconds. */
+
+/* The following three functions are convenience functions for setting up
+ * real-time tasks.  Default behaviors set by init_rt_task_params() are used.
+ * Also sets affinity masks for clustered/partitions functions. Time units in
+ * nanoseconds. */
 /**
  * Set up a sporadic task with global scheduling
  * @param e_ns Execution time in nanoseconds
@@ -95,6 +103,7 @@ int cluster_to_first_cpu(int cluster, int cluster_size);
  * @return 0 on success
  */
 int sporadic_global(lt_t e_ns, lt_t p_ns);
+
 /**
  * Set up a sporadic task with partitioned scheduling
  * @param e_ns Execution time in nanoseconds
@@ -103,15 +112,15 @@ int sporadic_global(lt_t e_ns, lt_t p_ns);
  * @return 0 on success
  */
 int sporadic_partitioned(lt_t e_ns, lt_t p_ns, int partition);
+
 /**
  * Set up a sporadic task with clustered scheduling
  * @param e_ns Execution time in nanoseconds
  * @param p_ns Period in nanoseconds
  * @param cluster Cluster to add this task to
- * @param cluster_size Size of the cluster
  * @return 0 on success
  */
-int sporadic_clustered(lt_t e_ns, lt_t p_ns, int cluster, int cluster_size);
+int sporadic_clustered(lt_t e_ns, lt_t p_ns, int cluster);
 
 /* simple time unit conversion macros */
 /** Convert seconds to nanoseconds
@@ -250,29 +259,25 @@ typedef int (*rt_fn_t)(void*);
  * @param arg Pointer to arguments to pass to the pointer in rt_prog
  * @param cluster Cluster to schedule this task on. For partitioned scheduling,
  * set to the desired partition. For global scheduling, set to 0
- * @param cluster_size Size of the cluster. For partitioned scheduling, set to
- * 1, for global scheduling set to 0.
  * @param wcet Worst-Case execution time for this task
  * @param period Period at which this task should be launched
  * @param prio Priority for this task
  */
-int create_rt_task(rt_fn_t rt_prog, void *arg, int cluster, int cluster_size,
-			lt_t wcet, lt_t period, unsigned int prio);
+int create_rt_task(rt_fn_t rt_prog, void *arg, int cluster,
+		   lt_t wcet, lt_t period, unsigned int prio);
 /**
  * Create a real-time task
  * @param rt_prog Function pointer to real-time task body
  * @param arg Pointer to arguments to pass to the pointer in rt_prog
  * @param cluster Cluster to schedule this task on. For partitioned scheduling,
  * set to the desired partition. For global scheduling, set to 0
- * @param cluster_size Size of the cluster. For partitioned scheduling, set to
- * 1, for global scheduling set to 0.
  * @param wcet Worst-Case execution time for this task
  * @param period Period at which this task should be launched
  * @param prio Priority for this task
- * @param cls Task class (???)
+ * @param cls Task class (unused)
  */
-int __create_rt_task(rt_fn_t rt_prog, void *arg, int cluster, int cluster_size,
-			lt_t wcet, lt_t period, unsigned int prio, task_class_t cls);
+int __create_rt_task(rt_fn_t rt_prog, void *arg, int cluster,
+		     lt_t wcet, lt_t period, unsigned int prio, task_class_t cls);
 
 /*	per-task modes */
 enum rt_task_mode_t {
