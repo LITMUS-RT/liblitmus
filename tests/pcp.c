@@ -2,11 +2,12 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/wait.h> /* for waitpid() */
-
+#include <sys/mman.h>
+#include <sched.h>
 
 #include "tests.h"
 #include "litmus.h"
-
+static int *volatile mutex;
 
 TESTCASE(lock_pcp, P_FP,
 	 "PCP acquisition and release")
@@ -276,6 +277,107 @@ TESTCASE(lock_dpcp, P_FP,
 	SYSCALL( close(fd) );
 
 	SYSCALL( remove(".pcp_locks") );
+}
+
+TESTCASE(lock_dpcp_pcp, P_FP,
+	 "DPCP-PCP interleaved priority")
+{
+	int fd, od_dpcp, od_pcp, child_hi, child_lo, status, waiters, cpu;
+	lt_t delay = ms2ns(100);
+	struct rt_task params;
+	double start;
+
+	/* tasks may not unlock resources they don't own */
+	SYSCALL( be_migrate_to_cpu(2) );
+
+	init_rt_task_param(&params);
+	params.cpu        = 0;
+	params.exec_cost  =  ms2ns(300);
+	params.period     = ms2ns(300);
+	params.relative_deadline = params.period;
+	params.phase      = 0;
+	params.cls        = RT_CLASS_HARD;
+	params.budget_policy = NO_ENFORCEMENT;
+
+	mutex = mmap(NULL, sizeof(*mutex), PROT_READ | PROT_WRITE,
+		                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+	*mutex = 0;
+
+	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
+
+	child_lo = FORK_TASK(
+		params.priority = LITMUS_LOWEST_PRIORITY;
+		params.phase = ms2ns(50);
+		params.cpu = partition_to_cpu(1);
+
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
+		SYSCALL( init_rt_thread() );
+		SYSCALL( set_rt_task_param(gettid(), &params) );
+		SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+		SYSCALL( od_dpcp = open_dpcp_sem(fd, 0, partition_to_cpu(0)) );
+
+		SYSCALL( wait_for_ts_release() );
+
+		SYSCALL( litmus_lock(od_dpcp) );
+		cpu = sched_getcpu();
+		*mutex = 1;
+		SYSCALL( litmus_unlock(od_dpcp) );
+
+		/* Agent: Have I migrated? */
+		ASSERT( cpu == partition_to_cpu(0) );
+
+		SYSCALL(sleep_next_period() );
+		);
+
+	child_hi = FORK_TASK(
+		int preempted;
+		params.priority	= LITMUS_HIGHEST_PRIORITY;
+		params.phase = 0;
+		params.cpu = partition_to_cpu(0);
+
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
+		SYSCALL( init_rt_thread() );
+		SYSCALL( set_rt_task_param(gettid(), &params) );
+		SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+		SYSCALL( od_pcp = open_pcp_sem(fd, 1, params.cpu) );
+
+		SYSCALL( wait_for_ts_release() );
+
+		/* block on semaphore */
+		SYSCALL( litmus_lock(od_pcp) );
+		start = cputime();
+		while (cputime() - start < 0.25)
+			;
+
+		preempted = *mutex;
+		SYSCALL( litmus_unlock(od_pcp) );
+
+		SYSCALL( od_close(od_pcp) );
+		ASSERT( preempted == 1 );
+
+		SYSCALL( kill(child_lo, SIGUSR2) );
+		);
+
+	do {
+		waiters = get_nr_ts_release_waiters();
+		ASSERT( waiters >= 0 );
+	} while (waiters != 2);
+
+	waiters = release_ts(&delay);
+
+	SYSCALL( waitpid(child_hi, &status, 0) );
+	ASSERT( status == 0 );
+
+	SYSCALL( waitpid(child_lo, &status, 0) );
+	ASSERT( status ==  SIGUSR2);
+
+	SYSCALL( close(fd) );
+
+	SYSCALL( remove(".pcp_locks") );
+
+	munmap(mutex, sizeof(*mutex));
 }
 
 TESTCASE(not_lock_pcp_be, P_FP,
