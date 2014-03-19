@@ -417,6 +417,19 @@ static inline int open_dpcp_sem(int fd, int name, int cpu)
 	return od_openx(fd, DPCP_SEM, name, &cpu);
 }
 
+
+/**
+ * Allocate a semaphore following the DFLP protocol
+ * @param fd File descriptor to associate lock with
+ * @param name Name of the lock, user-chosen integer
+ * @param cpu CPU to associate this lock with
+ * @return Object descriptor for given lock
+ */
+static inline int open_dflp_sem(int fd, int name, int cpu)
+{
+	return od_openx(fd, DFLP_SEM, name, &cpu);
+}
+
 /**
  * Do nothing as a syscall
  * @param timestamp Cyclecount before calling

@@ -466,3 +466,101 @@ TESTCASE(dpcp_nesting, P_FP,
 
 	SYSCALL( remove(".dpcp_locks") );
 }
+
+TESTCASE(dflp_nesting, P_FP,
+	 "DFLP no nesting allowed")
+{
+	int od, od2;
+	int cpu = 0;
+
+	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+	SYSCALL( od  = litmus_open_lock(DFLP_SEM, 0, ".dflp_locks", &cpu) );
+	SYSCALL( od2 = litmus_open_lock(DFLP_SEM, 1, ".dflp_locks", &cpu) );
+
+	SYSCALL( litmus_lock(od) );
+	SYSCALL( litmus_unlock(od) );
+
+	SYSCALL( litmus_lock(od2) );
+	SYSCALL( litmus_unlock(od2) );
+
+	SYSCALL( litmus_lock(od) );
+	SYSCALL_FAILS(EBUSY, litmus_lock(od2));
+	SYSCALL( litmus_unlock(od) );
+
+	SYSCALL( litmus_lock(od2) );
+	SYSCALL_FAILS(EBUSY, litmus_lock(od));
+	SYSCALL( litmus_unlock(od2) );
+
+	SYSCALL( od_close(od) );
+	SYSCALL( od_close(od2) );
+
+	SYSCALL( remove(".dflp_locks") );
+}
+
+TESTCASE(lock_fmlp_dflp_no_nesting, P_FP,
+	 "DFLP and FMLP nesting not allowed")
+{
+	int od, od2;
+	const char* namespace = ".locks";
+	int cpu = 0;
+
+	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+	SYSCALL( od  = litmus_open_lock(DFLP_SEM, 0, namespace, &cpu) );
+	SYSCALL( od2 = litmus_open_lock(FMLP_SEM, 1, namespace, NULL) );
+
+	SYSCALL( litmus_lock(od) );
+	SYSCALL( litmus_unlock(od) );
+
+	SYSCALL( litmus_lock(od2) );
+	SYSCALL( litmus_unlock(od2) );
+
+	SYSCALL( litmus_lock(od) );
+	SYSCALL_FAILS(EBUSY, litmus_lock(od2));
+	SYSCALL( litmus_unlock(od) );
+
+	SYSCALL( litmus_lock(od2) );
+	SYSCALL_FAILS(EBUSY, litmus_lock(od));
+	SYSCALL( litmus_unlock(od2) );
+
+	SYSCALL( od_close(od) );
+	SYSCALL( od_close(od2) );
+
+	SYSCALL( remove(namespace) );
+}
+
+TESTCASE(lock_dflp_pcp_no_nesting, P_FP,
+	 "PCP and DFLP nesting not allowed")
+{
+	int od, od2;
+	int cpu = 0;
+	const char* namespace = ".locks";
+
+	SYSCALL( sporadic_partitioned(10, 100, 0) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+	SYSCALL( od  = litmus_open_lock(PCP_SEM, 0, namespace, NULL) );
+	SYSCALL( od2 = litmus_open_lock(DFLP_SEM, 1, namespace, &cpu) );
+
+	SYSCALL( litmus_lock(od) );
+	SYSCALL( litmus_unlock(od) );
+
+	SYSCALL( litmus_lock(od2) );
+	SYSCALL( litmus_unlock(od2) );
+
+	SYSCALL( litmus_lock(od) );
+	SYSCALL_FAILS(EBUSY, litmus_lock(od2));
+	SYSCALL( litmus_unlock(od) );
+
+	SYSCALL( litmus_lock(od2) );
+	SYSCALL_FAILS(EBUSY, litmus_lock(od));
+	SYSCALL( litmus_unlock(od2) );
+
+	SYSCALL( od_close(od) );
+	SYSCALL( od_close(od2) );
+
+	SYSCALL( remove(namespace) );
+}
