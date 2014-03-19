@@ -26,6 +26,7 @@ static struct {
 	{MPCP_VS_SEM, "MPCP-VS"},
 	LP(DPCP),
 	LP(PCP),
+	LP(DFLP),
 };
 
 #define NUM_PROTOS (sizeof(protocol)/sizeof(protocol[0]))

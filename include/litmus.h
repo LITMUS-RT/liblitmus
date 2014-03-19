@@ -157,7 +157,8 @@ typedef enum  {
 	MPCP_VS_SEM	= 3, /**< Multiprocessor Priority Ceiling Protocol with
 						  Virtual Spinning */
 	DPCP_SEM	= 4, /**< Distributed Priority Ceiling Protocol */
-	PCP_SEM     = 5, /**< Priority Ceiling Protocol */
+	PCP_SEM		= 5, /**< Priority Ceiling Protocol */
+	DFLP_SEM	= 6, /**< Distributed FIFO Locking Protocol */
 } obj_type_t;
 
 /**
