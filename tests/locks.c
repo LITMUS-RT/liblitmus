@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/wait.h> /* for waitpid() */
 
 #include "tests.h"
 #include "litmus.h"
@@ -107,4 +108,172 @@ TESTCASE(lock_fmlp, PSN_EDF | GSN_EDF | P_FP,
 	SYSCALL( close(fd) );
 
 	SYSCALL( remove(".fmlp_locks") );
+}
+
+TESTCASE(srp_lock_mode_change, P_FP | PSN_EDF,
+	 "SRP task becomes non-RT task while holding lock")
+{
+	int fd, od;
+
+	int child, status;
+
+	struct rt_task params;
+	init_rt_task_param(&params);
+	params.cpu        = 0;
+	params.exec_cost  =  ms2ns(10000);
+	params.period     = ms2ns(100000);
+	params.relative_deadline = params.period;
+
+	SYSCALL( fd = open(".locks", O_RDONLY | O_CREAT, S_IRUSR) );
+
+
+	child = FORK_TASK(
+		params.priority = LITMUS_LOWEST_PRIORITY;
+		SYSCALL( set_rt_task_param(gettid(), &params) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
+		SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+		SYSCALL( od = open_srp_sem(fd, 0) );
+
+		SYSCALL( litmus_lock(od) );
+
+		SYSCALL( task_mode(BACKGROUND_TASK) );
+
+		SYSCALL( litmus_unlock(od) );
+
+		SYSCALL( od_close(od) );
+
+		exit(0);
+		);
+
+	SYSCALL( waitpid(child, &status, 0) );
+	ASSERT( WIFEXITED(status) );
+	ASSERT( WEXITSTATUS(status) == 0 );
+
+	SYSCALL( close(fd) );
+
+	SYSCALL( remove(".locks") );
+}
+
+TESTCASE(fmlp_lock_mode_change, P_FP | PSN_EDF | GSN_EDF,
+	 "FMLP task becomes non-RT task while holding lock")
+{
+	int fd, od;
+
+	int child, status;
+
+	struct rt_task params;
+	init_rt_task_param(&params);
+	params.cpu        = 0;
+	params.exec_cost  =  ms2ns(10000);
+	params.period     = ms2ns(100000);
+	params.relative_deadline = params.period;
+
+	SYSCALL( fd = open(".locks", O_RDONLY | O_CREAT, S_IRUSR) );
+
+
+	child = FORK_TASK(
+		params.priority = LITMUS_LOWEST_PRIORITY;
+		SYSCALL( set_rt_task_param(gettid(), &params) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
+		SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+		SYSCALL( od = open_fmlp_sem(fd, 0) );
+
+		SYSCALL( litmus_lock(od) );
+
+		SYSCALL( task_mode(BACKGROUND_TASK) );
+
+		SYSCALL( litmus_unlock(od) );
+
+		SYSCALL( od_close(od) );
+
+		exit(0);
+		);
+
+	SYSCALL( waitpid(child, &status, 0) );
+	ASSERT( WIFEXITED(status) );
+	ASSERT( WEXITSTATUS(status) == 0 );
+
+	SYSCALL( close(fd) );
+
+	SYSCALL( remove(".locks") );
+}
+
+TESTCASE(srp_lock_teardown, P_FP | PSN_EDF,
+	 "SRP task exits while holding lock")
+{
+	int fd, od;
+
+	int child, status;
+
+	struct rt_task params;
+	init_rt_task_param(&params);
+	params.cpu        = 0;
+	params.exec_cost  =  ms2ns(10000);
+	params.period     = ms2ns(100000);
+	params.relative_deadline = params.period;
+
+	SYSCALL( fd = open(".locks", O_RDONLY | O_CREAT, S_IRUSR) );
+
+	exit(0);
+
+	child = FORK_TASK(
+		params.priority = LITMUS_LOWEST_PRIORITY;
+		SYSCALL( set_rt_task_param(gettid(), &params) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
+		SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+		SYSCALL( od = open_srp_sem(fd, 0) );
+
+		SYSCALL( litmus_lock(od) );
+		exit(123);
+		);
+
+	SYSCALL( waitpid(child, &status, 0) );
+	ASSERT( WIFEXITED(status) );
+	ASSERT( WEXITSTATUS(status) == 123 );
+
+	SYSCALL( close(fd) );
+
+	SYSCALL( remove(".locks") );
+}
+
+TESTCASE(fmlp_lock_teardown, P_FP | PSN_EDF | GSN_EDF,
+	 "FMLP task exits while holding lock")
+{
+	int fd, od;
+
+	int child, status;
+
+	struct rt_task params;
+	init_rt_task_param(&params);
+	params.cpu        = 0;
+	params.exec_cost  =  ms2ns(10000);
+	params.period     = ms2ns(100000);
+	params.relative_deadline = params.period;
+
+	SYSCALL( fd = open(".locks", O_RDONLY | O_CREAT, S_IRUSR) );
+
+	exit(0);
+
+	child = FORK_TASK(
+		params.priority = LITMUS_LOWEST_PRIORITY;
+		SYSCALL( set_rt_task_param(gettid(), &params) );
+		SYSCALL( be_migrate_to_cpu(params.cpu) );
+		SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+		SYSCALL( od = open_fmlp_sem(fd, 0) );
+
+		SYSCALL( litmus_lock(od) );
+		exit(123);
+		);
+
+	SYSCALL( waitpid(child, &status, 0) );
+	ASSERT( WIFEXITED(status) );
+	ASSERT( WEXITSTATUS(status) == 123 );
+
+	SYSCALL( close(fd) );
+
+	SYSCALL( remove(".locks") );
 }
