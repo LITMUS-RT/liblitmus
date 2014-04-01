@@ -32,11 +32,7 @@ TESTCASE(set_rt_task_param_invalid_params, ALL,
 	/* over utilize */
 	params.exec_cost  = 110;
 	SYSCALL_FAILS( EINVAL, set_rt_task_param(gettid(), &params) );
-
-	/* bad CPU */
 	params.exec_cost = 90;
-	params.cpu       = -1;
-	SYSCALL_FAILS( EINVAL, set_rt_task_param(gettid(), &params) );
 
 	/* infeasible density */
 	params.cpu  = 0;
