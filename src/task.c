@@ -44,6 +44,7 @@ int __create_rt_task(rt_fn_t rt_prog, void *arg, int cluster,
 		lt_t wcet, lt_t period, unsigned int priority, task_class_t class)
 {
 	struct rt_task params;
+	init_rt_task_param(&params);
 	params.cpu       = domain_to_first_cpu(cluster);
 	params.period    = period;
 	params.exec_cost = wcet;
