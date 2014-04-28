@@ -160,10 +160,6 @@ TESTCASE(srp_ceiling_blocking, P_FP | PSN_EDF,
 	params.cpu        = 0;
 	params.exec_cost  =  ms2ns(10000);
 	params.period     = ms2ns(100000);
-	params.relative_deadline = params.period;
-	params.phase      = 0;
-	params.cls        = RT_CLASS_HARD;
-	params.budget_policy = NO_ENFORCEMENT;
 
 	SYSCALL( fd = open(".srp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
