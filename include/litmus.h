@@ -402,6 +402,16 @@ static inline int open_dflp_sem(int fd, int name, int cpu)
 }
 
 /**
+ * Get budget information from the scheduler (in nanoseconds).
+ * @param expended pointer to time value in wich the total
+ *        amount of already used-up budget will be stored.
+ * @param remaining pointer to time value in wich the total
+ *        amount of remaining budget will be stored.
+ */
+
+int get_current_budget(lt_t *expended, lt_t *remaining);
+
+/**
  * Do nothing as a syscall
  * @param timestamp Cyclecount before calling
  * Can be used for syscall overhead measuring */
