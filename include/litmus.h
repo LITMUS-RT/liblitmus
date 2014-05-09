@@ -251,35 +251,6 @@ int  init_rt_thread(void);
  */
 void exit_litmus(void);
 
-/* A real-time program. */
-typedef int (*rt_fn_t)(void*);
-
-/**
- * Create a real-time task that enforces exectution budgets
- * @param rt_prog Function pointer to real-time task body
- * @param arg Pointer to arguments to pass to the pointer in rt_prog
- * @param cluster Cluster to schedule this task on. For partitioned scheduling,
- * set to the desired partition. For global scheduling, set to 0
- * @param wcet Worst-Case execution time for this task
- * @param period Period at which this task should be launched
- * @param prio Priority for this task
- */
-int create_rt_task(rt_fn_t rt_prog, void *arg, int cluster,
-		   lt_t wcet, lt_t period, unsigned int prio);
-/**
- * Create a real-time task
- * @param rt_prog Function pointer to real-time task body
- * @param arg Pointer to arguments to pass to the pointer in rt_prog
- * @param cluster Cluster to schedule this task on. For partitioned scheduling,
- * set to the desired partition. For global scheduling, set to 0
- * @param wcet Worst-Case execution time for this task
- * @param period Period at which this task should be launched
- * @param prio Priority for this task
- * @param cls Task class (unused)
- */
-int __create_rt_task(rt_fn_t rt_prog, void *arg, int cluster,
-		     lt_t wcet, lt_t period, unsigned int prio, task_class_t cls);
-
 /*	per-task modes */
 enum rt_task_mode_t {
 	BACKGROUND_TASK = 0,

@@ -8,64 +8,6 @@
 #include "litmus.h"
 #include "internal.h"
 
-static void tperrorx(char* msg)
-{
-	fprintf(stderr,
-		"Task %d: %s: %m",
-		gettid(), msg);
-	exit(-1);
-}
-
-/* common launch routine */
-int __launch_rt_task(rt_fn_t rt_prog, void *rt_arg, rt_setup_fn_t setup,
-		     void* setup_arg)
-{
-	int ret;
-	int rt_task = fork();
-
-	if (rt_task == 0) {
-		/* we are the real-time task
-		 * launch task and die when it is done
-		 */
-		rt_task = gettid();
-		ret = setup(rt_task, setup_arg);
-		if (ret < 0)
-			tperrorx("could not setup task parameters");
-		ret = task_mode(LITMUS_RT_TASK);
-		if (ret < 0)
-			tperrorx("could not become real-time task");
-		exit(rt_prog(rt_arg));
-	}
-
-	return rt_task;
-}
-
-int __create_rt_task(rt_fn_t rt_prog, void *arg, int cluster,
-		lt_t wcet, lt_t period, unsigned int priority, task_class_t class)
-{
-	struct rt_task params;
-	init_rt_task_param(&params);
-	params.cpu       = domain_to_first_cpu(cluster);
-	params.period    = period;
-	params.exec_cost = wcet;
-	params.cls       = class;
-	params.phase     = 0;
-	params.priority = priority;
-	/* enforce budget for tasks that might not use sleep_next_period() */
-	params.budget_policy = QUANTUM_ENFORCEMENT;
-
-	return __launch_rt_task(rt_prog, arg,
-				(rt_setup_fn_t) set_rt_task_param, &params);
-}
-
-int create_rt_task(rt_fn_t rt_prog, void *arg, int cluster,
-		lt_t wcet, lt_t period, unsigned int prio)
-{
-	return __create_rt_task(rt_prog, arg, cluster, wcet, period,
-				prio, RT_CLASS_HARD);
-}
-
-
 #define SCHED_NORMAL 0
 
 int task_mode(int mode)
