@@ -115,7 +115,7 @@ TESTCASE(lock_dflp, P_FP,
 {
 	int fd, od, cpu = 1;
 
-	SYSCALL( fd = open(".dflp_locks", O_RDONLY | O_CREAT) );
+	SYSCALL( fd = open(".dflp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
 	SYSCALL( sporadic_partitioned(ms2ns(10), ms2ns(100), 0) );
 	SYSCALL( task_mode(LITMUS_RT_TASK) );
