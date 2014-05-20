@@ -27,17 +27,26 @@ int num_online_cpus()
 	return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
-static int read_mapping(int idx, const char* which, unsigned long long int* mask)
+static int read_mapping(int idx, const char* which, cpu_set_t** set, size_t *sz)
 {
+	/* Max CPUs = 4096 */
+
 	int	ret = -1;
-	char buf[129] = {0};
+	char buf[4096/4     /* enough chars for hex data (4 CPUs per char) */
+	       + 4096/(4*8) /* for commas (separate groups of 8 chars) */
+	       + 1] = {0};  /* for \0 */
 	char fname[80] = {0};
 
-	if (num_online_cpus() > 64) {
-		/* XXX: Support more than 64 CPUs.
-		 * User can still set appropriate values directly. */
+	char* chunk_str;
+	int len, nbits;
+	int i;
+
+	/* init vals returned to callee */
+	*set = NULL;
+	*sz = 0;
+
+	if (num_online_cpus() > 4096)
 		goto out;
-	}
 
 	snprintf(fname, sizeof(fname), "/proc/litmus/%s/%d", which, idx);
 
@@ -45,30 +54,115 @@ static int read_mapping(int idx, const char* which, unsigned long long int* mask
 	if (ret <= 0)
 		goto out;
 
-	*mask = strtoull(buf, NULL, 16);
+	len = strnlen(buf, sizeof(buf));
+	nbits = 32*(len/9 + 1); /* buf is a series of comma + 32-bits as hex */
+
+	*set = CPU_ALLOC(nbits);
+	*sz = CPU_ALLOC_SIZE(nbits);
+	CPU_ZERO_S(*sz, *set);
+
+	/* process LSB chunks first (at the end of the str) and move backward */
+	chunk_str = buf + len - 8;
+	i = 0;
+	while (chunk_str >= buf) {
+		unsigned long chunk = strtoul(chunk_str, NULL, 16);
+		while (chunk) {
+			int j = ffsl(chunk) - 1;
+			CPU_SET_S(i*32 + j, *sz, *set);
+			chunk &= ~(1ul << j);
+		}
+
+		chunk_str -= 9;
+		i += 1;
+	}
+
 	ret = 0;
 
 out:
 	return ret;
 }
 
+static unsigned long long int cpusettoull(cpu_set_t* bits, size_t sz)
+{
+	unsigned long long mask = 0;
+	int i;
+
+	for (i = 0; i < sizeof(mask)*8; ++i) {
+		if (CPU_ISSET_S(i, sz, bits)) {
+			mask |= (1ull) << i;
+		}
+	}
+
+	return mask;
+}
+
 int domain_to_cpus(int domain, unsigned long long int* mask)
 {
-	return read_mapping(domain, "domains", mask);
+	/* TODO: Support more than 64 CPUs. Instead of using 'ull' for 'mask',
+	   consider using gcc's __uint128_t or some struct. */
+
+	cpu_set_t *bits;
+	size_t sz;
+	int ret;
+
+	/* number of CPUs exceeds what we can pack in ull */
+	if (num_online_cpus() > sizeof(unsigned long long int)*8)
+		return -1;
+
+	ret = read_mapping(domain, "domains", &bits, &sz);
+	if (!ret) {
+		*mask = cpusettoull(bits, sz);
+		CPU_FREE(bits);
+	}
+
+	return ret;
 }
 
 int cpu_to_domains(int cpu, unsigned long long int* mask)
 {
-	return read_mapping(cpu, "cpus", mask);
+	/* TODO: Support more than 64 domains. Instead of using 'ull' for 'mask',
+	   consider using gcc's __uint128_t or some struct. */
+
+	cpu_set_t *bits;
+	size_t sz;
+	int ret;
+
+	/* number of CPUs exceeds what we can pack in ull */
+	if (num_online_cpus() > sizeof(unsigned long long int)*8)
+		return -1;
+
+	ret = read_mapping(cpu, "cpus", &bits, &sz);
+	if (!ret) {
+		*mask = cpusettoull(bits, sz);
+		CPU_FREE(bits);
+	}
+
+	return ret;
 }
 
 int domain_to_first_cpu(int domain)
 {
-	unsigned long long int mask;
-	int ret = domain_to_cpus(domain, &mask);
-	if(ret == 0)
-		return (ffsll(mask)-1);
-	return ret;
+	cpu_set_t *bits;
+	size_t sz;
+	int i, n_online;
+	int first;
+
+	int ret = read_mapping(domain, "domains", &bits, &sz);
+
+	if (ret)
+		return ret;
+
+	n_online = num_online_cpus();
+	first = -1; /* assume failure */
+	for (i = 0; i < n_online; ++i) {
+		if(CPU_ISSET_S(i, sz, bits)) {
+			first = i;
+			break;
+		}
+	}
+	CPU_FREE(bits);
+
+	return first;
 }
 
 int be_migrate_thread_to_cpu(pid_t tid, int target_cpu)
@@ -111,25 +205,14 @@ int be_migrate_thread_to_domain(pid_t tid, int domain)
 	int	ret, num_cpus;
 	cpu_set_t *cpu_set;
 	size_t sz;
-	unsigned long long int mask;
 
-	ret = domain_to_cpus(domain, &mask);
+	ret = read_mapping(domain, "domains", &cpu_set, &sz);
 	if (ret != 0)
 		return ret;
 
 	num_cpus = num_online_cpus();
 	if (num_cpus == -1)
 		return -1;
-
-	cpu_set = CPU_ALLOC(num_cpus);
-	sz = CPU_ALLOC_SIZE(num_cpus);
-	CPU_ZERO_S(sz, cpu_set);
-
-	while(mask) {
-		int idx = ffsll(mask) - 1;
-		CPU_SET_S(idx, sz, cpu_set);
-		mask &= ~(1ull<<idx);
-	}
 
 	/* apply to caller */
 	if (tid == 0)
