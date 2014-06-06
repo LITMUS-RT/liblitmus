@@ -202,17 +202,13 @@ int be_migrate_thread_to_cpu(pid_t tid, int target_cpu)
 
 int be_migrate_thread_to_domain(pid_t tid, int domain)
 {
-	int	ret, num_cpus;
+	int	ret;
 	cpu_set_t *cpu_set;
 	size_t sz;
 
 	ret = read_mapping(domain, "domains", &cpu_set, &sz);
 	if (ret != 0)
 		return ret;
-
-	num_cpus = num_online_cpus();
-	if (num_cpus == -1)
-		return -1;
 
 	/* apply to caller */
 	if (tid == 0)
