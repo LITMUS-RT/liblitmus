@@ -48,14 +48,16 @@ static int read_mapping(int idx, const char* which, cpu_set_t** set, size_t *sz)
 	if (num_online_cpus() > 4096)
 		goto out;
 
+	/* Read string is in the format of <mask>[,<mask>]*. All <mask>s following
+	   a comma are 8 chars (representing a 32-bit mask). The first <mask> may
+	   have fewer chars. Bits are MSB to LSB, left to right. */
 	snprintf(fname, sizeof(fname), "/proc/litmus/%s/%d", which, idx);
-
 	ret = read_file(fname, &buf, sizeof(buf)-1);
 	if (ret <= 0)
 		goto out;
 
 	len = strnlen(buf, sizeof(buf));
-	nbits = 32*(len/9 + 1); /* buf is a series of comma + 32-bits as hex */
+	nbits = 32*(len/9) + 4*(len%9); /* compute bits, accounting for commas */
 
 	*set = CPU_ALLOC(nbits);
 	*sz = CPU_ALLOC_SIZE(nbits);
@@ -64,17 +66,21 @@ static int read_mapping(int idx, const char* which, cpu_set_t** set, size_t *sz)
 	/* process LSB chunks first (at the end of the str) and move backward */
 	chunk_str = buf + len - 8;
 	i = 0;
-	while (chunk_str >= buf) {
-		unsigned long chunk = strtoul(chunk_str, NULL, 16);
+	do
+	{
+		unsigned long chunk;
+		if(chunk_str < buf)
+			chunk_str = buf; /* when MSB mask is less than 8 chars */
+		chunk = strtoul(chunk_str, NULL, 16);
 		while (chunk) {
 			int j = ffsl(chunk) - 1;
-			CPU_SET_S(i*32 + j, *sz, *set);
+			int x = i*32 + j;
+			CPU_SET_S(x, *sz, *set);
 			chunk &= ~(1ul << j);
 		}
-
 		chunk_str -= 9;
 		i += 1;
-	}
+	} while(chunk_str >= buf - 8);
 
 	ret = 0;
 
