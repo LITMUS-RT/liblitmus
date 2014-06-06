@@ -137,7 +137,7 @@ int sporadic_partitioned(lt_t e_ns, lt_t p_ns, int partition)
 	struct rt_task param;
 
 	ret = be_migrate_to_domain(partition);
-	check("be_migrate_to_partition()");
+	check("be_migrate_to_domain()");
 	if (ret != 0)
 		return ret;
 
