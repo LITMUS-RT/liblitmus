@@ -3,10 +3,13 @@
 *.a
 
 
+# editor backup files
+*~
 
 # generated files
 tests/test_catalog.inc
 *.d
+*.d.*
 docs/
 
 # executables
@@ -23,6 +26,8 @@ showst
 rtspin
 cycles
 measure_syscall
+uncache
+resctrl
 
 # build system files
 .config
@@ -32,3 +37,5 @@ test_catalog.inc
 # files copied in from the kernel tree
 include/litmus
 arch/*/include/asm
+arch/x86/include/generated
+arch/x86/include/uapi
