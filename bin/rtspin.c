@@ -184,7 +184,7 @@ static int job(double exec_time, double program_end, int lock_od, double cs_leng
 	}
 }
 
-#define OPTSTR "p:c:wlveo:f:s:q:X:L:Q:"
+#define OPTSTR "p:c:wlveo:f:s:q:r:X:L:Q:v"
 int main(int argc, char** argv)
 {
 	int ret;
@@ -194,6 +194,7 @@ int main(int argc, char** argv)
 	unsigned int priority = LITMUS_LOWEST_PRIORITY;
 	int migrate = 0;
 	int cluster = 0;
+	int reservation = -1;
 	int opt;
 	int wait = 0;
 	int test_loop = 0;
@@ -206,6 +207,9 @@ int main(int argc, char** argv)
 	task_class_t class = RT_CLASS_HARD;
 	int cur_job = 0, num_jobs = 0;
 	struct rt_task param;
+
+	int verbose = 0;
+	unsigned int job_no;
 
 	/* locking */
 	int lock_od = -1;
@@ -224,6 +228,9 @@ int main(int argc, char** argv)
 		case 'p':
 			cluster = atoi(optarg);
 			migrate = 1;
+			break;
+		case 'r':
+			reservation = atoi(optarg);
 			break;
 		case 'q':
 			priority = atoi(optarg);
@@ -264,6 +271,9 @@ int main(int argc, char** argv)
 			resource_id = atoi(optarg);
 			if (resource_id <= 0 && strcmp(optarg, "0"))
 				usage("Invalid resource ID.");
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case ':':
 			usage("Argument missing.");
@@ -334,14 +344,19 @@ int main(int argc, char** argv)
 	param.cls = class;
 	param.budget_policy = (want_enforcement) ?
 			PRECISE_ENFORCEMENT : NO_ENFORCEMENT;
-	if (migrate)
-		param.cpu = domain_to_first_cpu(cluster);
+	if (migrate) {
+		if (reservation >= 0)
+			param.cpu = reservation;
+		else
+			param.cpu = domain_to_first_cpu(cluster);
+	}
 	ret = set_rt_task_param(gettid(), &param);
 	if (ret < 0)
 		bail_out("could not setup rt task params");
 
 	init_litmus();
 
+	start = wctime();
 	ret = task_mode(LITMUS_RT_TASK);
 	if (ret != 0)
 		bail_out("could not become RT task");
@@ -355,13 +370,13 @@ int main(int argc, char** argv)
 		}
 	}
 
+
 	if (wait) {
 		ret = wait_for_ts_release();
 		if (ret != 0)
 			bail_out("wait_for_ts_release()");
+		start = wctime();
 	}
-
-	start = wctime();
 
 	if (file) {
 		/* use times read from the CSV file */
@@ -372,8 +387,14 @@ int main(int argc, char** argv)
 			    lock_od, cs_length * 0.001);
 		}
 	} else {
-		/* convert to seconds and scale */
-		while (job(wcet_ms * 0.001 * scale, start + duration,
+		do {
+			if (verbose) {
+				get_job_no(&job_no);
+				printf("rtspin/%d:%u @ %.4fms\n", gettid(),
+					job_no, (wctime() - start) * 1000);
+			}
+			/* convert to seconds and scale */
+		} while (job(wcet_ms * 0.001 * scale, start + duration,
 			   lock_od, cs_length * 0.001));
 	}
 
