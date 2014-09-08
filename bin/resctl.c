@@ -21,7 +21,7 @@ const char *usage_msg =
 	"    -p PERIOD         polling reservation period (in ms, default: 100ms)\n"
 	"    -d DEADLINE       relative deadline, implicit by default (in ms)\n"
 	"    -o OFFSET         offset (also known as phase), zero by default (in ms)\n"
-	"    -q PRIORITY       priority to use (EDF by default, max=0)\n"
+	"    -q PRIORITY       priority to use (EDF by default, highest priority = 1)\n"
 	"    -m MAJOR-CYCLE    major cycle length (in ms, for table-driven reservations) \n"
 	"\n";
 
@@ -156,6 +156,8 @@ int main(int argc, char** argv)
 
 		case 'q':
 			config.priority = atoi(optarg);
+			if (!config.priority)
+				usage("-q: invalid priority");
 			break;
 		case 'c':
 			config.cpu = atoi(optarg);
@@ -182,6 +184,11 @@ int main(int argc, char** argv)
 				res_type = SPORADIC_POLLING;
 			}  else if (strcmp(optarg, "table-driven") == 0) {
 				res_type = TABLE_DRIVEN;
+				/* Default for table-driven reservations to
+				 * maximum priority. EDF has not meaning for
+				 * table-driven reservations. */
+				if (config.priority == LITMUS_NO_PRIORITY)
+					config.priority = LITMUS_HIGHEST_PRIORITY;
 			} else {
 				usage("Unknown reservation type.");
 			}
