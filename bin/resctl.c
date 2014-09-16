@@ -74,18 +74,25 @@ static struct lt_interval* parse_td_intervals(int argc, char** argv,
 	int i, matched;
 	struct lt_interval *slots = malloc(sizeof(slots[0]) * argc);
 	double start, end;
+	char closing_paren[2];
+	int closed;
 
 	*num_intervals = 0;
 	for (i = 0; i < argc; i++) {
-		matched = sscanf(argv[i], "[%lf,%lf]", &start, &end);
-		if (matched != 2) {
+		matched = sscanf(argv[i], "[%lf,%lf%1[])]",
+			&start, &end, closing_paren);
+		if (matched != 3) {
 			fprintf(stderr, "could not parse '%s' as interval\n", argv[i]);
 			exit(5);
 		}
+
+		closed = closing_paren[0] == ']';
+
 		if (start < 0) {
 			fprintf(stderr, "interval %s: must not start before zero\n", argv[i]);
 			exit(5);
 		}
+
 		if (end <= start) {
 			fprintf(stderr, "interval %s: end before start\n", argv[i]);
 			exit(5);
@@ -94,13 +101,17 @@ static struct lt_interval* parse_td_intervals(int argc, char** argv,
 		slots[i].start = ms2ns(start);
 		slots[i].end   = ms2ns(end);
 
+		if (!closed)
+			slots[i].end--;
+
 		if (i > 0 && slots[i - 1].end >= slots[i].start) {
 			fprintf(stderr, "interval %s: overlaps with previous interval\n", argv[i]);
 			exit(5);
 		}
 
 		if (slots[i].end >= major_cycle) {
-			fprintf(stderr, "interval %s: exceeds major cycle length\n", argv[i]);
+			fprintf(stderr, "interval %s: exceeds major cycle length (%llu >= %llu)\n", argv[i],
+			slots[i].end, major_cycle);
 			exit(5);
 		}
 
