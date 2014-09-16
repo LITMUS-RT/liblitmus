@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <signal.h>
+#include <errno.h>
 
 #include <sched.h>
 
@@ -114,6 +115,7 @@ static struct lt_interval* parse_td_intervals(int argc, char** argv,
 int main(int argc, char** argv)
 {
 	int ret, opt;
+	char* parsed;
 	double budget_ms, period_ms, offset_ms, deadline_ms, major_cycle_ms;
 	int create_new = 0;
 	int attach_pid = 0;
@@ -155,8 +157,9 @@ int main(int argc, char** argv)
 			break;
 
 		case 'q':
-			config.priority = atoi(optarg);
-			if (!config.priority)
+			errno = 0;
+			config.priority = strtoull(optarg, &parsed, 0);
+			if (!config.priority || errno || *parsed != '\0')
 				usage("-q: invalid priority");
 			break;
 		case 'c':
