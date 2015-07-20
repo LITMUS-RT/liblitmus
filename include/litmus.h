@@ -42,9 +42,9 @@ extern "C" {
 
 /**
  * @private
- * Number of semaphore protocol object types
+ * The numeric ID of the LITMUS^RT scheduling class.
  */
-#define SCHED_LITMUS 6
+#define SCHED_LITMUS 7
 
 /**
  * Initialise a real-time task param struct
