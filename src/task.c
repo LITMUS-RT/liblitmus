@@ -18,7 +18,7 @@ int task_mode(int mode)
 	int policy = sched_getscheduler(gettid());
 	int old_mode = policy == SCHED_LITMUS ? LITMUS_RT_TASK : BACKGROUND_TASK;
 
-	memset(&param, sizeof(param), 0);
+	memset(&param, 0, sizeof(param));
 	param.sched_priority = 0;
 	if (old_mode == LITMUS_RT_TASK && mode == BACKGROUND_TASK) {
 		/* transition to normal task */
