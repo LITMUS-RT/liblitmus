@@ -40,6 +40,23 @@ TESTCASE(lock_pcp, P_FP,
 	SYSCALL( remove(".pcp_locks") );
 }
 
+TESTCASE(pcp_bad_cpu, P_FP,
+	 "PCP reject bad CPU parameter")
+{
+	int fd, cpu = 0xbadca5e;
+
+	SYSCALL( fd = open(".pcp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
+
+	SYSCALL( sporadic_partitioned(ms2ns(10), ms2ns(100), 0) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+	SYSCALL_FAILS(EINVAL, open_pcp_sem(fd, 0, cpu) );
+
+	SYSCALL( close(fd) );
+
+	SYSCALL( remove(".pcp_locks") );
+}
+
 TESTCASE(pcp_inheritance, P_FP,
 	 "PCP priority inheritance")
 {

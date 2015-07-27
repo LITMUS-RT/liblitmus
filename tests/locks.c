@@ -141,6 +141,23 @@ TESTCASE(lock_dflp, P_FP,
 	SYSCALL( remove(".dflp_locks") );
 }
 
+TESTCASE(dflp_bad_cpu, P_FP,
+	 "DFLP reject bad CPU parameter")
+{
+	int fd, cpu = 0xbadca5e;
+
+	SYSCALL( fd = open(".dflp_locks", O_RDONLY | O_CREAT, S_IRUSR) );
+
+	SYSCALL( sporadic_partitioned(ms2ns(10), ms2ns(100), 0) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
+
+	SYSCALL_FAILS(EINVAL, open_dflp_sem(fd, 0, cpu) );
+
+	SYSCALL( close(fd) );
+
+	SYSCALL( remove(".dflp_locks") );
+}
+
 TESTCASE(srp_lock_mode_change, P_FP | PSN_EDF,
 	 "SRP task becomes non-RT task while holding lock")
 {
