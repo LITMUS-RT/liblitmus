@@ -163,8 +163,6 @@ TESTCASE(srp_lock_mode_change, P_FP | PSN_EDF,
 {
 	int fd, od;
 
-	int child, status;
-
 	struct rt_task params;
 	init_rt_task_param(&params);
 	params.cpu        = 0;
@@ -174,29 +172,22 @@ TESTCASE(srp_lock_mode_change, P_FP | PSN_EDF,
 
 	SYSCALL( fd = open(".locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
+	params.priority = LITMUS_LOWEST_PRIORITY;
+	SYSCALL( set_rt_task_param(gettid(), &params) );
+	SYSCALL( be_migrate_to_cpu(params.cpu) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
 
-	child = FORK_TASK(
-		params.priority = LITMUS_LOWEST_PRIORITY;
-		SYSCALL( set_rt_task_param(gettid(), &params) );
-		SYSCALL( be_migrate_to_cpu(params.cpu) );
-		SYSCALL( task_mode(LITMUS_RT_TASK) );
+	SYSCALL( od = open_srp_sem(fd, 0) );
 
-		SYSCALL( od = open_srp_sem(fd, 0) );
+	SYSCALL( litmus_lock(od) );
 
-		SYSCALL( litmus_lock(od) );
+	SYSCALL( task_mode(BACKGROUND_TASK) );
 
-		SYSCALL( task_mode(BACKGROUND_TASK) );
+	be_migrate_to_cpu(1);
 
-		SYSCALL( litmus_unlock(od) );
+	SYSCALL( litmus_unlock(od) );
 
-		SYSCALL( od_close(od) );
-
-		exit(0);
-		);
-
-	SYSCALL( waitpid(child, &status, 0) );
-	ASSERT( WIFEXITED(status) );
-	ASSERT( WEXITSTATUS(status) == 0 );
+	SYSCALL( od_close(od) );
 
 	SYSCALL( close(fd) );
 
@@ -208,8 +199,6 @@ TESTCASE(dflp_lock_mode_change, P_FP,
 {
 	int fd, od, cpu = 0;
 
-	int child, status;
-
 	struct rt_task params;
 	init_rt_task_param(&params);
 	params.cpu        = 1;
@@ -219,28 +208,22 @@ TESTCASE(dflp_lock_mode_change, P_FP,
 
 	SYSCALL( fd = open(".locks", O_RDONLY | O_CREAT, S_IRUSR) );
 
-	child = FORK_TASK(
-		params.priority = LITMUS_LOWEST_PRIORITY;
-		SYSCALL( set_rt_task_param(gettid(), &params) );
-		SYSCALL( be_migrate_to_cpu(params.cpu) );
-		SYSCALL( task_mode(LITMUS_RT_TASK) );
+	params.priority = LITMUS_LOWEST_PRIORITY;
+	SYSCALL( set_rt_task_param(gettid(), &params) );
+	SYSCALL( be_migrate_to_cpu(params.cpu) );
+	SYSCALL( task_mode(LITMUS_RT_TASK) );
 
-		SYSCALL( od = open_dflp_sem(fd, 0, cpu) );
+	SYSCALL( od = open_dflp_sem(fd, 0, cpu) );
 
-		SYSCALL( litmus_lock(od) );
+	SYSCALL( litmus_lock(od) );
 
-		SYSCALL( task_mode(BACKGROUND_TASK) );
+	SYSCALL( task_mode(BACKGROUND_TASK) );
 
-		SYSCALL( litmus_unlock(od) );
+	be_migrate_to_cpu(2);
 
-		SYSCALL( od_close(od) );
+	SYSCALL( litmus_unlock(od) );
 
-		exit(0);
-		);
-
-	SYSCALL( waitpid(child, &status, 0) );
-	ASSERT( WIFEXITED(status) );
-	ASSERT( WEXITSTATUS(status) == 0 );
+	SYSCALL( od_close(od) );
 
 	SYSCALL( close(fd) );
 
