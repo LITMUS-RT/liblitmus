@@ -13,6 +13,8 @@
 
 #include "litmus.h"
 
+int verbose = 0;
+
 int run_test(struct testcase *tc) {
 	int status;
 	pid_t pid;
@@ -26,6 +28,10 @@ int run_test(struct testcase *tc) {
 		tc->function();
 		exit(0);
 	} else {
+		if (verbose) {
+			printf("[PID=%d] ", pid);
+			fflush(stdout);
+		}
 		/* parent: wait for completion of test */
 		SYSCALL( waitpid(pid, &status, 0) );
 		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
@@ -74,18 +80,53 @@ static int get_active_plugin(char *buf, size_t buf_size)
 	return 0;
 }
 
+const char *usage_msg =
+	"Usage: runtests OPTIONS [plugin name]\n"
+	"    -v                verbose (prints PIDs)\n"
+	"\n";
+
+void usage(char *error) {
+	int i;
+	fprintf(stderr, "%s\n%s", error, usage_msg);
+	fprintf(stderr, "Supported plugins: ");
+	for (i = 0; i < NUM_PLUGINS; i++)
+		fprintf(stderr, "%s ", testsuite[i].plugin);
+	fprintf(stderr, "\n");
+	exit(1);
+}
+
 #define streq(s1, s2) (!strcmp(s1, s2))
+
+#define OPTSTR "v"
 
 int main(int argc, char** argv)
 {
-	int ok, i;
+	int ok, i, opt;
 	char active_plugin[256];
 	char *plugin_name = NULL;
 
+	while ((opt = getopt(argc, argv, OPTSTR)) != -1) {
+		switch (opt) {
+		case 'v':
+			verbose = 1;
+			break;
+		case ':':
+			usage("Argument missing.");
+			break;
+		case '?':
+		default:
+			usage("Bad argument.");
+			break;
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
 	printf("** LITMUS^RT test suite.\n");
 
-	if (argc == 2)
-		plugin_name = argv[1];
+	if (argc == 1)
+		plugin_name = argv[0];
 	else if (get_active_plugin(active_plugin, sizeof(active_plugin))) {
 		/* run tests for currently active plugin */
 		plugin_name = active_plugin;
@@ -102,13 +143,10 @@ int main(int argc, char** argv)
 				return ok == testsuite[i].num_cases ? 0 : 3;
 			}
 		fprintf(stderr, "** Unknown plugin: '%s'\n", plugin_name);
+		usage("");
 		return 1;
 	} else {
-		fprintf(stderr, "Usage: %s <plugin name>\n", argv[0]);
-		fprintf(stderr, "Supported plugins: ");
-		for (i = 0; i < NUM_PLUGINS; i++)
-			fprintf(stderr, "%s ", testsuite[i].plugin);
-		fprintf(stderr, "\n");
+		usage("** Active plugin unknown");
 		return 2;
 	}
 }
