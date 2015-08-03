@@ -2,20 +2,22 @@
 Liblitmus Installation Instructions
 ===================================
 
+See also: https://wiki.litmus-rt.org/litmus/InstallationInstructions
+
 Dependencies
 ------------
 
-Liblitmus has no dependencies besides the kernel. During compilation, the
-Makefile will attempt to copy required headers from the kernel source tree into
-the library source tree.
+Liblitmus has no dependencies besides the kernel. During compilation,
+the Makefile will attempt to copy required headers from the kernel
+source tree into the library source tree.
 
 
 Configuration
 -------------
 
-The build system reads a local configuration file named '.config' (just like the
-kernel, but much simpler). There are three variables that affect the
-compilation process:
+The build system reads a local configuration file named '.config' (just
+like the kernel, but much simpler). There are three variables that
+affect the compilation process:
 
 	LITMUS_KERNEL --- Path (relative or absolute) to the LITMUS^RT kernel
 	                  source tree. The default value is
@@ -23,7 +25,7 @@ compilation process:
 	                  the kernel somewhere else.
 
 	ARCH          --- The target architecture. Currently, liblitmus can be
-	                  build for i386, x86_64, sparc64, and arm.  The default
+	                  build for i386, x86_64, and arm. The default
 	                  value is the host architecture.
 
 	CROSS_COMPILE --- A prefix for the compiler and linker to use. Works
