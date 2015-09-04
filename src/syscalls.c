@@ -86,3 +86,13 @@ int null_call(cycles_t *timestamp)
 {
 	return syscall(__NR_null_call, timestamp);
 }
+
+int budget_exhausted(int *bBudgetExhausted)
+{
+	return syscall(__NR_query_budget_exhausted, bBudgetExhausted);
+}
+
+int get_slack(lt_t *slack)
+{
+	return syscall(__NR_query_slack_time, slack);
+}

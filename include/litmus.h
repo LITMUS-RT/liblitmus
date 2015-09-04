@@ -416,6 +416,19 @@ int null_call(cycles_t *timestamp);
  */
 struct control_page* get_ctrl_page(void);
 
+/**
+ * Check if budget for current job has been exhausted
+ * @param bBudgetExhausted Stores answer
+ *  */
+int budget_exhausted(int *bBudgetExhausted);
+
+/**
+ * Get the slack for current job before deadline
+ * @param slack Stores slack answer
+ *  */
+int get_slack(lt_t* slack);
+
+
 #ifdef __cplusplus
 }
 #endif
