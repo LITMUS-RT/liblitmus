@@ -17,12 +17,13 @@ interact with the kernel services provided for real-time tasks.
 Tools and Programs
 ==================
 
-* setsched
-  Select active scheduler. Must be run as root.
+* setsched [<PLUGIN>]
+  Select the active scheduler. Must be run as root. Run without argument to be
+  presented with a list of available plugins (requires 'dialog' to be
+  installed).
 
 * showsched
-  Print the name of the currently active scheduler. Schedulers are selected at
-  boot time with the "rtsched=<NAME>" kernel parameter.
+  Print the name of the currently active scheduler.
 
 * rt_launch  [-w] [-p <PARTITION>] <WCET> <PERIOD> <PROGRAM> <ARGS>...
   Launch the program <PROGRAM> as a real-time task provisioned with the
