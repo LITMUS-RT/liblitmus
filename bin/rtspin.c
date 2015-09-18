@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <time.h>
 #include <string.h>
 #include <assert.h>
@@ -184,17 +185,18 @@ static int job(double exec_time, double program_end, int lock_od, double cs_leng
 	}
 }
 
-#define OPTSTR "p:c:wlveo:f:s:q:r:X:L:Q:vi"
+#define OPTSTR "p:c:wlveo:f:s:q:r:X:L:Q:viR"
 int main(int argc, char** argv)
 {
 	int ret;
 	lt_t wcet;
 	lt_t period;
 	double wcet_ms, period_ms;
-	unsigned int priority = LITMUS_LOWEST_PRIORITY;
+	unsigned int priority = LITMUS_NO_PRIORITY;
 	int migrate = 0;
 	int cluster = 0;
 	int reservation = -1;
+	int create_reservation = -1;
 	int opt;
 	int wait = 0;
 	int test_loop = 0;
@@ -234,6 +236,10 @@ int main(int argc, char** argv)
 			break;
 		case 'r':
 			reservation = atoi(optarg);
+			break;
+		case 'R':
+			create_reservation = 1;
+			reservation = getpid();
 			break;
 		case 'q':
 			priority = atoi(optarg);
@@ -346,7 +352,7 @@ int main(int argc, char** argv)
 	init_rt_task_param(&param);
 	param.exec_cost = wcet;
 	param.period = period;
-	param.priority = priority;
+	param.priority = priority == LITMUS_NO_PRIORITY ? LITMUS_LOWEST_PRIORITY : priority;
 	param.cls = class;
 	param.budget_policy = (want_enforcement) ?
 			PRECISE_ENFORCEMENT : NO_ENFORCEMENT;
@@ -359,6 +365,20 @@ int main(int argc, char** argv)
 	ret = set_rt_task_param(gettid(), &param);
 	if (ret < 0)
 		bail_out("could not setup rt task params");
+
+	if (create_reservation) {
+		struct reservation_config config;
+		memset(&config, 0, sizeof(config));
+		config.id = gettid();
+		config.cpu = domain_to_first_cpu(cluster);
+		config.priority = priority;
+		config.polling_params.budget = wcet;
+		config.polling_params.period = period;
+		config.polling_params.relative_deadline = period;
+		ret = reservation_create(SPORADIC_POLLING, &config);
+		if (ret < 0)
+			bail_out("failed to create reservation");
+	}
 
 	init_litmus();
 
