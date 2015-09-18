@@ -13,7 +13,8 @@ const char *usage_msg =
 	"    -w                wait for synchronous release\n"
 	"    -v                verbose (prints PID)\n"
 	"    -p CPU            physical partition or cluster to assign to\n"
-	"    -r VCPU           virtual CPU to attach to (irrelevant to most plugins)\n"
+	"    -r VCPU           virtual CPU or reservation to attach to (irrelevant to most plugins)\n"
+	"    -R                create sporadic reservation for task (with VCPU=PID)\n"
 	"    -d DEADLINE       relative deadline, implicit by default (in ms)\n"
 	"    -o OFFSET         offset (also known as phase), zero by default (in ms)\n"
 	"    -q PRIORITY       priority to use (ignored by EDF plugins, highest=1, lowest=511)\n"
@@ -28,7 +29,7 @@ void usage(char *error) {
 	exit(1);
 }
 
-#define OPTSTR "wp:q:c:er:b:o:d:vh"
+#define OPTSTR "wp:q:c:er:b:o:d:vhR"
 
 int main(int argc, char** argv)
 {
@@ -45,6 +46,7 @@ int main(int argc, char** argv)
 	int wait;
 	int want_enforcement;
 	int verbose;
+	int create_reservation;
 	task_class_t class;
 	struct rt_task param;
 
@@ -52,13 +54,14 @@ int main(int argc, char** argv)
 	verbose = 0;
 	offset_ms = 0;
 	deadline_ms = 0;
-	priority = LITMUS_LOWEST_PRIORITY;
+	priority = LITMUS_NO_PRIORITY;
 	want_enforcement = 1; /* safety: default to enforcement */
 	wait = 0;  /* don't wait for task system release */
 	class = RT_CLASS_SOFT; /* ignored by most plugins */
 	migrate = 0; /* assume global unless -p is specified */
 	cluster = -1; /* where to migrate to, invalid by default */
 	reservation = -1; /* set if task should attach to virtual CPU */
+	create_reservation = 0;
 
 	while ((opt = getopt(argc, argv, OPTSTR)) != -1) {
 		switch (opt) {
@@ -84,6 +87,10 @@ int main(int argc, char** argv)
 			break;
 		case 'r':
 			reservation = atoi(optarg);
+			break;
+		case 'R':
+			create_reservation = 1;
+			reservation = getpid();
 			break;
 		case 'o':
 			offset_ms = atof(optarg);
@@ -144,7 +151,7 @@ int main(int argc, char** argv)
 	param.period = period;
 	param.phase = offset;
 	param.relative_deadline = deadline;
-	param.priority = priority;
+	param.priority = priority == LITMUS_NO_PRIORITY ? LITMUS_LOWEST_PRIORITY : priority;
 	param.cls = class;
 	param.budget_policy = (want_enforcement) ?
 			PRECISE_ENFORCEMENT : NO_ENFORCEMENT;
@@ -157,6 +164,21 @@ int main(int argc, char** argv)
 	ret = set_rt_task_param(gettid(), &param);
 	if (ret < 0)
 		bail_out("could not setup rt task params");
+
+	if (create_reservation) {
+		struct reservation_config config;
+		memset(&config, 0, sizeof(config));
+		config.id = gettid();
+		config.cpu = domain_to_first_cpu(cluster);
+		config.priority = priority;
+		config.polling_params.budget = wcet;
+		config.polling_params.period = period;
+		config.polling_params.offset = offset;
+		config.polling_params.relative_deadline = deadline;
+		ret = reservation_create(SPORADIC_POLLING, &config);
+		if (ret < 0)
+			bail_out("failed to create reservation");
+	}
 
 	init_litmus();
 
