@@ -6,7 +6,7 @@
 #include <time.h>
 #include <string.h>
 #include <assert.h>
-
+#include <inttypes.h>
 
 #include "litmus.h"
 #include "common.h"
@@ -184,7 +184,7 @@ static int job(double exec_time, double program_end, int lock_od, double cs_leng
 	}
 }
 
-#define OPTSTR "p:c:wlveo:f:s:q:r:X:L:Q:v"
+#define OPTSTR "p:c:wlveo:f:s:q:r:X:L:Q:vi"
 int main(int argc, char** argv)
 {
 	int ret;
@@ -210,6 +210,9 @@ int main(int argc, char** argv)
 
 	int verbose = 0;
 	unsigned int job_no;
+	struct control_page* cp;
+	int report_interrupts = 0;
+	uint64_t last_irq_count = 0;
 
 	/* locking */
 	int lock_od = -1;
@@ -274,6 +277,9 @@ int main(int argc, char** argv)
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'i':
+			report_interrupts = 1;
 			break;
 		case ':':
 			usage("Argument missing.");
@@ -361,6 +367,8 @@ int main(int argc, char** argv)
 	if (ret != 0)
 		bail_out("could not become RT task");
 
+	cp = get_ctrl_page();
+
 	if (protocol >= 0) {
 		/* open reference to semaphore */
 		lock_od = litmus_open_lock(protocol, resource_id, lock_namespace, &cluster);
@@ -392,6 +400,14 @@ int main(int argc, char** argv)
 				get_job_no(&job_no);
 				printf("rtspin/%d:%u @ %.4fms\n", gettid(),
 					job_no, (wctime() - start) * 1000);
+				if (report_interrupts && cp) {
+					uint64_t irq = cp->irq_count;
+
+					printf("\ttotal interrupts: %" PRIu64
+					       "; delta: %" PRIu64 "\n",
+					       irq, irq - last_irq_count);
+					last_irq_count = irq;
+				}
 			}
 			/* convert to seconds and scale */
 		} while (job(wcet_ms * 0.001 * scale, start + duration,
