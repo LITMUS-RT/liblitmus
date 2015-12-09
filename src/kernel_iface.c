@@ -98,6 +98,8 @@ int init_kernel_iface(void)
 		     != LITMUS_CP_OFFSET_TS_SC_START);
 	BUILD_BUG_ON(offsetof(struct control_page, irq_syscall_start)
 		     != LITMUS_CP_OFFSET_IRQ_SC_START);
+	BUILD_BUG_ON(offsetof(struct control_page, deadline)
+		     != LITMUS_CP_OFFSET_DEADLINE);
 
 	err = map_file(LITMUS_CTRL_DEVICE, &mapped_at, CTRL_PAGES * page_size);
 
