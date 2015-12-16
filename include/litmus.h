@@ -330,6 +330,12 @@ double cputime(void);
  */
 double wctime(void);
 
+/**
+ * Obtain CLOCK_MONOTONIC time
+ * @return CLOCK_MONOTONIC time in seconds
+ */
+double monotime(void);
+
 /***** semaphore allocation ******/
 /**
  * Allocate a semaphore following the FMLP protocol

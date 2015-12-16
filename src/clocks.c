@@ -24,6 +24,17 @@ double wctime(void)
 	return (tv.tv_sec + 1E-6 * tv.tv_usec);
 }
 
+/* current time, according to CLOCK_MONOTONIC */
+double monotime(void)
+{
+	struct timespec ts;
+	int err;
+	err = clock_gettime(CLOCK_MONOTONIC, &ts);
+	if (err != 0)
+		perror("clock_gettime");
+	return (ts.tv_sec + 1E-9 * ts.tv_nsec);
+}
+
 int lt_sleep(lt_t timeout)
 {
 	struct timespec delay;
