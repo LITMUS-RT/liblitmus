@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "litmus.h"
+#include "internal.h"
 
 /*	Syscall stub for setting RT mode and scheduling options */
 
@@ -54,7 +55,13 @@ int litmus_unlock(int od)
 
 int get_job_no(unsigned int *job_no)
 {
-	return syscall(__NR_query_job_no, job_no);
+	struct control_page* cp = get_ctrl_page();
+	if (likely(cp != NULL)) {
+		*job_no = cp->job_index;
+		return 0;
+	} else {
+		return -1;
+	}
 }
 
 int wait_for_job_release(unsigned int job_no)
