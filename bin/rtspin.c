@@ -400,6 +400,15 @@ int main(int argc, char** argv)
 				get_job_no(&job_no);
 				printf("rtspin/%d:%u @ %.4fms\n", gettid(),
 					job_no, (wctime() - start) * 1000);
+				if (cp) {
+					double deadline, current;
+					deadline = cp->deadline * 1e-9;
+					current  = monotime();
+					printf("\tdeadline: %" PRIu64 "ns (=%.2fs)\n",
+					       (uint64_t) cp->deadline, deadline);
+					printf("\tcurrent time: %.2fs, slack: %.2fms\n",
+					       current, (deadline - current) * 1000);
+				}
 				if (report_interrupts && cp) {
 					uint64_t irq = cp->irq_count;
 
