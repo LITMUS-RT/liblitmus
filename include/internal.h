@@ -26,5 +26,7 @@
 /* I/O convenience function */
 ssize_t read_file(const char* fname, void* buf, size_t maxlen);
 
+long litmus_syscall(litmus_syscall_id_t syscall, unsigned long arg);
+
 #endif
 

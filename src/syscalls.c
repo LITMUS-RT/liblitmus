@@ -20,37 +20,48 @@ pid_t gettid(void)
 
 int set_rt_task_param(pid_t pid, struct rt_task *param)
 {
-	return syscall(__NR_set_rt_task_param, pid, param);
+	union litmus_syscall_args args;
+	args.get_set_task_param.pid = pid;
+	args.get_set_task_param.param = param;
+	return litmus_syscall(LRT_set_rt_task_param, (unsigned long) &args);
 }
 
 int get_rt_task_param(pid_t pid, struct rt_task *param)
 {
-	return syscall(__NR_get_rt_task_param, pid, param);
+	union litmus_syscall_args args;
+	args.get_set_task_param.pid = pid;
+	args.get_set_task_param.param = param;
+	return litmus_syscall(LRT_get_rt_task_param, (unsigned long) &args);
 }
 
 int sleep_next_period(void)
 {
-	return syscall(__NR_complete_job);
+	return litmus_syscall(LRT_complete_job, 0);
 }
 
 int od_openx(int fd, obj_type_t type, int obj_id, void *config)
 {
-	return syscall(__NR_od_open, fd, type, obj_id, config);
+	union litmus_syscall_args args;
+	args.od_open.fd = fd;
+	args.od_open.obj_type = type;
+	args.od_open.obj_id = obj_id;
+	args.od_open.config = config;
+	return litmus_syscall(LRT_od_open, (unsigned long) &args);
 }
 
 int od_close(int od)
 {
-	return syscall(__NR_od_close, od);
+	return litmus_syscall(LRT_od_close, od);
 }
 
 int litmus_lock(int od)
 {
-	return syscall(__NR_litmus_lock, od);
+	return litmus_syscall(LRT_litmus_lock, od);
 }
 
 int litmus_unlock(int od)
 {
-	return syscall(__NR_litmus_unlock, od);
+	return litmus_syscall(LRT_litmus_unlock, od);
 }
 
 int get_job_no(unsigned int *job_no)
@@ -66,27 +77,30 @@ int get_job_no(unsigned int *job_no)
 
 int wait_for_job_release(unsigned int job_no)
 {
-	return syscall(__NR_wait_for_job_release, job_no);
+	return litmus_syscall(LRT_wait_for_job_release, job_no);
 }
 
 int wait_for_ts_release(void)
 {
-	return syscall(__NR_wait_for_ts_release);
+	return litmus_syscall(LRT_wait_for_ts_release, 0);
 }
 
 int release_ts(lt_t *delay)
 {
-	return syscall(__NR_release_ts, delay);
+	return litmus_syscall(LRT_release_ts, (unsigned long) delay);
 }
 
 int null_call(cycles_t *timestamp)
 {
-	return syscall(__NR_null_call, timestamp);
+	return litmus_syscall(LRT_null_call, (unsigned long) timestamp);
 }
 
 int get_current_budget(
 	lt_t *expended,
 	lt_t *remaining)
 {
-	return syscall(__NR_get_current_budget, expended, remaining);
+	union litmus_syscall_args args;
+	args.get_current_budget.expended = expended;
+	args.get_current_budget.remaining = remaining;
+	return litmus_syscall(LRT_get_current_budget, (unsigned long) &args);
 }

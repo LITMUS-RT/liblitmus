@@ -166,6 +166,7 @@ arch/${include-${ARCH}}/include/generated/uapi/asm/%.h: \
 
 litmus-headers = \
 	include/litmus/rt_param.h \
+	include/litmus/ctrlpage.h \
 	include/litmus/fpmath.h \
 	include/litmus/unistd_32.h \
 	include/litmus/unistd_64.h

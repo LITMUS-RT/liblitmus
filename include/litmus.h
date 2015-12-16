@@ -35,6 +35,9 @@ extern "C" {
  * and control_page structures.
  */
 #include "litmus/rt_param.h"
+#define __user
+#include "litmus/ctrlpage.h"
+#undef __user
 
 #include "asm/cycles.h" /* for null_call() */
 

@@ -1,6 +1,8 @@
 #include <sys/mman.h>
 #include <sys/fcntl.h> /* for O_RDWR */
+#include <sys/ioctl.h>
 #include <sys/unistd.h>
+#include <errno.h>
 #include <sched.h> /* for sched_yield() */
 
 
@@ -22,6 +24,7 @@ static int map_file(const char* filename, void **addr, size_t size)
 
 	if (size > 0) {
 		fd = open(filename, O_RDWR);
+		error = fd;
 		if (fd >= 0) {
 			*addr = mmap(NULL, size,
 				     PROT_READ | PROT_WRITE,
@@ -29,9 +32,7 @@ static int map_file(const char* filename, void **addr, size_t size)
 				     fd, 0);
 			if (*addr == MAP_FAILED)
 				error = -1;
-			close(fd);
-		} else
-			error = fd;
+		}
 	} else
 		*addr = NULL;
 	return error;
@@ -81,6 +82,7 @@ int get_nr_ts_release_waiters(void)
 
 /* thread-local pointer to control page */
 static __thread struct control_page *ctrl_page;
+static __thread int ctrl_fd;
 
 int init_kernel_iface(void)
 {
@@ -105,16 +107,19 @@ int init_kernel_iface(void)
 	BUILD_BUG_ON(offsetof(struct control_page, job_index)
 		     != LITMUS_CP_OFFSET_JOB_INDEX);
 
-	err = map_file(LITMUS_CTRL_DEVICE, &mapped_at, CTRL_PAGES * page_size);
+	ctrl_fd = map_file(LITMUS_CTRL_DEVICE, &mapped_at, CTRL_PAGES * page_size);
 
 	/* Assign ctrl_page indirectly to avoid GCC warnings about aliasing
 	 * related to type pruning.
 	 */
 	ctrl_page = mapped_at;
 
-	if (err) {
+	if (ctrl_fd < 0) {
 		fprintf(stderr, "%s: cannot open LITMUS^RT control page (%m)\n",
 			__FUNCTION__);
+		err = ctrl_fd;
+	} else {
+		err = 0;
 	}
 
 	return err;
@@ -159,3 +164,13 @@ struct control_page* get_ctrl_page(void)
 		return NULL;
 }
 
+long litmus_syscall(litmus_syscall_id_t syscall, unsigned long arg)
+{
+	if (likely(ctrl_page != NULL) || init_kernel_iface() == 0)
+	{
+		return ioctl(ctrl_fd, syscall, arg);
+	} else {
+		errno = ENOSYS;
+		return -1;
+	}
+}
