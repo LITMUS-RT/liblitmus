@@ -1,11 +1,13 @@
 #include <sys/wait.h> /* for waitpid() */
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <sched.h>
 
 #include "tests.h"
 #include "litmus.h"
+#include "migration.h"
 
 
 TESTCASE(set_rt_task_param_invalid_pointer, ALL,
@@ -15,6 +17,33 @@ TESTCASE(set_rt_task_param_invalid_pointer, ALL,
 
 	SYSCALL_FAILS( EFAULT, set_rt_task_param(gettid(), (void*) 0x123 ));
 }
+
+TESTCASE(get_set_rt_task_param, ALL,
+	 "read back rt_task values")
+{
+	struct rt_task params;
+	int cpu = num_online_cpus() - 1;
+	init_rt_task_param(&params);
+	params.cpu        = cpu;
+	params.exec_cost  = 90;
+	params.period     = 321;
+	params.relative_deadline = 123;
+
+	/* set params */
+	SYSCALL( set_rt_task_param(gettid(), &params) );
+
+	/* now clear our copy */
+	memset(&params, 0, sizeof(params));
+
+	/* get params */
+	SYSCALL( get_rt_task_param(gettid(), &params) );
+
+	ASSERT(params.cpu == cpu);
+	ASSERT(params.exec_cost == 90);
+	ASSERT(params.period == 321);
+	ASSERT(params.relative_deadline == 123);
+}
+
 
 TESTCASE(set_rt_task_param_invalid_params, ALL,
 	 "reject invalid rt_task values")
