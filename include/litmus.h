@@ -72,6 +72,14 @@ int set_rt_task_param(pid_t pid, struct rt_task* param);
 int get_rt_task_param(pid_t pid, struct rt_task* param);
 
 /**
+ * Create a new reservation/container (not supported by all plugins).
+ * @param rtype The type of reservation to create.
+ * @param config optional reservation-specific configuration (may be NULL)
+ * @return 0 on success
+ */
+int reservation_create(int rtype, void *config);
+
+/**
  * Convert a partition number to a CPU identifier
  * @param partition Partition number
  * @return CPU identifier for given partition
