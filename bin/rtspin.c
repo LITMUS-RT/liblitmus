@@ -185,13 +185,13 @@ static int job(double exec_time, double program_end, int lock_od, double cs_leng
 	}
 }
 
-#define OPTSTR "p:c:wlveo:f:s:q:r:X:L:Q:viR"
+#define OPTSTR "p:c:wlveo:f:s:q:r:X:L:Q:viRu:"
 int main(int argc, char** argv)
 {
 	int ret;
 	lt_t wcet;
 	lt_t period;
-	double wcet_ms, period_ms;
+	double wcet_ms, period_ms, underrun_ms = 0;
 	unsigned int priority = LITMUS_NO_PRIORITY;
 	int migrate = 0;
 	int cluster = 0;
@@ -265,6 +265,11 @@ int main(int argc, char** argv)
 			break;
 		case 's':
 			scale = atof(optarg);
+			break;
+		case 'u':
+			underrun_ms = atof(optarg);
+			if (underrun_ms <= 0)
+				usage("-u: positive argument needed.");
 			break;
 		case 'X':
 			protocol = lock_protocol_for_name(optarg);
@@ -380,6 +385,9 @@ int main(int argc, char** argv)
 			bail_out("failed to create reservation");
 	}
 
+	srand48(time(NULL));
+
+
 	init_litmus();
 
 	start = wctime();
@@ -415,6 +423,7 @@ int main(int argc, char** argv)
 			    lock_od, cs_length * 0.001);
 		}
 	} else {
+		double acet;
 		do {
 			if (verbose) {
 				get_job_no(&job_no);
@@ -439,7 +448,15 @@ int main(int argc, char** argv)
 				}
 			}
 			/* convert to seconds and scale */
-		} while (job(wcet_ms * 0.001 * scale, start + duration,
+			acet = (wcet_ms - drand48() * underrun_ms) * 0.001;
+			if (acet < 0)
+				acet = 0;
+			acet *= scale;
+			if (verbose)
+				printf("\ttarget ACET: %6.2fms (%.2f%% of WCET)\n",
+					acet * 1000,
+					(acet * 1000 / wcet_ms) * 100);
+		} while (job(acet, start + duration,
 			   lock_od, cs_length * 0.001));
 	}
 
