@@ -8,6 +8,8 @@
 #include <string.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <sys/mman.h>
+#include <errno.h>
 
 #include "litmus.h"
 #include "common.h"
@@ -24,10 +26,12 @@ static void usage(char *error) {
 		"\n"
 		"COMMON-OPTS = [-w] [-s SCALE]\n"
 		"              [-p PARTITION/CLUSTER [-z CLUSTER SIZE]] [-c CLASS]\n"
-		"              [-X LOCKING-PROTOCOL] [-L CRITICAL SECTION LENGTH] [-Q RESOURCE-ID]"
+		"              [-X LOCKING-PROTOCOL] [-L CRITICAL SECTION LENGTH] [-Q RESOURCE-ID]\n"
+		"	       [-m RESIDENT SET SIZE]"
 		"\n"
 		"WCET and PERIOD are milliseconds, DURATION is seconds.\n"
-		"CRITICAL SECTION LENGTH is in milliseconds.\n");
+		"CRITICAL SECTION LENGTH is in milliseconds.\n"
+		"RESIDENT SET SIZE is in number of pages\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -103,12 +107,27 @@ static void get_exec_times(const char *file, const int column,
 static int num[NUMS];
 static char* progname;
 
+static int nr_of_pages = 0;
+static int page_size;
+static void *base = NULL;
+
 static int loop_once(void)
 {
 	int i, j = 0;
 	for (i = 0; i < NUMS; i++)
 		j += num[i]++;
 	return j;
+}
+
+static int loop_once_with_mem(void)
+{
+	int i;
+	int rand;
+	for(i=0; i<NUMS; i++) {
+		rand=lrand48() % (nr_of_pages - 1);
+		memset(base + (rand * page_size),rand,1024);
+	}
+	return 0;
 }
 
 static int loop_for(double exec_time, double emergency_exit)
@@ -121,7 +140,10 @@ static int loop_for(double exec_time, double emergency_exit)
 
 	while (now + last_loop < start + exec_time) {
 		loop_start = now;
-		tmp += loop_once();
+		if (nr_of_pages)
+			tmp += loop_once_with_mem();
+		else
+			tmp += loop_once();
 		now = cputime();
 		last_loop = now - loop_start;
 		if (emergency_exit && wctime() > emergency_exit) {
@@ -185,7 +207,7 @@ static int job(double exec_time, double program_end, int lock_od, double cs_leng
 	}
 }
 
-#define OPTSTR "p:c:wlveo:f:s:q:r:X:L:Q:viRu:"
+#define OPTSTR "p:c:wlveo:f:s:m:q:r:X:L:Q:viRu:B:"
 int main(int argc, char** argv)
 {
 	int ret;
@@ -196,7 +218,7 @@ int main(int argc, char** argv)
 	int migrate = 0;
 	int cluster = 0;
 	int reservation = -1;
-	int create_reservation = -1;
+	int create_reservation = 0;
 	int opt;
 	int wait = 0;
 	int test_loop = 0;
@@ -209,6 +231,9 @@ int main(int argc, char** argv)
 	task_class_t class = RT_CLASS_HARD;
 	int cur_job = 0, num_jobs = 0;
 	struct rt_task param;
+
+	int rss=0;
+	int idx;
 
 	int verbose = 0;
 	unsigned int job_no;
@@ -263,6 +288,9 @@ int main(int argc, char** argv)
 		case 'f':
 			file = optarg;
 			break;
+		case 'm':
+			nr_of_pages = atoi(optarg);
+			break;
 		case 's':
 			scale = atof(optarg);
 			break;
@@ -300,6 +328,26 @@ int main(int argc, char** argv)
 			usage("Bad argument.");
 			break;
 		}
+	}
+
+	if(nr_of_pages) {
+		page_size = getpagesize();
+		rss = page_size * nr_of_pages;
+		base = mmap(NULL, rss, PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+		if(base == MAP_FAILED) {
+			fprintf(stderr,"mmap failed: %s\n",strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+
+		/* pin frames to prevent swapping */
+		ret = mlock(base,rss);
+		if (ret) {
+			fprintf(stderr,"mlock failed: %s\n",strerror(errno));
+		}
+
+		/* touch every allocated page */
+		for(idx = 0; idx < nr_of_pages; idx++)
+				memset(base + (idx * page_size), 1, page_size);
 	}
 
 	if (test_loop) {
@@ -353,6 +401,7 @@ int main(int argc, char** argv)
 		if (ret < 0)
 			bail_out("could not migrate to target partition or cluster.");
 	}
+
 
 	init_rt_task_param(&param);
 	param.exec_cost = wcet;
@@ -466,6 +515,9 @@ int main(int argc, char** argv)
 
 	if (file)
 		free(exec_times);
+
+	if(base != MAP_FAILED)
+		munlock(base, rss);
 
 	return 0;
 }
