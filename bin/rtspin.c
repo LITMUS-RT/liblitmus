@@ -17,22 +17,29 @@
 
 
 static void usage(char *error) {
-	fprintf(stderr, "Error: %s\n", error);
+	if (error)
+		fprintf(stderr, "Error: %s\n", error);
 	fprintf(stderr,
 		"Usage:\n"
-		"	rt_spin [COMMON-OPTS] WCET PERIOD DURATION\n"
-		"	rt_spin [COMMON-OPTS] -f FILE [-o COLUMN] WCET PERIOD\n"
-		"	rt_spin -l\n"
+		"       (1) rtspin [COMMON-OPTS] WCET PERIOD DURATION\n"
+		"       (2) rtspin [COMMON-OPTS] -f FILE [-o COLUMN] WCET PERIOD\n"
+		"       (3) rtspin -l\n"
+		"       (4) rtspin -B\n"
+		"\n"
+		"Modes: (1) run as periodic task with given WCET and PERIOD\n"
+		"       (2) as (1), but load per-job execution times from CSV file\n"
+		"       (3) Run calibration loop (how accurately are target runtimes met?)\n"
+		"       (4) Run background, non-real-time cache-thrashing loop (w/ -m).\n"
 		"\n"
 		"COMMON-OPTS = [-w] [-s SCALE]\n"
 		"              [-p PARTITION/CLUSTER [-z CLUSTER SIZE]] [-c CLASS]\n"
 		"              [-X LOCKING-PROTOCOL] [-L CRITICAL SECTION LENGTH] [-Q RESOURCE-ID]\n"
-		"	       [-m RESIDENT SET SIZE]"
+		"	       [-m RESIDENT SET SIZE]\n"
 		"\n"
 		"WCET and PERIOD are milliseconds, DURATION is seconds.\n"
 		"CRITICAL SECTION LENGTH is in milliseconds.\n"
 		"RESIDENT SET SIZE is in number of pages\n");
-	exit(EXIT_FAILURE);
+	exit(error ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 /*
@@ -207,7 +214,7 @@ static int job(double exec_time, double program_end, int lock_od, double cs_leng
 	}
 }
 
-#define OPTSTR "p:c:wlveo:f:s:m:q:r:X:L:Q:viRu:B:"
+#define OPTSTR "p:c:wlveo:f:s:m:q:r:X:L:Q:viRu:Bh"
 int main(int argc, char** argv)
 {
 	int ret;
@@ -222,6 +229,7 @@ int main(int argc, char** argv)
 	int opt;
 	int wait = 0;
 	int test_loop = 0;
+	int background_loop = 0;
 	int column = 1;
 	const char *file = NULL;
 	int want_enforcement = 0;
@@ -282,6 +290,9 @@ int main(int argc, char** argv)
 		case 'l':
 			test_loop = 1;
 			break;
+		case 'B':
+			background_loop = 1;
+			break;
 		case 'o':
 			column = atoi(optarg);
 			break;
@@ -317,6 +328,9 @@ int main(int argc, char** argv)
 		case 'v':
 			verbose = 1;
 			break;
+		case 'h':
+			usage(NULL);
+			break;
 		case 'i':
 			report_interrupts = 1;
 			break;
@@ -330,7 +344,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-	if(nr_of_pages) {
+	if (nr_of_pages) {
 		page_size = getpagesize();
 		rss = page_size * nr_of_pages;
 		base = mmap(NULL, rss, PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
@@ -350,12 +364,22 @@ int main(int argc, char** argv)
 				memset(base + (idx * page_size), 1, page_size);
 	}
 
+	srand(getpid());
+
 	if (test_loop) {
 		debug_delay_loop();
 		return 0;
 	}
 
-	srand(getpid());
+	if (background_loop) {
+		while (1) {
+			if (nr_of_pages)
+				loop_once_with_mem();
+			else
+				loop_once();
+		}
+		return 0;
+	}
 
 	if (file) {
 		get_exec_times(file, column, &num_jobs, &exec_times);
