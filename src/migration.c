@@ -64,7 +64,7 @@ static int read_mapping(int idx, const char* which, cpu_set_t** set, size_t *sz)
 	CPU_ZERO_S(*sz, *set);
 
 	/* process LSB chunks first (at the end of the str) and move backward */
-	chunk_str = buf + len - 8;
+	chunk_str = buf + len - 9;
 	i = 0;
 	do
 	{
