@@ -9,7 +9,7 @@
 #include "litmus.h"
 #include "internal.h"
 
-#define OPTSTR "d:wf:"
+#define OPTSTR "d:wf:W"
 
 #define LITMUS_STATS_FILE "/proc/litmus/stats"
 
@@ -22,6 +22,7 @@ void usage(char *error) {
 		"         -w  wait until all tasks are ready for release\n"
 		"             (as determined by /proc/litmus/stats\n"
 		"         -f  <#tasks> wait for #tasks (default: 0)\n"
+		"         -W  just wait, don't actually release tasks\n"
 		"\n",
 		error);
 	exit(1);
@@ -46,8 +47,9 @@ int main(int argc, char** argv)
 	lt_t delay = ms2ns(1000);
 	int wait = 0;
 	int expected = 0;
+	int exit_after_wait = 0;
 	int opt;
-      
+
 	while ((opt = getopt(argc, argv, OPTSTR)) != -1) {
 		switch (opt) {
 		case 'd':
@@ -55,6 +57,10 @@ int main(int argc, char** argv)
 			break;
 		case 'w':
 			wait = 1;
+			break;
+		case 'W':
+			wait = 1;
+			exit_after_wait = 1;
 			break;
 		case 'f':
 			wait = 1;
@@ -73,12 +79,15 @@ int main(int argc, char** argv)
 	if (wait)
 		wait_until_ready(expected);
 
+	if (exit_after_wait)
+		exit(0);
+
 	released = release_ts(&delay);
 	if (released < 0) {
 		perror("release task system");
 		exit(1);
 	}
-	
+
 	printf("Released %d real-time tasks.\n", released);
 
 	return 0;
