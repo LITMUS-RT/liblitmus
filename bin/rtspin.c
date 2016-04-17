@@ -214,13 +214,15 @@ static int job(double exec_time, double program_end, int lock_od, double cs_leng
 	}
 }
 
-#define OPTSTR "p:c:wlveo:f:s:m:q:r:X:L:Q:viRu:Bh"
+#define OPTSTR "p:c:wlveo:f:s:m:q:r:X:L:Q:viRu:Bhd:C:"
 int main(int argc, char** argv)
 {
 	int ret;
 	lt_t wcet;
-	lt_t period;
+	lt_t period, deadline;
+	lt_t phase;
 	double wcet_ms, period_ms, underrun_ms = 0;
+	double offset_ms = 0, deadline_ms = 0;
 	unsigned int priority = LITMUS_NO_PRIORITY;
 	int migrate = 0;
 	int cluster = 0;
@@ -293,7 +295,7 @@ int main(int argc, char** argv)
 		case 'B':
 			background_loop = 1;
 			break;
-		case 'o':
+		case 'C':
 			column = atoi(optarg);
 			break;
 		case 'f':
@@ -304,6 +306,16 @@ int main(int argc, char** argv)
 			break;
 		case 's':
 			scale = atof(optarg);
+			break;
+		case 'o':
+			offset_ms = atof(optarg);
+			break;
+		case 'd':
+			deadline_ms = atof(optarg);
+			if (!deadline_ms || deadline_ms < 0) {
+				usage("The relative deadline must be a positive"
+					" number.");
+			}
 			break;
 		case 'u':
 			underrun_ms = atof(optarg);
@@ -405,9 +417,15 @@ int main(int argc, char** argv)
 
 	wcet   = ms2ns(wcet_ms);
 	period = ms2ns(period_ms);
+	phase  = ms2ns(offset_ms);
+	deadline = ms2ns(deadline_ms);
 	if (wcet <= 0)
 		usage("The worst-case execution time must be a "
 				"positive number.");
+	if (offset_ms < 0)
+		usage("The synchronous release delay must be a "
+				"non-negative number.");
+
 	if (period <= 0)
 		usage("The period must be a positive number.");
 	if (!file && wcet > period) {
@@ -430,6 +448,8 @@ int main(int argc, char** argv)
 	init_rt_task_param(&param);
 	param.exec_cost = wcet;
 	param.period = period;
+	param.phase  = phase;
+	param.relative_deadline = deadline;
 	param.priority = priority == LITMUS_NO_PRIORITY ? LITMUS_LOWEST_PRIORITY : priority;
 	param.cls = class;
 	param.budget_policy = (want_enforcement) ?
@@ -452,7 +472,8 @@ int main(int argc, char** argv)
 		config.priority = priority;
 		config.polling_params.budget = wcet;
 		config.polling_params.period = period;
-		config.polling_params.relative_deadline = period;
+		config.polling_params.offset = phase;
+		config.polling_params.relative_deadline = deadline;
 		ret = reservation_create(SPORADIC_POLLING, &config);
 		if (ret < 0)
 			bail_out("failed to create reservation");

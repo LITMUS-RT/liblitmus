@@ -133,6 +133,11 @@ int main(int argc, char** argv)
 	if (wcet <= 0)
 		usage("The worst-case execution time must be a "
 				"positive number.");
+
+	if (offset_ms < 0)
+		usage("The synchronous release delay must be a "
+				"non-negative number.");
+
 	if (period <= 0)
 		usage("The period must be a positive number.");
 	if (wcet > period) {
