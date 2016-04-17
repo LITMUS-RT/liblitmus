@@ -9,27 +9,32 @@
 #include "common.h"
 
 const char *usage_msg =
-	"Usage: rt_launch OPTIONS wcet period program [arg1 arg2 ...]\n"
-	"    -w                wait for synchronous release\n"
-	"    -v                verbose (prints PID)\n"
-	"    -p CPU            physical partition or cluster to assign to\n"
+	"Usage: rt_launch OPTIONS budget period -- program [arg1 arg2 ...]\n"
+	"\n"
+	"Required arguments:\n"
+	"    budget, period    reservation parameters (in ms)\n"
+	"    program           path to the binary to be launched\n"
+	"\n"
+	"Options:\n"
+	"    -c be|srt|hrt     task class (best-effort, soft real-time, hard real-time)\n"
+	"    -d DEADLINE       relative deadline, equal to the period by default (in ms)\n"
+	"    -e                turn off budget enforcement (DANGEROUS: can result in lockup)\n"
+	"    -h                show this help message\n"
+	"    -o OFFSET         offset (also known as phase), zero by default (in ms)\n"
+	"    -p CPU            partition or cluster to assign this task to\n"
+	"    -q PRIORITY       priority to use (ignored by EDF plugins, highest=1, lowest=511)\n"
 	"    -r VCPU           virtual CPU or reservation to attach to (irrelevant to most plugins)\n"
 	"    -R                create sporadic reservation for task (with VCPU=PID)\n"
-	"    -d DEADLINE       relative deadline, implicit by default (in ms)\n"
-	"    -o OFFSET         offset (also known as phase), zero by default (in ms)\n"
-	"    -q PRIORITY       priority to use (ignored by EDF plugins, highest=1, lowest=511)\n"
-	"    -c be|srt|hrt     task class (best-effort, soft real-time, hard real-time)\n"
-	"    -e                turn off budget enforcement (DANGEROUS: can result in lockup)\n"
-	"    wcet, period      reservation parameters (in ms)\n"
-	"    program           path to the binary to be launched\n"
+	"    -v                verbose (prints PID)\n"
+	"    -w                wait for synchronous release\n"
 	"\n";
 
 void usage(char *error) {
-	fprintf(stderr, "%s\n%s", error, usage_msg);
+	fprintf(stderr, "%s\n\n%s", error, usage_msg);
 	exit(1);
 }
 
-#define OPTSTR "wp:q:c:er:b:o:d:vhR"
+#define OPTSTR "wp:q:c:er:o:d:vhR"
 
 int main(int argc, char** argv)
 {
@@ -106,7 +111,7 @@ int main(int argc, char** argv)
 			verbose = 1;
 			break;
 		case 'h':
-			usage("");
+			usage("rt_launch: Run an arbitrary binary as a LITMUS^RT real-time task.");
 			break;
 		case ':':
 			usage("Argument missing.");
