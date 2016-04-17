@@ -14,31 +14,63 @@
 #include "litmus.h"
 #include "common.h"
 
+const char *usage_msg =
+	"Usage: (1) rtspin OPTIONS WCET PERIOD DURATION\n"
+	"       (2) rtspin OPTIONS -F FILE [-C COLUMN] WCET PERIOD\n"
+	"       (3) rtspin -l\n"
+	"       (4) rtspin -B\n"
+	"\n"
+	"Modes: (1) run as periodic task with given WCET and PERIOD\n"
+	"       (2) as (1), but load per-job execution times from a CSV file\n"
+	"       (3) Run calibration loop (how accurately are target runtimes met?)\n"
+	"       (4) Run background, non-real-time cache-thrashing loop (w/ -m).\n"
+	"\n"
+	"Required arguments:\n"
+	"    WCET, PERIOD      reservation parameters (in ms)\n"
+	"    DURATION          terminate the task after DURATION seconds\n"
+	"\n"
+	"Options:\n"
+	"    -B                run non-real-time background loop\n"
+	"    -c be|srt|hrt     task class (best-effort, soft real-time, hard real-time)\n"
+	"    -d DEADLINE       relative deadline, equal to the period by default (in ms)\n"
+	"    -e                turn on budget enforcement (off by default)\n"
+	"    -h                show this help message\n"
+	"    -i                report interrupts (implies -v)\n"
+	"    -l                run calibration loop and report error\n"
+	"    -m FOOTPRINT      specify number of data pages to access\n"
+	"    -o OFFSET         offset (also known as phase), zero by default (in ms)\n"
+	"    -p CPU            partition or cluster to assign this task to\n"
+	"    -q PRIORITY       priority to use (ignored by EDF plugins, highest=1, lowest=511)\n"
+	"    -r VCPU           virtual CPU or reservation to attach to (irrelevant to most plugins)\n"
+	"    -R                create sporadic reservation for task (with VCPU=PID)\n"
+	"    -s SCALE          fraction of WCET to spin for (1.0 means 100%)\n"
+	"    -u SLACK          randomly under-run WCET by up to SLACK milliseconds\n"
+	"    -v                verbose (print per-job statistics)\n"
+	"    -w                wait for synchronous release\n"
+	"\n"
+	"    -F FILE           load per-job execution times from CSV file\n"
+	"    -C COLUMNS        specify column to read per-job execution times from (default: 1)\n"
+	"\n"
+	"    -X PROTOCOL       access a shared resource protected by a locking protocol\n"
+	"    -L CS-LENGTH      simulate a critical section length of CS-LENGTH milliseconds\n"
+	"    -Q RESOURCE-ID    access the resource identified by RESOURCE-ID\n"
+	"\n"
+	"Units:\n"
+	"    WCET and PERIOD are expected in milliseconds.\n"
+	"    SLACK is expected in milliseconds.\n"
+	"    DURATION is expected in seconds.\n"
+	"    CS-LENGTH is expected in milliseconds.\n"
+	"    FOOTPRINT is expected in number of pages\n";
 
 
 static void usage(char *error) {
 	if (error)
-		fprintf(stderr, "Error: %s\n", error);
-	fprintf(stderr,
-		"Usage:\n"
-		"       (1) rtspin [COMMON-OPTS] WCET PERIOD DURATION\n"
-		"       (2) rtspin [COMMON-OPTS] -f FILE [-o COLUMN] WCET PERIOD\n"
-		"       (3) rtspin -l\n"
-		"       (4) rtspin -B\n"
-		"\n"
-		"Modes: (1) run as periodic task with given WCET and PERIOD\n"
-		"       (2) as (1), but load per-job execution times from CSV file\n"
-		"       (3) Run calibration loop (how accurately are target runtimes met?)\n"
-		"       (4) Run background, non-real-time cache-thrashing loop (w/ -m).\n"
-		"\n"
-		"COMMON-OPTS = [-w] [-s SCALE]\n"
-		"              [-p PARTITION/CLUSTER [-z CLUSTER SIZE]] [-c CLASS]\n"
-		"              [-X LOCKING-PROTOCOL] [-L CRITICAL SECTION LENGTH] [-Q RESOURCE-ID]\n"
-		"	       [-m RESIDENT SET SIZE]\n"
-		"\n"
-		"WCET and PERIOD are milliseconds, DURATION is seconds.\n"
-		"CRITICAL SECTION LENGTH is in milliseconds.\n"
-		"RESIDENT SET SIZE is in number of pages\n");
+		fprintf(stderr, "Error: %s\n\n", error);
+	else {
+		fprintf(stderr, "rtspin: simulate a periodic CPU-bound "
+		                "real-time task\n\n");
+	}
+	fprintf(stderr, usage_msg);
 	exit(error ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
@@ -214,7 +246,7 @@ static int job(double exec_time, double program_end, int lock_od, double cs_leng
 	}
 }
 
-#define OPTSTR "p:c:wlveo:f:s:m:q:r:X:L:Q:viRu:Bhd:C:"
+#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:Bhd:C:"
 int main(int argc, char** argv)
 {
 	int ret;
@@ -298,7 +330,7 @@ int main(int argc, char** argv)
 		case 'C':
 			column = atoi(optarg);
 			break;
-		case 'f':
+		case 'F':
 			file = optarg;
 			break;
 		case 'm':
@@ -344,6 +376,7 @@ int main(int argc, char** argv)
 			usage(NULL);
 			break;
 		case 'i':
+			verbose = 1;
 			report_interrupts = 1;
 			break;
 		case ':':
@@ -529,7 +562,8 @@ int main(int argc, char** argv)
 					current  = monotime();
 					printf("\tdeadline: %" PRIu64 "ns (=%.2fs)\n",
 					       (uint64_t) cp->deadline, deadline);
-					printf("\tcurrent time: %.2fs, slack: %.2fms\n",
+					printf("\tcurrent time: %.2fs, "
+					       "time until deadline: %.2fms\n",
 					       current, (deadline - current) * 1000);
 				}
 				if (report_interrupts && cp) {
@@ -547,7 +581,7 @@ int main(int argc, char** argv)
 				acet = 0;
 			acet *= scale;
 			if (verbose)
-				printf("\ttarget ACET: %6.2fms (%.2f%% of WCET)\n",
+				printf("\ttarget exec. time: %6.2fms (%.2f%% of WCET)\n",
 					acet * 1000,
 					(acet * 1000 / wcet_ms) * 100);
 		} while (job(acet, start + duration,
