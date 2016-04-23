@@ -70,7 +70,7 @@ static void usage(char *error) {
 		fprintf(stderr, "rtspin: simulate a periodic CPU-bound "
 		                "real-time task\n\n");
 	}
-	fprintf(stderr, usage_msg);
+	fprintf(stderr, "%s", usage_msg);
 	exit(error ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
