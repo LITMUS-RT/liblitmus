@@ -52,6 +52,7 @@ const char *usage_msg =
 	"    -R                create sporadic reservation for task (with VCPU=PID)\n"
 	"    -s SCALE          fraction of WCET to spin for (1.0 means 100%)\n"
 	"    -u SLACK          randomly under-run WCET by up to SLACK milliseconds\n"
+	"    -U SLACK-FRACTION randomly under-run WCET by up to (WCET * SLACK-FRACTION) milliseconds \n"
 	"    -v                verbose (print per-job statistics)\n"
 	"    -w                wait for synchronous release\n"
 	"\n"
@@ -278,7 +279,8 @@ static void job(double exec_time, double program_end, int lock_od, double cs_len
 	}
 }
 
-#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:Bhd:C:S::T"
+#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::T"
+
 int main(int argc, char** argv)
 {
 	int ret;
@@ -286,6 +288,7 @@ int main(int argc, char** argv)
 	lt_t period, deadline;
 	lt_t phase;
 	double wcet_ms, period_ms, underrun_ms = 0;
+	double underrun_frac = 0;
 	double offset_ms = 0, deadline_ms = 0;
 	unsigned int priority = LITMUS_NO_PRIORITY;
 	int migrate = 0;
@@ -408,6 +411,11 @@ int main(int argc, char** argv)
 			if (underrun_ms <= 0)
 				usage("-u: positive argument needed.");
 			break;
+		case 'U':
+			underrun_frac = atof(optarg);
+			if (underrun_frac <= 0 || underrun_frac > 1)
+				usage("-U: argument must be in the range (0, 1]");
+			break;
 		case 'X':
 			protocol = lock_protocol_for_name(optarg);
 			if (protocol < 0)
@@ -513,6 +521,10 @@ int main(int argc, char** argv)
 		duration = num_jobs * period_ms * 0.001;
 	else
 		duration = atof(argv[optind + 2]);
+
+	if (underrun_frac) {
+		underrun_ms = underrun_frac * wcet_ms;
+	}
 
 	if (migrate) {
 		ret = be_migrate_to_domain(cluster);
