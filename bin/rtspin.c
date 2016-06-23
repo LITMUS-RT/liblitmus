@@ -1,5 +1,6 @@
 #include <sys/time.h>
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -16,14 +17,20 @@
 
 const char *usage_msg =
 	"Usage: (1) rtspin OPTIONS WCET PERIOD DURATION\n"
-	"       (2) rtspin OPTIONS -F FILE [-C COLUMN] WCET PERIOD\n"
-	"       (3) rtspin -l\n"
-	"       (4) rtspin -B\n"
+	"       (2) rtspin -S [INPUT] WCET PERIOD DURATION\n"
+	"       (3) rtspin OPTIONS -F FILE [-C COLUMN] WCET PERIOD [DURATION]\n"
+	"       (4) rtspin -l\n"
+	"       (5) rtspin -B -m FOOTPRINT\n"
 	"\n"
 	"Modes: (1) run as periodic task with given WCET and PERIOD\n"
-	"       (2) as (1), but load per-job execution times from a CSV file\n"
-	"       (3) Run calibration loop (how accurately are target runtimes met?)\n"
-	"       (4) Run background, non-real-time cache-thrashing loop (w/ -m).\n"
+	"       (2) run as sporadic task with given WCET and PERIOD,\n"
+	"           using INPUT as a file from which events are received\n"
+	"           by means of blocking reads (default: read from STDIN)\n"
+	"       (3) as (1) or (2), but load per-job execution times from\n"
+	"           a CSV file\n"
+	"       (4) Run calibration loop (how accurately are target\n"
+	"           runtimes met?)\n"
+	"       (5) Run background, non-real-time cache-thrashing loop.\n"
 	"\n"
 	"Required arguments:\n"
 	"    WCET, PERIOD      reservation parameters (in ms)\n"
@@ -49,7 +56,11 @@ const char *usage_msg =
 	"    -w                wait for synchronous release\n"
 	"\n"
 	"    -F FILE           load per-job execution times from CSV file\n"
-	"    -C COLUMNS        specify column to read per-job execution times from (default: 1)\n"
+	"    -C COLUMN         specify column to read per-job execution times from (default: 1)\n"
+	"\n"
+	"    -S [FILE]         read from FILE to trigger sporadic job releases\n"
+	"                      default w/o -S: periodic job releases\n"
+	"                      default if FILE is omitted: read from STDIN\n"
 	"\n"
 	"    -X PROTOCOL       access a shared resource protected by a locking protocol\n"
 	"    -L CS-LENGTH      simulate a critical section length of CS-LENGTH milliseconds\n"
@@ -79,8 +90,7 @@ static void usage(char *error) {
  */
 static int skip_to_next_line(FILE *fstream)
 {
-	int ch;
-	for (ch = fgetc(fstream); ch != EOF && ch != '\n'; ch = fgetc(fstream));
+	int ch;	for (ch = fgetc(fstream); ch != EOF && ch != '\n'; ch = fgetc(fstream));
 	return ch;
 }
 
@@ -186,10 +196,14 @@ static int loop_for(double exec_time, double emergency_exit)
 		now = cputime();
 		last_loop = now - loop_start;
 		if (emergency_exit && wctime() > emergency_exit) {
-			/* Oops --- this should only be possible if the execution time tracking
-			 * is broken in the LITMUS^RT kernel. */
-			fprintf(stderr, "!!! rtspin/%d emergency exit!\n", getpid());
-			fprintf(stderr, "Something is seriously wrong! Do not ignore this.\n");
+			/* Oops --- this should only be possible if the
+			 * execution time tracking is broken in the LITMUS^RT
+			 * kernel or the user specified infeasible parameters.
+			 */
+			fprintf(stderr, "!!! rtspin/%d emergency exit!\n",
+			        getpid());
+			fprintf(stderr, "Reached experiment timeout while "
+			        "spinning.\n");
 			break;
 		}
 	}
@@ -216,37 +230,53 @@ static void debug_delay_loop(void)
 	}
 }
 
-static int job(double exec_time, double program_end, int lock_od, double cs_length)
+static int wait_for_input(int event_fd)
+{
+	/* We do a blocking read, accepting up to 4KiB of data.
+	 * For simplicity, for now, if there's more than 4KiB of data,
+	 * we treat this as multiple jobs. Note that this means that
+	 * tardiness can result in coalesced jobs. Ideally, there should
+	 * be some sort of configurable job boundary marker, but that's
+	 * not supported in this basic version yet. Patches welcome.
+	 */
+	char buf[4096];
+	size_t consumed;
+
+	consumed = read(event_fd, buf, sizeof(buf));
+
+	if (consumed == 0)
+		fprintf(stderr, "reached end-of-file on input event stream\n");
+	if (consumed < 0)
+		fprintf(stderr, "error reading input event stream (%m)\n");
+
+	return consumed > 0;
+}
+
+static void job(double exec_time, double program_end, int lock_od, double cs_length)
 {
 	double chunk1, chunk2;
 
-	if (wctime() > program_end)
-		return 0;
-	else {
-		if (lock_od >= 0) {
-			/* simulate critical section somewhere in the middle */
-			chunk1 = drand48() * (exec_time - cs_length);
-			chunk2 = exec_time - cs_length - chunk1;
+	if (lock_od >= 0) {
+		/* simulate critical section somewhere in the middle */
+		chunk1 = drand48() * (exec_time - cs_length);
+		chunk2 = exec_time - cs_length - chunk1;
 
-			/* non-critical section */
-			loop_for(chunk1, program_end + 1);
+		/* non-critical section */
+		loop_for(chunk1, program_end + 1);
 
-			/* critical section */
-			litmus_lock(lock_od);
-			loop_for(cs_length, program_end + 1);
-			litmus_unlock(lock_od);
+		/* critical section */
+		litmus_lock(lock_od);
+		loop_for(cs_length, program_end + 1);
+		litmus_unlock(lock_od);
 
-			/* non-critical section */
-			loop_for(chunk2, program_end + 2);
-		} else {
-			loop_for(exec_time, program_end + 1);
-		}
-		sleep_next_period();
-		return 1;
+		/* non-critical section */
+		loop_for(chunk2, program_end + 2);
+	} else {
+		loop_for(exec_time, program_end + 1);
 	}
 }
 
-#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:Bhd:C:"
+#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:Bhd:C:S::"
 int main(int argc, char** argv)
 {
 	int ret;
@@ -274,8 +304,11 @@ int main(int argc, char** argv)
 	int cur_job = 0, num_jobs = 0;
 	struct rt_task param;
 
-	int rss=0;
+	int rss = 0;
 	int idx;
+
+	int sporadic = 0;  /* trigger jobs sporadically? */
+	int event_fd = -1; /* file descriptor for sporadic events */
 
 	int verbose = 0;
 	unsigned int job_no;
@@ -332,6 +365,19 @@ int main(int argc, char** argv)
 			break;
 		case 'F':
 			file = optarg;
+			break;
+		case 'S':
+			sporadic = 1;
+			if (!optarg || strcmp(optarg, "-") == 0)
+				event_fd = STDIN_FILENO;
+			else
+				event_fd = open(optarg, O_RDONLY);
+			if (event_fd == -1) {
+				fprintf(stderr, "Could not open file '%s' "
+					"(%m)\n", optarg);
+				usage("-S requires a valid file path or '-' "
+				      "for STDIN.");
+			}
 			break;
 		case 'm':
 			nr_of_pages = atoi(optarg);
@@ -426,24 +472,8 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (file) {
-		get_exec_times(file, column, &num_jobs, &exec_times);
-
-		if (argc - optind < 2)
-			usage("Arguments missing.");
-
-		for (cur_job = 0; cur_job < num_jobs; ++cur_job) {
-			/* convert the execution time to seconds */
-			duration += exec_times[cur_job] * 0.001;
-		}
-	} else {
-		/*
-		 * if we're not reading from the CSV file, then we need
-		 * three parameters
-		 */
-		if (argc - optind < 3)
-			usage("Arguments missing.");
-	}
+	if (argc - optind < 3 || (argc - optind < 2 && !file))
+		usage("Arguments missing.");
 
 	wcet_ms   = atof(argv[optind + 0]);
 	period_ms = atof(argv[optind + 1]);
@@ -466,10 +496,15 @@ int main(int argc, char** argv)
 				"exceed the period.");
 	}
 
-	if (!file)
-		duration  = atof(argv[optind + 2]);
-	else if (file && num_jobs > 1)
-		duration += period_ms * 0.001 * (num_jobs - 1);
+	if (file)
+		get_exec_times(file, column, &num_jobs, &exec_times);
+
+	if (argc - optind < 3 && file)
+		/* If duration is not given explicitly,
+		 * take duration from file. */
+		duration = num_jobs * period_ms * 0.001;
+	else
+		duration = atof(argv[optind + 2]);
 
 	if (migrate) {
 		ret = be_migrate_to_domain(cluster);
@@ -541,51 +576,77 @@ int main(int argc, char** argv)
 		start = wctime();
 	}
 
-	if (file) {
-		/* use times read from the CSV file */
-		for (cur_job = 0; cur_job < num_jobs; ++cur_job) {
-			/* convert job's length to seconds */
-			job(exec_times[cur_job] * 0.001 * scale,
-			    start + duration,
-			    lock_od, cs_length * 0.001);
-		}
-	} else {
-		double acet;
-		do {
-			if (verbose) {
-				get_job_no(&job_no);
-				printf("rtspin/%d:%u @ %.4fms\n", gettid(),
-					job_no, (wctime() - start) * 1000);
-				if (cp) {
-					double deadline, current;
-					deadline = cp->deadline * 1e-9;
-					current  = monotime();
-					printf("\tdeadline: %" PRIu64 "ns (=%.2fs)\n",
-					       (uint64_t) cp->deadline, deadline);
-					printf("\tcurrent time: %.2fs, "
-					       "time until deadline: %.2fms\n",
-					       current, (deadline - current) * 1000);
-				}
-				if (report_interrupts && cp) {
-					uint64_t irq = cp->irq_count;
 
-					printf("\ttotal interrupts: %" PRIu64
-					       "; delta: %" PRIu64 "\n",
-					       irq, irq - last_irq_count);
-					last_irq_count = irq;
-				}
+	/* main job loop */
+	cur_job = 0;
+	while (1) {
+		double acet; /* actual execution time */
+
+		if (sporadic) {
+			/* sporadic job activations, sleep until
+			 * we receive an "event" (= any data) from
+			 * our input event channel */
+			if (!wait_for_input(event_fd))
+				/* error out of something goes wrong */
+				break;
+		}
+
+		/* first, check if we have reached the end of the run */
+		if (wctime() > start + duration)
+			break;
+
+		if (verbose) {
+			get_job_no(&job_no);
+			printf("rtspin/%d:%u @ %.4fms\n", gettid(),
+				job_no, (wctime() - start) * 1000);
+			if (cp) {
+				double deadline, current;
+				deadline = cp->deadline * 1e-9;
+				current  = monotime();
+				printf("\tdeadline: %" PRIu64 "ns (=%.2fs)\n",
+				       (uint64_t) cp->deadline, deadline);
+				printf("\tcurrent time: %.2fs, "
+				       "time until deadline: %.2fms\n",
+				       current, (deadline - current) * 1000);
 			}
-			/* convert to seconds and scale */
+			if (report_interrupts && cp) {
+				uint64_t irq = cp->irq_count;
+
+				printf("\ttotal interrupts: %" PRIu64
+				       "; delta: %" PRIu64 "\n",
+				       irq, irq - last_irq_count);
+				last_irq_count = irq;
+			}
+		}
+
+		/* figure out for how long this job should use the CPU */
+		cur_job++;
+
+		if (file) {
+			/* read from provided CSV file and convert to seconds */
+			acet = exec_times[cur_job % num_jobs] * 0.001;
+		} else {
+			/* randomize and convert to seconds */
 			acet = (wcet_ms - drand48() * underrun_ms) * 0.001;
 			if (acet < 0)
 				acet = 0;
-			acet *= scale;
-			if (verbose)
-				printf("\ttarget exec. time: %6.2fms (%.2f%% of WCET)\n",
-					acet * 1000,
-					(acet * 1000 / wcet_ms) * 100);
-		} while (job(acet, start + duration,
-			   lock_od, cs_length * 0.001));
+		}
+		/* scale exec time */
+		acet *= scale;
+
+		if (verbose)
+			printf("\ttarget exec. time: %6.2fms (%.2f%% of WCET)\n",
+				acet * 1000,
+				(acet * 1000 / wcet_ms) * 100);
+
+		/* burn cycles */
+		job(acet, start + duration, lock_od, cs_length * 0.001);
+
+		/* wait for periodic job activation (unless sporadic) */
+		if (!sporadic) {
+			/* periodic job activations */
+			sleep_next_period();
+		}
 	}
 
 	ret = task_mode(BACKGROUND_TASK);
@@ -595,7 +656,7 @@ int main(int argc, char** argv)
 	if (file)
 		free(exec_times);
 
-	if(base != MAP_FAILED)
+	if (base != MAP_FAILED)
 		munlock(base, rss);
 
 	return 0;
