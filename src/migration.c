@@ -57,6 +57,11 @@ static int read_mapping(int idx, const char* which, cpu_set_t** set, size_t *sz)
 		goto out;
 
 	len = strnlen(buf, sizeof(buf));
+	/* if there is, omit newline at the end of string */
+	if (buf[len-1] == '\n') {
+		buf[len-1] = '\0';
+		len -= 1;
+	}
 	nbits = 32*(len/9) + 4*(len%9); /* compute bits, accounting for commas */
 
 	*set = CPU_ALLOC(nbits);
@@ -64,12 +69,15 @@ static int read_mapping(int idx, const char* which, cpu_set_t** set, size_t *sz)
 	CPU_ZERO_S(*sz, *set);
 
 	/* process LSB chunks first (at the end of the str) and move backward */
-	chunk_str = buf + len - 9;
+	chunk_str = buf + len;
 	i = 0;
-	do
-	{
+	do {
 		unsigned long chunk;
-		if(chunk_str < buf)
+		/* since strtoul stops processing the string with occurrence of
+		first non-digit character, it is necessary to read 8-bytes 
+		on first iteration for ignoring the leading comma*/
+		chunk_str -= (9 + ((i == 0) ? -1 : 0));
+		if (chunk_str < buf)
 			chunk_str = buf; /* when MSB mask is less than 8 chars */
 		chunk = strtoul(chunk_str, NULL, 16);
 		while (chunk) {
@@ -78,9 +86,8 @@ static int read_mapping(int idx, const char* which, cpu_set_t** set, size_t *sz)
 			CPU_SET_S(x, *sz, *set);
 			chunk &= ~(1ul << j);
 		}
-		chunk_str -= 9;
 		i += 1;
-	} while(chunk_str >= buf - 8);
+	} while (chunk_str > buf);
 
 	ret = 0;
 
