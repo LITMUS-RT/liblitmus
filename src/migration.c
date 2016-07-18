@@ -27,6 +27,43 @@ int num_online_cpus()
 	return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
+void set_mapping(char* buf, int len, cpu_set_t** set, size_t *sz)
+{
+	int nbits;
+	char *chunk_str;
+	int i;
+
+	/* init vals returned to callee */
+	*set = NULL;
+	*sz = 0;
+
+	nbits = 32*(len/9) + 4*(len%9); /* compute bits, accounting for commas */
+	*set = CPU_ALLOC(nbits);
+	*sz = CPU_ALLOC_SIZE(nbits);
+	CPU_ZERO_S(*sz, *set);
+
+	/* process LSB chunks first (at the end of the str) and move backward */
+	chunk_str = buf + len;
+	i = 0;
+	do {
+		unsigned long chunk;
+		/* since strtoul stops processing the string with occurrence of
+		first non-digit character, it is necessary to read 8-bytes
+		on first iteration for ignoring the leading comma*/
+		chunk_str -= (9 + ((i == 0) ? -1 : 0));
+		if (chunk_str < buf)
+			chunk_str = buf; /* when MSB mask is less than 8 chars */
+		chunk = strtoul(chunk_str, NULL, 16);
+		while (chunk) {
+			int j = ffsl(chunk) - 1;
+			int x = i*32 + j;
+			CPU_SET_S(x, *sz, *set);
+			chunk &= ~(1ul << j);
+		}
+		i += 1;
+	} while (chunk_str > buf);
+}
+
 static int read_mapping(int idx, const char* which, cpu_set_t** set, size_t *sz)
 {
 	/* Max CPUs = 4096 */
@@ -37,13 +74,7 @@ static int read_mapping(int idx, const char* which, cpu_set_t** set, size_t *sz)
 	       + 1] = {0};  /* for \0 */
 	char fname[80] = {0};
 
-	char* chunk_str;
-	int len, nbits;
-	int i;
-
-	/* init vals returned to callee */
-	*set = NULL;
-	*sz = 0;
+	int len;
 
 	if (num_online_cpus() > 4096)
 		goto out;
@@ -62,32 +93,8 @@ static int read_mapping(int idx, const char* which, cpu_set_t** set, size_t *sz)
 		buf[len-1] = '\0';
 		len -= 1;
 	}
-	nbits = 32*(len/9) + 4*(len%9); /* compute bits, accounting for commas */
 
-	*set = CPU_ALLOC(nbits);
-	*sz = CPU_ALLOC_SIZE(nbits);
-	CPU_ZERO_S(*sz, *set);
-
-	/* process LSB chunks first (at the end of the str) and move backward */
-	chunk_str = buf + len;
-	i = 0;
-	do {
-		unsigned long chunk;
-		/* since strtoul stops processing the string with occurrence of
-		first non-digit character, it is necessary to read 8-bytes 
-		on first iteration for ignoring the leading comma*/
-		chunk_str -= (9 + ((i == 0) ? -1 : 0));
-		if (chunk_str < buf)
-			chunk_str = buf; /* when MSB mask is less than 8 chars */
-		chunk = strtoul(chunk_str, NULL, 16);
-		while (chunk) {
-			int j = ffsl(chunk) - 1;
-			int x = i*32 + j;
-			CPU_SET_S(x, *sz, *set);
-			chunk &= ~(1ul << j);
-		}
-		i += 1;
-	} while (chunk_str > buf);
+	set_mapping(buf, len, set, sz);
 
 	ret = 0;
 

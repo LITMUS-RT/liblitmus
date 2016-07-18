@@ -193,6 +193,44 @@ TESTCASE(ctrl_page_writable, ALL,
 	ctrl_page[32] = 0x12345678;
 }
 
+TESTCASE(set_cpu_mapping, LITMUS,
+	 "task's CPU affinity is set to CPU set that is read from file")
+{
+	char buf[4096/4	/* enough chars for hex data (4 CPUs per char) */
+		+ 4096/(4*8) /* for commas (separate groups of 8 chars) */
+		+ 1] = {0}; /* for \0 */
+	int len;
+	cpu_set_t *set;
+	size_t sz;
+	
+	/*set affinity to CPU 0 */
+	strcpy(buf, "20");
+	len = strnlen(buf, sizeof(buf));
+	set_mapping(buf, len, &set, &sz);
+	ASSERT( CPU_ISSET_S(5, sz, set) );
+
+	/*set affinity to CPU 29 */
+	strcpy(buf, "20000000");
+	len = strnlen(buf, sizeof(buf));
+	set_mapping(buf, len, &set, &sz);
+	ASSERT( CPU_ISSET_S(29, sz, set) );
+
+	/*set affinity to CPUS 27 and 39 */
+	strcpy(buf, "80,08000000");
+	len = strnlen(buf, sizeof(buf));
+	set_mapping(buf, len, &set, &sz);
+	ASSERT( CPU_ISSET_S(27, sz, set) );
+	ASSERT( CPU_ISSET_S(39, sz, set) );
+
+	/*set affinity to CPUS 96 */
+	strcpy(buf, "1,00000000,00000000,00000000");
+	len = strnlen(buf, sizeof(buf));
+	set_mapping(buf, len, &set, &sz);
+	ASSERT( CPU_ISSET_S(96, sz, set) );
+
+}
+
+
 
 TESTCASE(suspended_admission, LITMUS,
 	 "admission control handles suspended tasks correctly")

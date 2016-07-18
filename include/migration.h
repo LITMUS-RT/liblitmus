@@ -3,6 +3,7 @@
  * Functions to migrate tasks to different CPUs, partitions, clusters...
  */
 
+#include <sched.h>
 typedef int pid_t;
 
 /**
@@ -56,6 +57,20 @@ int be_migrate_to_cluster(int cluster, int cluster_sz);
  * @return 0 if successful
  */
 int be_migrate_to_domain(int domain);
+
+/**
+  * Parse CPU set given as string, and return corresponding cpu_set_t variable
+  * and its size as parameters.
+  * @param buf CPU mapping as string. Specific format is explained in
+  * src/migration.c:82 
+  * @param len Length of input string in bytes
+  * @param set cpu_set_t type variable with bits set as according to input
+  * @param sz Size of CPU set in bytes
+  * @return void
+*/
+
+void set_mapping(char* buf, int len, cpu_set_t** set, size_t *sz);
+
 
 /**
  * Return the number of CPUs currently online
