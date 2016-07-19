@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include <sys/time.h>
+#include <errno.h>
 #include <time.h>
 
 #include "litmus.h"
@@ -33,6 +34,57 @@ double monotime(void)
 	if (err != 0)
 		perror("clock_gettime");
 	return (ts.tv_sec + 1E-9 * ts.tv_nsec);
+}
+
+static void do_sleep_until(struct timespec *ts, clockid_t clock_id)
+{
+	int err;
+
+	do {
+		/* sleep to exact absolute release time */
+		err = clock_nanosleep(clock_id, TIMER_ABSTIME, ts, NULL);
+		/* If we were interrupted by a signal and we didn't terminate,
+		 * then keep sleeping. */
+	} while (err != 0 && errno == EINTR);
+}
+
+/* Sleep until we've reached wake_up_time (in seconds) on the given timeline */
+static void clock_sleep_until(double wake_up_time, clockid_t clock_id)
+{
+	struct timespec ts;
+
+	/* convert from double (seconds) */
+	ts.tv_sec = (time_t) wake_up_time;
+	ts.tv_nsec = (wake_up_time - ts.tv_sec) * 1E9;
+	
+	do_sleep_until(&ts, clock_id);
+}
+
+/* Sleep until we've reached wake_up_time (in seconds) on the CLOCK_MONOTONIC 
+ * timeline. */
+void sleep_until_mono(double wake_up_time)
+{
+	clock_sleep_until(wake_up_time, CLOCK_MONOTONIC);
+}
+
+/* Sleep until we've reached wake_up_time (in seconds) on the CLOCK_MONOTONIC 
+ * timeline. */
+void sleep_until_wc(double wake_up_time)
+{
+	clock_sleep_until(wake_up_time, CLOCK_REALTIME);
+}
+
+/* Sleep until we've reached wake_up_time (in nanoseconds) on the
+ * CLOCK_MONOTONIC  timeline. */
+void lt_sleep_until(lt_t wake_up_time)
+{
+	struct timespec ts;
+
+	/* convert from double (seconds) */
+	ts.tv_sec = (time_t) ns2s(wake_up_time);
+	ts.tv_nsec = (long) (wake_up_time - s2ns(ts.tv_sec));
+	
+	do_sleep_until(&ts, CLOCK_MONOTONIC);
 }
 
 int lt_sleep(lt_t timeout)

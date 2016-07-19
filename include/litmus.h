@@ -158,6 +158,10 @@ int sporadic_clustered(lt_t e_ns, lt_t p_ns, int cluster);
   * @param us Time units in microseconds */
 #define us2ns(us) ((us)*1000LL)
 
+/** Convert nanoseconds to seconds (truncating)
+ * @param ns Time units in nanoseconds */
+#define ns2s(ns)   ((ns)/1000000000LL)
+
 /**
  * Locking protocols for allocated shared objects
  */
@@ -330,6 +334,13 @@ int read_litmus_stats(int *ready, int *total);
 int lt_sleep(lt_t timeout);
 
 /**
+ * Sleep until the given point in time.
+ * @param wake_up_time Point in time when to wake up (w.r.t. CLOCK_MONOTONIC,
+ *                     in nanoseconds).
+ */
+void lt_sleep_until(lt_t wake_up_time);
+
+/**
  * Obtain CPU time consumed so far
  * @return CPU time in seconds
  */
@@ -346,6 +357,18 @@ double wctime(void);
  * @return CLOCK_MONOTONIC time in seconds
  */
 double monotime(void);
+
+/**
+ * Sleep until the given point in time.
+ * @param wake_up_time Point in time when to wake up (w.r.t. CLOCK_MONOTONIC)
+ */
+void sleep_until_mono(double wake_up_time);
+
+/**
+ * Sleep until the given point in time.
+ * @param wake_up_time Point in time when to wake up (w.r.t. CLOCK_REALTIME)
+ */
+void sleep_until_wc(double wake_up_time);
 
 /***** semaphore allocation ******/
 /**
