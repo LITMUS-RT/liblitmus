@@ -40,11 +40,17 @@ how to do so are provided on the LITMUS^RT wiki.
 
 - HOWTO: [linking against liblitmus](https://wiki.litmus-rt.org/litmus/LinkAgainstLiblitmusTutorial).
 
-As of version 2016.1, LITMUS^RT supports reservation-based scheduling.
+As of version 2016.1, LITMUS^RT supports *reservation-based scheduling*.
 How to set up and use reservations is described in a separate document.
 
 - HOWTO: [working with reservations](doc/howto-use-resctl.md)
 
+As part of the reservation framework, LITMUS^RT also supports proper
+*table-driven scheduling* (aka *time partitioning* or *time-triggered
+scheduling*). How to set up and use a static scheduling table described in a
+separate guide.
+
+- HOWTO: [table-driven scheduling](doc/table-driven-scheduling.md)
 
 Getting Help
 ------------
