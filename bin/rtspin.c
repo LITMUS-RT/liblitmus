@@ -612,14 +612,19 @@ int main(int argc, char** argv)
 			printf("rtspin/%d:%u @ %.4fms\n", gettid(),
 				job_no, (wctime() - start) * 1000);
 			if (cp) {
-				double deadline, current;
-				deadline = cp->deadline * 1e-9;
-				current  = monotime();
+				double deadline, current, release;
+				lt_t now = litmus_clock();
+				deadline = ns2s((double) cp->deadline);
+				current  = ns2s((double) now);
+				release  = ns2s((double) cp->release);
+				printf("\trelease:  %" PRIu64 "ns (=%.2fs)\n",
+				       (uint64_t) cp->release, release);
 				printf("\tdeadline: %" PRIu64 "ns (=%.2fs)\n",
 				       (uint64_t) cp->deadline, deadline);
-				printf("\tcurrent time: %.2fs, "
-				       "time until deadline: %.2fms\n",
-				       current, (deadline - current) * 1000);
+				printf("\tcur time: %" PRIu64 "ns (=%.2fs)\n",
+				       (uint64_t) now, current);
+				printf("\ttime until deadline: %.2fms\n",
+				       (deadline - current) * 1000);
 			}
 			if (report_interrupts && cp) {
 				uint64_t irq = cp->irq_count;
@@ -661,12 +666,23 @@ int main(int argc, char** argv)
 				/* Use vanilla Linux API. This looks to the
 				 * active LITMUS^RT plugin like a
 				 * self-suspension. */
+				if (verbose)
+					printf("\tclock_nanosleep() until %"
+					       PRIu64 "ns (=%.2fs)\n",
+				               (uint64_t) next_release,
+				               ns2s((double) next_release));
 				lt_sleep_until(next_release);
 				next_release += period;
-			} else
+			} else {
 				/* Use LITMUS^RT API: some plugins optimize
 				 * this by not actually suspending the task. */
+				if (verbose && cp)
+					printf("\tsleep_next_period() until %"
+					       PRIu64 "ns (=%.2fs)\n",
+					       (uint64_t) (cp->release + period),
+					       ns2s((double) (cp->release + period)));
 				sleep_next_period();
+			}
 		}
 	}
 
