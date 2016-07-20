@@ -340,6 +340,14 @@ int lt_sleep(lt_t timeout);
  */
 void lt_sleep_until(lt_t wake_up_time);
 
+/** Get the current time used by the LITMUS^RT scheduler.
+ * This is just CLOCK_MONOTONIC and hence the same
+ * as monotime(), but the result is given in nanoseconds
+ * as a value of type lt_t.
+ * @return CLOCK_MONOTONIC time in nanoseconds
+ */
+lt_t litmus_clock(void);
+
 /**
  * Obtain CPU time consumed so far
  * @return CPU time in seconds

@@ -36,6 +36,20 @@ double monotime(void)
 	return (ts.tv_sec + 1E-9 * ts.tv_nsec);
 }
 
+/* Current time used by the LITMUS^RT scheduler.
+ * This is just CLOCK_MONOTONIC and hence the same
+ * as monotime(), but the result is given in nanoseconds
+ * as a value of type lt_t.*/
+lt_t litmus_clock(void)
+{
+	struct timespec ts;
+	int err;
+	err = clock_gettime(CLOCK_MONOTONIC, &ts);
+	if (err != 0)
+		perror("clock_gettime");
+	return ((lt_t) s2ns(ts.tv_sec)) + (lt_t) ts.tv_nsec;
+}
+
 static void do_sleep_until(struct timespec *ts, clockid_t clock_id)
 {
 	int err;
@@ -56,18 +70,18 @@ static void clock_sleep_until(double wake_up_time, clockid_t clock_id)
 	/* convert from double (seconds) */
 	ts.tv_sec = (time_t) wake_up_time;
 	ts.tv_nsec = (wake_up_time - ts.tv_sec) * 1E9;
-	
+
 	do_sleep_until(&ts, clock_id);
 }
 
-/* Sleep until we've reached wake_up_time (in seconds) on the CLOCK_MONOTONIC 
+/* Sleep until we've reached wake_up_time (in seconds) on the CLOCK_MONOTONIC
  * timeline. */
 void sleep_until_mono(double wake_up_time)
 {
 	clock_sleep_until(wake_up_time, CLOCK_MONOTONIC);
 }
 
-/* Sleep until we've reached wake_up_time (in seconds) on the CLOCK_MONOTONIC 
+/* Sleep until we've reached wake_up_time (in seconds) on the CLOCK_MONOTONIC
  * timeline. */
 void sleep_until_wc(double wake_up_time)
 {
@@ -83,7 +97,7 @@ void lt_sleep_until(lt_t wake_up_time)
 	/* convert from double (seconds) */
 	ts.tv_sec = (time_t) ns2s(wake_up_time);
 	ts.tv_nsec = (long) (wake_up_time - s2ns(ts.tv_sec));
-	
+
 	do_sleep_until(&ts, CLOCK_MONOTONIC);
 }
 
