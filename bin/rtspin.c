@@ -62,6 +62,8 @@ const char *usage_msg =
 	"                      default w/o -S: periodic job releases\n"
 	"                      default if FILE is omitted: read from STDIN\n"
 	"\n"
+	"    -T                use clock_nanosleep() instead of sleep_next_period()\n"
+	"\n"
 	"    -X PROTOCOL       access a shared resource protected by a locking protocol\n"
 	"    -L CS-LENGTH      simulate a critical section length of CS-LENGTH milliseconds\n"
 	"    -Q RESOURCE-ID    access the resource identified by RESOURCE-ID\n"
@@ -276,7 +278,7 @@ static void job(double exec_time, double program_end, int lock_od, double cs_len
 	}
 }
 
-#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:Bhd:C:S::"
+#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:Bhd:C:S::T"
 int main(int argc, char** argv)
 {
 	int ret;
@@ -309,6 +311,9 @@ int main(int argc, char** argv)
 
 	int sporadic = 0;  /* trigger jobs sporadically? */
 	int event_fd = -1; /* file descriptor for sporadic events */
+
+	int linux_sleep = 0; /* use Linux API for periodic activations? */
+	lt_t next_release;
 
 	int verbose = 0;
 	unsigned int job_no;
@@ -378,6 +383,9 @@ int main(int argc, char** argv)
 				usage("-S requires a valid file path or '-' "
 				      "for STDIN.");
 			}
+			break;
+		case 'T':
+			linux_sleep = 1;
 			break;
 		case 'm':
 			nr_of_pages = atoi(optarg);
@@ -576,6 +584,10 @@ int main(int argc, char** argv)
 		start = wctime();
 	}
 
+	if (cp)
+		next_release = cp->release + period;
+	else
+		next_release = litmus_clock() + period;
 
 	/* main job loop */
 	cur_job = 0;
@@ -645,7 +657,16 @@ int main(int argc, char** argv)
 		/* wait for periodic job activation (unless sporadic) */
 		if (!sporadic) {
 			/* periodic job activations */
-			sleep_next_period();
+			if (linux_sleep) {
+				/* Use vanilla Linux API. This looks to the
+				 * active LITMUS^RT plugin like a
+				 * self-suspension. */
+				lt_sleep_until(next_release);
+				next_release += period;
+			} else
+				/* Use LITMUS^RT API: some plugins optimize
+				 * this by not actually suspending the task. */
+				sleep_next_period();
 		}
 	}
 
