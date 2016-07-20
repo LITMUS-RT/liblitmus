@@ -131,6 +131,44 @@ It is often useful to ensure that a periodic task that is assigned to a table-dr
 
 Specifically, appropriate task activations can be programmed with the [`clock_nanosleep()`](http://linux.die.net/man/2/clock_nanosleep) API. The reference *time zero* of the repeating table schedule is literally time zero on the timeline of `CLOCK_MONOTONIC`.
 
+LITMUS^RT provides two simple wrapper APIs to work with `CLOCK_MONOTONIC`:
+
+- `litmus_clock()`, which provides the current time  according to `CLOCK_MONOTONIC` as a 64-bit value of type `lt_t` (the LITMUS^RT time type); and
+- `lt_sleep_until()`, which suspends the calling process until the provided point in time.
+
+Using these two APIs, it is easy to coordinate for a process to wake up at the beginning of a given scheduling slot. 
+
+For example, suppose we want a task to wake up at the beginning of every instance of a slot *[50ms, 60ms)* of a table-driven reservation with major cycle *M=250ms*. This can be accomplished with the following code:
+
+	lt_t cycle_length, slot_offset, now, next_cycle_start;
+	
+	/* major cycle length in nanoseconds */
+	cycle_length = ms2ns(250); /* ms2ns() is from litmus.h */
+	
+	/* slot offset in nanoseconds */
+	slot_offset = ms2ns(50);
+	
+	/* main task loop: one iteration == one job */
+	while (1) {
+		/* get current time in nanoseconds */
+		now = litmus_clock();
+	
+		/* round up to start time of next major cycle */
+		next_cycle_start = ((now / cycle_length) + 1) * cycle_length;
+	
+		/* sleep until beginning of next slot */
+		lt_sleep_until(next_cycle_start + slot_offset);
+	
+		/* when the task resumes, it's beginning of a slot */
+		
+		 /* application logic */
+		execute_the_job();
+	
+		/* job is complete: loop and sleep until next slot comes around */	
+	}
+
+This example code works if the job never overruns its provided slot length. If jobs can overrun, the computation of the next start time needs to be made more robust by accounting for potential overruns.
+
 
 ## Combining Reservation Types
 
