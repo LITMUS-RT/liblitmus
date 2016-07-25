@@ -9,10 +9,12 @@
 #include "common.h"
 
 const char *usage_msg =
-	"Usage: rt_launch OPTIONS budget period -- program [arg1 arg2 ...]\n"
+	"Usage: rt_launch [OPTIONS] BUDGET PERIOD -- PROGRAM [arg1 arg2 ...]\n"
+	"       rt_launch -r VCPU [OPTIONS] -- PROGRAM [arg1 arg2 ...]\n"
 	"\n"
 	"Required arguments:\n"
 	"    budget, period    reservation parameters (in ms)\n"
+	"                      Note: omit the budget and period if -r is given.\n"
 	"    program           path to the binary to be launched\n"
 	"\n"
 	"Options:\n"
@@ -74,11 +76,11 @@ int main(int argc, char** argv)
 			wait = 1;
 			break;
 		case 'p':
-			cluster = atoi(optarg);
+			cluster = want_non_negative_int(optarg, "-p");
 			migrate = 1;
 			break;
 		case 'q':
-			priority = atoi(optarg);
+			priority = want_non_negative_int(optarg, "-q");
 			if (!litmus_is_valid_fixed_prio(priority))
 				usage("Invalid priority.");
 			break;
@@ -91,21 +93,17 @@ int main(int argc, char** argv)
 			want_enforcement = 0;
 			break;
 		case 'r':
-			reservation = atoi(optarg);
+			reservation = want_non_negative_int(optarg, "-r");
 			break;
 		case 'R':
 			create_reservation = 1;
 			reservation = getpid();
 			break;
 		case 'o':
-			offset_ms = atof(optarg);
+			offset_ms = want_non_negative_double(optarg, "-o");
 			break;
 		case 'd':
-			deadline_ms = atof(optarg);
-			if (!deadline_ms || deadline_ms < 0) {
-				usage("The relative deadline must be a positive"
-					" number.");
-			}
+			deadline_ms = want_positive_double(optarg, "-d");
 			break;
 		case 'v':
 			verbose = 1;
@@ -125,26 +123,30 @@ int main(int argc, char** argv)
 
 	signal(SIGUSR1, SIG_IGN);
 
-	if (argc - optind < 3)
-		usage("Arguments missing.");
+	if (reservation == -1) {
+		/* -r flag not given => wcet and period arguments required */
+		if (argc - optind < 3)
+			usage("Arguments missing.");
 
-	wcet_ms   = atof(argv[optind + 0]);
-	period_ms = atof(argv[optind + 1]);
+		wcet_ms   = want_positive_double(argv[optind + 0], "BUDGET");
+		period_ms = want_positive_double(argv[optind + 1], "PERIOD");
+		optind += 2;
+	} else {
+		/* -r argument given: wcet and period are irrelevant
+		 * since only the reservation parameters matter. */
+		if (argc - optind < 1)
+			usage("Argument missing.");
+
+		 /* pick dummy values */
+		wcet_ms   = 100;
+		period_ms = 100;
+	}
 
 	wcet   = ms2ns(wcet_ms);
 	period = ms2ns(period_ms);
 	offset = ms2ns(offset_ms);
 	deadline = ms2ns(deadline_ms);
-	if (wcet <= 0)
-		usage("The worst-case execution time must be a "
-				"positive number.");
 
-	if (offset_ms < 0)
-		usage("The synchronous release delay must be a "
-				"non-negative number.");
-
-	if (period <= 0)
-		usage("The period must be a positive number.");
 	if (wcet > period) {
 		usage("The worst-case execution time must not "
 				"exceed the period.");
@@ -205,7 +207,7 @@ int main(int argc, char** argv)
 			bail_out("wait_for_ts_release()");
 	}
 
-	execvp(argv[optind + 2], argv + optind + 2);
+	execvp(argv[optind], argv + optind);
 	perror("execv failed");
 	return 1;
 }
