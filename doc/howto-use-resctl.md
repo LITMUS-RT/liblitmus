@@ -109,9 +109,10 @@ The same options (`-p` and `-r`) are also understood by the `rt_launch` utility.
 For example, to launch a `find` process in reservation 1000 on core 1, use the following command:
 
 ```
-rt_launch -p 1 -r 1000 10 100 find /
+rt_launch -p 1 -r 1000 find /
 ```
 
+While `rt_launch` usually requires a budget and period to be specified when used with a process-based scheduler plugin, this is not required when launching a process inside a reservation: since only the parameters of the reservation are relevant for scheduling purposes, the per-process parameters are simply omitted. 
 
 ### Attaching an already running task to a reservation
 
