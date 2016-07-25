@@ -339,18 +339,18 @@ int main(int argc, char** argv)
 			wait = 1;
 			break;
 		case 'p':
-			cluster = atoi(optarg);
+			cluster = want_non_negative_int(optarg, "-p");
 			migrate = 1;
 			break;
 		case 'r':
-			reservation = atoi(optarg);
+			reservation = want_non_negative_int(optarg, "-r");
 			break;
 		case 'R':
 			create_reservation = 1;
 			reservation = getpid();
 			break;
 		case 'q':
-			priority = atoi(optarg);
+			priority = want_non_negative_int(optarg, "-q");
 			if (!litmus_is_valid_fixed_prio(priority))
 				usage("Invalid priority.");
 			break;
@@ -369,7 +369,7 @@ int main(int argc, char** argv)
 			background_loop = 1;
 			break;
 		case 'C':
-			column = atoi(optarg);
+			column = want_non_negative_int(optarg, "-C");
 			break;
 		case 'F':
 			file = optarg;
@@ -391,29 +391,23 @@ int main(int argc, char** argv)
 			linux_sleep = 1;
 			break;
 		case 'm':
-			nr_of_pages = atoi(optarg);
+			nr_of_pages = want_non_negative_int(optarg, "-m");
 			break;
 		case 's':
-			scale = atof(optarg);
+			scale = want_non_negative_double(optarg, "-s");
 			break;
 		case 'o':
-			offset_ms = atof(optarg);
+			offset_ms = want_non_negative_double(optarg, "-o");
 			break;
 		case 'd':
-			deadline_ms = atof(optarg);
-			if (!deadline_ms || deadline_ms < 0) {
-				usage("The relative deadline must be a positive"
-					" number.");
-			}
+			deadline_ms = want_non_negative_double(optarg, "-d");
 			break;
 		case 'u':
-			underrun_ms = atof(optarg);
-			if (underrun_ms <= 0)
-				usage("-u: positive argument needed.");
+			underrun_ms = want_positive_double(optarg, "-u");
 			break;
 		case 'U':
-			underrun_frac = atof(optarg);
-			if (underrun_frac <= 0 || underrun_frac > 1)
+			underrun_frac = want_positive_double(optarg, "-U");
+			if (underrun_frac > 1)
 				usage("-U: argument must be in the range (0, 1]");
 			break;
 		case 'X':
@@ -422,14 +416,11 @@ int main(int argc, char** argv)
 				usage("Unknown locking protocol specified.");
 			break;
 		case 'L':
-			cs_length = atof(optarg);
-			if (cs_length <= 0)
-				usage("Invalid critical section length.");
+			cs_length = want_positive_double(optarg, "-L");
 			break;
 		case 'Q':
-			resource_id = atoi(optarg);
-			if (resource_id <= 0 && strcmp(optarg, "0"))
-				usage("Invalid resource ID.");
+			resource_id = want_non_negative_int(optarg, "-Q");
+
 			break;
 		case 'v':
 			verbose = 1;
@@ -491,8 +482,8 @@ int main(int argc, char** argv)
 	if (argc - optind < 3 || (argc - optind < 2 && !file))
 		usage("Arguments missing.");
 
-	wcet_ms   = atof(argv[optind + 0]);
-	period_ms = atof(argv[optind + 1]);
+	wcet_ms   = want_positive_double(argv[optind + 0], "WCET");
+	period_ms = want_positive_double(argv[optind + 1], "PERIOD");
 
 	wcet   = ms2ns(wcet_ms);
 	period = ms2ns(period_ms);
@@ -520,7 +511,7 @@ int main(int argc, char** argv)
 		 * take duration from file. */
 		duration = num_jobs * period_ms * 0.001;
 	else
-		duration = atof(argv[optind + 2]);
+		duration = want_positive_double(argv[optind + 2], "DURATION");
 
 	if (underrun_frac) {
 		underrun_ms = underrun_frac * wcet_ms;
