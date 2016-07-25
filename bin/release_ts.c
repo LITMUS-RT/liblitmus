@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "common.h"
 #include "litmus.h"
 #include "internal.h"
 
@@ -53,7 +54,7 @@ int main(int argc, char** argv)
 	while ((opt = getopt(argc, argv, OPTSTR)) != -1) {
 		switch (opt) {
 		case 'd':
-			delay = ms2ns(atoi(optarg));
+			delay = ms2ns(want_non_negative_double(optarg, "-d"));
 			break;
 		case 'w':
 			wait = 1;
@@ -64,7 +65,7 @@ int main(int argc, char** argv)
 			break;
 		case 'f':
 			wait = 1;
-			expected = atoi(optarg);
+			expected = want_non_negative_int(optarg, "-f");
 			break;
 		case ':':
 			usage("Argument missing.");

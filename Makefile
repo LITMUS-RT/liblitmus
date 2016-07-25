@@ -218,7 +218,7 @@ lib-rtspin = -lrt
 obj-uncache = uncache.o
 lib-uncache = -lrt
 
-obj-release_ts = release_ts.o
+obj-release_ts = release_ts.o common.o
 
 obj-measure_syscall = null_call.o
 lib-measure_syscall = -lm
