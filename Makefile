@@ -35,12 +35,6 @@ include-sparc64  = sparc
 # default: the arch name
 include-${ARCH} ?= ${ARCH}
 
-# name of the file(s) that holds the actual system call numbers
-unistd-i386      = uapi/asm/unistd.h generated/uapi/asm/unistd_32.h
-unistd-x86_64    = uapi/asm/unistd.h generated/uapi/asm/unistd_64.h
-# default: unistd.h
-unistd-${ARCH}  ?= uapi/asm/unistd.h
-
 # by default we use the local version
 LIBLITMUS ?= .
 
@@ -167,15 +161,9 @@ arch/${include-${ARCH}}/include/generated/uapi/asm/%.h: \
 litmus-headers = \
 	include/litmus/rt_param.h \
 	include/litmus/ctrlpage.h \
-	include/litmus/fpmath.h \
-	include/litmus/unistd_32.h \
-	include/litmus/unistd_64.h
+	include/litmus/fpmath.h
 
-unistd-headers = \
-  $(foreach file,${unistd-${ARCH}},arch/${include-${ARCH}}/include/$(file))
-
-
-imported-headers = ${litmus-headers} ${unistd-headers}
+imported-headers = ${litmus-headers} 
 
 # Let's not copy these twice.
 .SECONDARY: ${imported-headers}
@@ -278,17 +266,6 @@ $(info (!!) Are you sure the path is correct?)
 $(info (!!) Run 'make dump-config' to see the build configuration.)
 $(info (!!) Edit the file .config to override the default configuration.)
 $(error Cannot build without access to the LITMUS^RT kernel source)
-endif
-
-
-config-ok  := $(shell test -f "${LITMUS_KERNEL}/${word 1,${unistd-headers}}" \
-	|| echo fail )
-ifneq ($(config-ok),)
-$(info (!!) Could not find the architecture-specifc Linux headers.)
-$(info (!!) Are you sure ARCH=${ARCH} is correct?)
-$(info (!!) Run 'make dump-config' to see the build configuration.)
-$(info (!!) Edit the file '.config' to override the default configuration.)
-$(error Cannot build without access to the architecture-specific files)
 endif
 
 endif
