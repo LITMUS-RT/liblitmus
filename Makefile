@@ -280,12 +280,6 @@ $(info (!!) Edit the file .config to override the default configuration.)
 $(error Cannot build without access to the LITMUS^RT kernel source)
 endif
 
-kernel-unistd-hdrs := $(foreach file,${unistd-headers},${LITMUS_KERNEL}/$(file))
-hdr-ok     := $(shell egrep '\#include ["<]litmus/unistd|__NR_litmus_lock' ${kernel-unistd-hdrs} )
-ifeq ($(strip $(hdr-ok)),)
-$(info (!!) Could not find LITMUS^RT system calls in ${kernel-unistd-hdrs}.)
-$(error Your kernel headers do not seem to be LITMUS^RT headers)
-endif
 
 config-ok  := $(shell test -f "${LITMUS_KERNEL}/${word 1,${unistd-headers}}" \
 	|| echo fail )
