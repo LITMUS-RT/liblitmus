@@ -50,7 +50,7 @@ const char *usage_msg =
 	"    -q PRIORITY       priority to use (ignored by EDF plugins, highest=1, lowest=511)\n"
 	"    -r VCPU           virtual CPU or reservation to attach to (irrelevant to most plugins)\n"
 	"    -R                create sporadic reservation for task (with VCPU=PID)\n"
-	"    -s SCALE          fraction of WCET to spin for (1.0 means 100%)\n"
+	"    -s SCALE          fraction of WCET to spin for (1.0 means 100%, default 0.95)\n"
 	"    -u SLACK          randomly under-run WCET by up to SLACK milliseconds\n"
 	"    -U SLACK-FRACTION randomly under-run WCET by up to (WCET * SLACK-FRACTION) milliseconds \n"
 	"    -v                verbose (print per-job statistics)\n"
@@ -304,7 +304,7 @@ int main(int argc, char** argv)
 	int want_enforcement = 0;
 	double duration = 0, start = 0;
 	double *exec_times = NULL;
-	double scale = 1.0;
+	double scale = 0.95;
 	task_class_t class = RT_CLASS_HARD;
 	int cur_job = 0, num_jobs = 0;
 	struct rt_task param;
