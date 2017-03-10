@@ -59,11 +59,13 @@ const char *usage_msg =
 	"    -F FILE           load per-job execution times from CSV file\n"
 	"    -C COLUMN         specify column to read per-job execution times from (default: 1)\n"
 	"\n"
-	"    -S [FILE]         read from FILE to trigger sporadic job releases\n"
+	"    -S[FILE]          read from FILE to trigger sporadic job releases\n"
 	"                      default w/o -S: periodic job releases\n"
 	"                      default if FILE is omitted: read from STDIN\n"
 	"\n"
 	"    -T                use clock_nanosleep() instead of sleep_next_period()\n"
+	"    -D MAX-DELTA      set maximum inter-arrival delay to MAX-DELTA [default: period]\n"
+	"    -E MIN-DELTA      set minimum inter-arrival delay to MIN-DELTA [default: period]\n"
 	"\n"
 	"    -X PROTOCOL       access a shared resource protected by a locking protocol\n"
 	"    -L CS-LENGTH      simulate a critical section length of CS-LENGTH milliseconds\n"
@@ -81,8 +83,8 @@ static void usage(char *error) {
 	if (error)
 		fprintf(stderr, "Error: %s\n\n", error);
 	else {
-		fprintf(stderr, "rtspin: simulate a periodic CPU-bound "
-		                "real-time task\n\n");
+		fprintf(stderr, "rtspin: simulate a periodic or sporadic "
+		                "CPU-bound real-time task\n\n");
 	}
 	fprintf(stderr, "%s", usage_msg);
 	exit(error ? EXIT_FAILURE : EXIT_SUCCESS);
@@ -279,7 +281,7 @@ static void job(double exec_time, double program_end, int lock_od, double cs_len
 	}
 }
 
-#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::T"
+#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::TD:E:"
 
 int main(int argc, char** argv)
 {
@@ -287,6 +289,8 @@ int main(int argc, char** argv)
 	lt_t wcet;
 	lt_t period, deadline;
 	lt_t phase;
+	lt_t inter_arrival_time;
+	double inter_arrival_min_ms = 0, inter_arrival_max_ms = 0;
 	double wcet_ms, period_ms, underrun_ms = 0;
 	double underrun_frac = 0;
 	double offset_ms = 0, deadline_ms = 0;
@@ -389,6 +393,16 @@ int main(int argc, char** argv)
 			break;
 		case 'T':
 			linux_sleep = 1;
+			break;
+		case 'D':
+			linux_sleep = 1;
+			inter_arrival_max_ms =
+				want_non_negative_double(optarg, "-D");
+			break;
+		case 'E':
+			linux_sleep = 1;
+			inter_arrival_min_ms =
+				want_non_negative_double(optarg, "-E");
 			break;
 		case 'm':
 			nr_of_pages = want_non_negative_int(optarg, "-m");
@@ -592,6 +606,16 @@ int main(int argc, char** argv)
 	else
 		next_release = litmus_clock() + period;
 
+	/* default: periodic releases */
+	if (!inter_arrival_min_ms)
+		inter_arrival_min_ms = period_ms;
+	if (!inter_arrival_max_ms)
+		inter_arrival_max_ms = period_ms;
+
+	if (inter_arrival_min_ms > inter_arrival_max_ms)
+		inter_arrival_max_ms = inter_arrival_min_ms;
+	inter_arrival_time = period;
+
 	/* main job loop */
 	cur_job = 0;
 	while (1) {
@@ -671,11 +695,18 @@ int main(int argc, char** argv)
 				 * self-suspension. */
 				if (verbose)
 					printf("\tclock_nanosleep() until %"
-					       PRIu64 "ns (=%.2fs)\n",
+					       PRIu64 "ns (=%.2fs), "
+					       "delta %" PRIu64 "ns (=%.2fms)\n",
 				               (uint64_t) next_release,
-				               ns2s((double) next_release));
+				               ns2s((double) next_release),
+				               (uint64_t) inter_arrival_time,
+				               ns2ms((double) inter_arrival_time));
 				lt_sleep_until(next_release);
-				next_release += period;
+				inter_arrival_time = ms2ns(
+					inter_arrival_min_ms +
+					drand48() * (inter_arrival_max_ms -
+					             inter_arrival_min_ms));
+				next_release += inter_arrival_time;
 			} else {
 				/* Use LITMUS^RT API: some plugins optimize
 				 * this by not actually suspending the task. */
