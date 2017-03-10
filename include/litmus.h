@@ -162,6 +162,10 @@ int sporadic_clustered(lt_t e_ns, lt_t p_ns, int cluster);
  * @param ns Time units in nanoseconds */
 #define ns2s(ns)   ((ns)/1000000000LL)
 
+/** Convert nanoseconds to milliseconds (truncating)
+ * @param ns Time units in nanoseconds */
+#define ns2ms(ns)   ((ns)/1000000LL)
+
 /**
  * Locking protocols for allocated shared objects
  */
