@@ -123,7 +123,7 @@ int main(int argc, char** argv)
 
 	signal(SIGUSR1, SIG_IGN);
 
-	if (reservation == -1) {
+	if (reservation == -1 || create_reservation) {
 		/* -r flag not given => wcet and period arguments required */
 		if (argc - optind < 3)
 			usage("Arguments missing.");
