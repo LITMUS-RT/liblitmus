@@ -208,6 +208,6 @@ int main(int argc, char** argv)
 	}
 
 	execvp(argv[optind], argv + optind);
-	perror("execv failed");
+	fprintf(stderr, "rt_launch: cannot execute '%s' (%m)\n", argv[optind]);
 	return 1;
 }
