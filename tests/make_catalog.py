@@ -64,6 +64,7 @@ def create_tc_tables(out=sys.stdout):
 
     plugins.discard('ALL')
     plugins.discard('LITMUS')
+    plugins.discard('NONE')
 
     _('#include "tests.h"')
 
