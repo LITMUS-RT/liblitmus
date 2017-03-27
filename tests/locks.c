@@ -30,7 +30,7 @@ TESTCASE(not_lock_fmlp_be, GSN_EDF | PSN_EDF | P_FP,
 
 }
 
-TESTCASE(not_lock_srp_be, PSN_EDF | P_FP,
+TESTCASE(not_lock_srp_be, NONE,
 	 "don't let best-effort tasks open SRP semaphores")
 {
 	int fd, od;
@@ -47,7 +47,7 @@ TESTCASE(not_lock_srp_be, PSN_EDF | P_FP,
 
 }
 
-TESTCASE(lock_srp, PSN_EDF | P_FP,
+TESTCASE(lock_srp, NONE,
 	 "SRP acquisition and release")
 {
 	int fd, od;
@@ -158,7 +158,7 @@ TESTCASE(dflp_bad_cpu, P_FP,
 	SYSCALL( remove(".dflp_locks") );
 }
 
-TESTCASE(srp_lock_mode_change, P_FP | PSN_EDF,
+TESTCASE(srp_lock_mode_change, NONE,
 	 "SRP task becomes non-RT task while holding lock")
 {
 	int fd, od;
@@ -275,7 +275,7 @@ TESTCASE(fmlp_lock_mode_change, P_FP | PSN_EDF | GSN_EDF,
 	SYSCALL( remove(".locks") );
 }
 
-TESTCASE(srp_lock_teardown, P_FP | PSN_EDF,
+TESTCASE(srp_lock_teardown, NONE,
 	 "SRP task exits while holding lock")
 {
 	int fd, od;

@@ -40,7 +40,7 @@ TESTCASE(lock_fmlp_nesting, PSN_EDF | GSN_EDF | P_FP,
 	SYSCALL( remove(".fmlp_locks") );
 }
 
-TESTCASE(lock_fmlp_srp_nesting, PSN_EDF | P_FP,
+TESTCASE(lock_fmlp_srp_nesting, NONE,
 	 "FMLP no nesting with SRP resources allowed")
 {
 	int fd, od, od2;
@@ -75,7 +75,7 @@ TESTCASE(lock_fmlp_srp_nesting, PSN_EDF | P_FP,
 	SYSCALL( remove(".fmlp_locks") );
 }
 
-TESTCASE(lock_srp_nesting, PSN_EDF | P_FP,
+TESTCASE(lock_srp_nesting, NONE,
 	 "SRP nesting allowed")
 {
 	int fd, od, od2;
@@ -243,7 +243,7 @@ TESTCASE(lock_dpcp_pcp_no_nesting, P_FP,
 	SYSCALL( remove(namespace) );
 }
 
-TESTCASE(lock_mpcp_srp_no_nesting, P_FP,
+TESTCASE(lock_mpcp_srp_no_nesting, NONE,
 	 "SRP and MPCP nesting not allowed")
 {
 	int od, od2;
@@ -275,7 +275,7 @@ TESTCASE(lock_mpcp_srp_no_nesting, P_FP,
 	SYSCALL( remove(namespace) );
 }
 
-TESTCASE(lock_dpcp_srp_no_nesting, P_FP,
+TESTCASE(lock_dpcp_srp_no_nesting, NONE,
 	 "SRP and DPCP nesting not allowed")
 {
 	int od, od2;

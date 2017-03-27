@@ -163,7 +163,7 @@ TESTCASE(pcp_inheritance, P_FP,
 	ASSERT( status ==  SIGUSR2);
 }
 
-TESTCASE(srp_ceiling_blocking, P_FP | PSN_EDF,
+TESTCASE(srp_ceiling_blocking, NONE,
 	 "SRP ceiling blocking")
 {
 	int fd, od;
