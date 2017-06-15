@@ -168,20 +168,36 @@ static void *base = NULL;
 static int loop_once(void)
 {
 	int i, j = 0;
-	for (i = 0; i < NUMS; i++)
+	/* touch some numbers and do some math */
+	for (i = 0; i < NUMS; i++) {
 		j += num[i]++;
+		if (j > num[i])
+			num[i] = (j / 2) + 1;
+	}
 	return j;
 }
 
 static int loop_once_with_mem(void)
 {
-	int i;
+	int i, j = 0;
 	int rand;
-	for(i=0; i<NUMS; i++) {
-		rand=lrand48() % (nr_of_pages - 1);
-		memset(base + (rand * page_size),rand,1024);
+	int *num;
+
+	/* choose a random page */
+	if (nr_of_pages > 1)
+		rand = lrand48() % (nr_of_pages - 1);
+	else
+		rand = 0;
+
+	/* touch the randomly selected page */
+	num = base + (rand * page_size);
+	for (i = 0; i < page_size / sizeof(int); i++) {
+		j += num[i]++;
+		if (j > num[i])
+			num[i] = (j / 2) + 1;
 	}
-	return 0;
+
+	return j;
 }
 
 static int loop_for(double exec_time, double emergency_exit)
