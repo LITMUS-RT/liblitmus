@@ -313,13 +313,13 @@ int  requested_to_preempt(void);
 int wait_for_ts_release(void);
 /**
  * Release all tasks in the task system
- * @param delay Time to wait
+ * @param when Time of the synchronous release (w.r.t. CLOCK_MONOTONIC)
  * @return Number of tasks released
  *
  * Used by a task master to release all threads after each of them has been
  * set up.
  */
-int release_ts(lt_t *delay);
+int release_ts(lt_t *when);
 /**
  * Obtain the number of currently waiting tasks
  * @return The number of waiting tasks

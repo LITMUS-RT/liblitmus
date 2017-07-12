@@ -10,7 +10,7 @@
 #include "litmus.h"
 #include "internal.h"
 
-#define OPTSTR "d:wf:W"
+#define OPTSTR "d:wf:Wq:"
 
 #define LITMUS_STATS_FILE "/proc/litmus/stats"
 
@@ -20,6 +20,9 @@ void usage(char *error) {
 		"Usage: release_ts [OPTIONS]\n"
 		"\n"
 		"Options: -d  <delay in ms>  (default: 1000ms)\n"
+		"         -q  <quantum in ms> (default: 1000ms)\n"
+		"             (times release to occur on an integer multiple "
+		              "of the quantum length)\n"
 		"         -w  wait until all tasks are ready for release\n"
 		"             (as determined by /proc/litmus/stats\n"
 		"         -f  <#tasks> wait for #tasks (default: 0)\n"
@@ -46,6 +49,8 @@ int main(int argc, char** argv)
 {
 	int released;
 	lt_t delay = ms2ns(1000);
+	lt_t quantum = ms2ns(1000);
+	lt_t when = 0;
 	int wait = 0;
 	int expected = 0;
 	int exit_after_wait = 0;
@@ -56,6 +61,8 @@ int main(int argc, char** argv)
 		case 'd':
 			delay = ms2ns(want_non_negative_double(optarg, "-d"));
 			break;
+		case 'q':
+			quantum = ms2ns(want_non_negative_double(optarg, "-q"));
 		case 'w':
 			wait = 1;
 			break;
@@ -83,7 +90,11 @@ int main(int argc, char** argv)
 	if (exit_after_wait)
 		exit(0);
 
-	released = release_ts(&delay);
+	when = litmus_clock() + delay;
+	when = ((when / quantum) + 1) * quantum;
+	printf("Synchronous release at time %.2fms.\n",
+		ns2ms((double) when));
+	released = release_ts(&when);
 	if (released < 0) {
 		perror("release task system");
 		exit(1);

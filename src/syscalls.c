@@ -93,9 +93,9 @@ int wait_for_ts_release(void)
 	return litmus_syscall(LRT_wait_for_ts_release, 0);
 }
 
-int release_ts(lt_t *delay)
+int release_ts(lt_t *when)
 {
-	return litmus_syscall(LRT_release_ts, (unsigned long) delay);
+	return litmus_syscall(LRT_release_ts, (unsigned long) when);
 }
 
 int null_call(cycles_t *timestamp)
