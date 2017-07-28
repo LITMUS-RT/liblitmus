@@ -652,7 +652,7 @@ int main(int argc, char** argv)
 
 		if (verbose) {
 			get_job_no(&job_no);
-			printf("rtspin/%d:%u @ %.4fms\n", gettid(),
+			fprintf(stderr, "rtspin/%d:%u @ %.4fms\n", gettid(),
 				job_no, (wctime() - start) * 1000);
 			if (cp) {
 				double deadline, current, release;
@@ -660,20 +660,25 @@ int main(int argc, char** argv)
 				deadline = ns2s((double) cp->deadline);
 				current  = ns2s((double) now);
 				release  = ns2s((double) cp->release);
-				printf("\trelease:  %" PRIu64 "ns (=%.2fs)\n",
-				       (uint64_t) cp->release, release);
-				printf("\tdeadline: %" PRIu64 "ns (=%.2fs)\n",
-				       (uint64_t) cp->deadline, deadline);
-				printf("\tcur time: %" PRIu64 "ns (=%.2fs)\n",
-				       (uint64_t) now, current);
-				printf("\ttime until deadline: %.2fms\n",
-				       (deadline - current) * 1000);
+				fprintf(stderr,
+				        "\trelease:  %" PRIu64 "ns (=%.2fs)\n",
+				        (uint64_t) cp->release, release);
+				fprintf(stderr,
+				        "\tdeadline: %" PRIu64 "ns (=%.2fs)\n",
+				        (uint64_t) cp->deadline, deadline);
+				fprintf(stderr,
+				        "\tcur time: %" PRIu64 "ns (=%.2fs)\n",
+				        (uint64_t) now, current);
+				fprintf(stderr,
+				        "\ttime until deadline: %.2fms\n",
+				        (deadline - current) * 1000);
 			}
 			if (report_interrupts && cp) {
 				uint64_t irq = cp->irq_count;
 
-				printf("\ttotal interrupts: %" PRIu64
-				       "; delta: %" PRIu64 "\n",
+				fprintf(stderr,
+				        "\ttotal interrupts: %" PRIu64
+				        "; delta: %" PRIu64 "\n",
 				       irq, irq - last_irq_count);
 				last_irq_count = irq;
 			}
@@ -695,7 +700,8 @@ int main(int argc, char** argv)
 		acet *= scale;
 
 		if (verbose)
-			printf("\ttarget exec. time: %6.2fms (%.2f%% of WCET)\n",
+			fprintf(stderr,
+				"\ttarget exec. time: %6.2fms (%.2f%% of WCET)\n",
 				acet * 1000,
 				(acet * 1000 / wcet_ms) * 100);
 
@@ -710,13 +716,14 @@ int main(int argc, char** argv)
 				 * active LITMUS^RT plugin like a
 				 * self-suspension. */
 				if (verbose)
-					printf("\tclock_nanosleep() until %"
-					       PRIu64 "ns (=%.2fs), "
-					       "delta %" PRIu64 "ns (=%.2fms)\n",
-				               (uint64_t) next_release,
-				               ns2s((double) next_release),
-				               (uint64_t) inter_arrival_time,
-				               ns2ms((double) inter_arrival_time));
+					fprintf(stderr,
+				                "\tclock_nanosleep() until %"
+					        PRIu64 "ns (=%.2fs), "
+					        "delta %" PRIu64 "ns (=%.2fms)\n",
+				                (uint64_t) next_release,
+				                ns2s((double) next_release),
+				                (uint64_t) inter_arrival_time,
+				                ns2ms((double) inter_arrival_time));
 				lt_sleep_until(next_release);
 				inter_arrival_time = ms2ns(
 					inter_arrival_min_ms +
@@ -727,10 +734,11 @@ int main(int argc, char** argv)
 				/* Use LITMUS^RT API: some plugins optimize
 				 * this by not actually suspending the task. */
 				if (verbose && cp)
-					printf("\tsleep_next_period() until %"
-					       PRIu64 "ns (=%.2fs)\n",
-					       (uint64_t) (cp->release + period),
-					       ns2s((double) (cp->release + period)));
+					fprintf(stderr,
+				                "\tsleep_next_period() until %"
+					        PRIu64 "ns (=%.2fs)\n",
+					        (uint64_t) (cp->release + period),
+					        ns2s((double) (cp->release + period)));
 				sleep_next_period();
 			}
 		}
