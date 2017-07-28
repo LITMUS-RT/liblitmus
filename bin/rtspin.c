@@ -62,6 +62,10 @@ const char *usage_msg =
 	"    -S[FILE]          read from FILE to trigger sporadic job releases\n"
 	"                      default w/o -S: periodic job releases\n"
 	"                      default if FILE is omitted: read from STDIN\n"
+	"    -O[FILE]          write to FILE when job completes (this is useful with -S\n"
+	"                      to create precedence constraints/event chains)\n"
+	"                      default w/o -O: no output\n"
+	"                      default if FILE is omitted: write to STDOUT\n"
 	"\n"
 	"    -T                use clock_nanosleep() instead of sleep_next_period()\n"
 	"    -D MAX-DELTA      set maximum inter-arrival delay to MAX-DELTA [default: period]\n"
@@ -251,6 +255,8 @@ static void debug_delay_loop(void)
 	}
 }
 
+static char input_buf[4096] = "<no input>";
+
 static int wait_for_input(int event_fd)
 {
 	/* We do a blocking read, accepting up to 4KiB of data.
@@ -260,17 +266,40 @@ static int wait_for_input(int event_fd)
 	 * be some sort of configurable job boundary marker, but that's
 	 * not supported in this basic version yet. Patches welcome.
 	 */
-	char buf[4096];
 	size_t consumed;
 
-	consumed = read(event_fd, buf, sizeof(buf));
+	consumed = read(event_fd, input_buf, sizeof(input_buf) - 1);
 
 	if (consumed == 0)
 		fprintf(stderr, "reached end-of-file on input event stream\n");
 	if (consumed < 0)
 		fprintf(stderr, "error reading input event stream (%m)\n");
 
+	if (consumed > 0) {
+		/* zero-terminate string buffer */
+		input_buf[consumed] = '\0';
+		/* check if we can remove a trailing newline */
+		if (consumed > 1 && input_buf[consumed - 1] == '\n') {
+			input_buf[consumed - 1] = '\0';
+		}
+	}
+
 	return consumed > 0;
+}
+
+static int generate_output(int output_fd)
+{
+	char buf[4096];
+	size_t len, written;
+	unsigned int job_no;
+
+	get_job_no(&job_no);
+	len = snprintf(buf, 4095, "(rtspin/%d:%u completed: %s @ %" PRIu64 "ns)\n",
+			getpid(), job_no, input_buf, (uint64_t) litmus_clock());
+
+	written = write(output_fd, buf, len);
+
+	return written == len;
 }
 
 static void job(double exec_time, double program_end, int lock_od, double cs_length)
@@ -297,7 +326,7 @@ static void job(double exec_time, double program_end, int lock_od, double cs_len
 	}
 }
 
-#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::TD:E:"
+#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::O::TD:E:"
 
 int main(int argc, char** argv)
 {
@@ -334,6 +363,8 @@ int main(int argc, char** argv)
 
 	int sporadic = 0;  /* trigger jobs sporadically? */
 	int event_fd = -1; /* file descriptor for sporadic events */
+	int want_output = 0; /* create output at end of job? */
+	int output_fd = -1;  /* file descriptor for output */
 
 	int linux_sleep = 0; /* use Linux API for periodic activations? */
 	lt_t next_release;
@@ -407,6 +438,21 @@ int main(int argc, char** argv)
 				      "for STDIN.");
 			}
 			break;
+
+		case 'O':
+			want_output = 1;
+			if (!optarg || strcmp(optarg, "-") == 0)
+				output_fd = STDOUT_FILENO;
+			else
+				output_fd = open(optarg, O_WRONLY | O_APPEND);
+			if (output_fd == -1) {
+				fprintf(stderr, "Could not open file '%s' "
+					"(%m)\n", optarg);
+				usage("-O requires a valid file path or '-' "
+				      "for STDOUT.");
+			}
+			break;
+
 		case 'T':
 			linux_sleep = 1;
 			break;
@@ -707,6 +753,11 @@ int main(int argc, char** argv)
 
 		/* burn cycles */
 		job(acet, start + duration, lock_od, cs_length * 0.001);
+
+		if (want_output) {
+			/* generate some output at end of job */
+			generate_output(output_fd);
+		}
 
 		/* wait for periodic job activation (unless sporadic) */
 		if (!sporadic) {
