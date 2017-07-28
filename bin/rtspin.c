@@ -59,6 +59,9 @@ const char *usage_msg =
 	"    -C FILE[:COLUMN]  load per-job execution times from CSV file;\n"
 	"                      if COLUMN is given, it specifies the column to read\n"
 	"                      per-job execution times from (default: 1)\n"
+	"    -A FILE[:COLUMN]  load sporadic inter-arrival times from CSV file (implies -T);\n"
+	"                      if COLUMN is given, it specifies the column to read\n"
+	"                      inter-arrival times from (default: 1)\n"
 	"\n"
 	"    -S[FILE]          read from FILE to trigger sporadic job releases\n"
 	"                      default w/o -S: periodic job releases\n"
@@ -260,7 +263,21 @@ static void job(double exec_time, double program_end, int lock_od, double cs_len
 	}
 }
 
-#define OPTSTR "p:c:wlveo:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::O::TD:E:"
+static lt_t choose_inter_arrival_time_ns(
+	double* arrival_times, int num_arrivals, int cur_job,
+	double range_min, double range_max)
+{
+	double iat_ms;
+
+	if (arrival_times)
+		iat_ms = arrival_times[cur_job % num_arrivals];
+	else
+		iat_ms = range_min + drand48() * (range_max - range_min);
+
+	return ms2ns(iat_ms);
+}
+
+#define OPTSTR "p:c:wlveo:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::O::TD:E:A:"
 
 int main(int argc, char** argv)
 {
@@ -282,14 +299,22 @@ int main(int argc, char** argv)
 	int wait = 0;
 	int test_loop = 0;
 	int background_loop = 0;
-	int column = 1;
+
+	int cost_column = 1;
 	const char *cost_csv_file = NULL;
+	int num_jobs = 0;
+	double *exec_times = NULL;
+
+	int arrival_column = 1;
+	const char *arrival_csv_file = NULL;
+	int num_arrival_times = 0;
+	double *arrival_times = NULL;
+
 	int want_enforcement = 0;
 	double duration = 0, start = 0;
-	double *exec_times = NULL;
 	double scale = 0.95;
 	task_class_t class = RT_CLASS_HARD;
-	int cur_job = 0, num_jobs = 0;
+	int cur_job = 0;
 	struct rt_task param;
 
 	char *after_colon;
@@ -359,8 +384,18 @@ int main(int argc, char** argv)
 			after_colon = strsplit(':', optarg);
 			cost_csv_file = optarg;
 			if (after_colon) {
-				column = want_non_negative_int(after_colon, "-C");
+				cost_column =
+					want_non_negative_int(after_colon, "-C");
 			}
+			break;
+		case 'A':
+			after_colon = strsplit(':', optarg);
+			arrival_csv_file = optarg;
+			if (after_colon) {
+				arrival_column =
+					want_non_negative_int(after_colon, "-A");
+			}
+			linux_sleep = 1;
 			break;
 		case 'S':
 			sporadic = 1;
@@ -517,7 +552,13 @@ int main(int argc, char** argv)
 	}
 
 	if (cost_csv_file)
-		exec_times = csv_read_column(cost_csv_file, column, &num_jobs);
+		exec_times = csv_read_column(cost_csv_file, cost_column,
+					&num_jobs);
+
+	if (arrival_csv_file)
+		arrival_times = csv_read_column(arrival_csv_file,
+					arrival_column, &num_arrival_times);
+
 
 	if (argc - optind < 3 && cost_csv_file)
 		/* If duration is not given explicitly,
@@ -600,10 +641,8 @@ int main(int argc, char** argv)
 		start = wctime();
 	}
 
-	if (cp)
-		next_release = cp->release + period;
-	else
-		next_release = litmus_clock() + period;
+
+	next_release = cp ? cp->release : litmus_clock();
 
 	/* default: periodic releases */
 	if (!inter_arrival_min_ms)
@@ -702,6 +741,17 @@ int main(int argc, char** argv)
 				/* Use vanilla Linux API. This looks to the
 				 * active LITMUS^RT plugin like a
 				 * self-suspension. */
+
+				inter_arrival_time =
+					choose_inter_arrival_time_ns(
+				        	arrival_times,
+				                num_arrival_times,
+				                cur_job,
+				                inter_arrival_min_ms,
+				                inter_arrival_max_ms);
+
+				next_release += inter_arrival_time;
+
 				if (verbose)
 					fprintf(stderr,
 				                "\tclock_nanosleep() until %"
@@ -711,12 +761,9 @@ int main(int argc, char** argv)
 				                ns2s((double) next_release),
 				                (uint64_t) inter_arrival_time,
 				                ns2ms((double) inter_arrival_time));
+
 				lt_sleep_until(next_release);
-				inter_arrival_time = ms2ns(
-					inter_arrival_min_ms +
-					drand48() * (inter_arrival_max_ms -
-					             inter_arrival_min_ms));
-				next_release += inter_arrival_time;
+
 			} else {
 				/* Use LITMUS^RT API: some plugins optimize
 				 * this by not actually suspending the task. */
