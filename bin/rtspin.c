@@ -95,73 +95,6 @@ static void usage(char *error) {
 	exit(error ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
-/*
- * returns the character that made processing stop, newline or EOF
- */
-static int skip_to_next_line(FILE *fstream)
-{
-	int ch;	for (ch = fgetc(fstream); ch != EOF && ch != '\n'; ch = fgetc(fstream));
-	return ch;
-}
-
-static void skip_comments(FILE *fstream)
-{
-	int ch;
-	for (ch = fgetc(fstream); ch == '#'; ch = fgetc(fstream))
-		skip_to_next_line(fstream);
-	ungetc(ch, fstream);
-}
-
-static void get_exec_times(const char *file, const int column,
-			   int *num_jobs,    double **exec_times)
-{
-	FILE *fstream;
-	int  cur_job, cur_col, ch;
-	*num_jobs = 0;
-
-	fstream = fopen(file, "r");
-	if (!fstream)
-		bail_out("could not open execution time file");
-
-	/* figure out the number of jobs */
-	do {
-		skip_comments(fstream);
-		ch = skip_to_next_line(fstream);
-		if (ch != EOF)
-			++(*num_jobs);
-	} while (ch != EOF);
-
-	if (-1 == fseek(fstream, 0L, SEEK_SET))
-		bail_out("rewinding file failed");
-
-	/* allocate space for exec times */
-	*exec_times = calloc(*num_jobs, sizeof(*exec_times));
-	if (!*exec_times)
-		bail_out("couldn't allocate memory");
-
-	for (cur_job = 0; cur_job < *num_jobs && !feof(fstream); ++cur_job) {
-
-		skip_comments(fstream);
-
-		for (cur_col = 1; cur_col < column; ++cur_col) {
-			/* discard input until we get to the column we want */
-			int unused __attribute__ ((unused)) = fscanf(fstream, "%*s,");
-		}
-
-		/* get the desired exec. time */
-		if (1 != fscanf(fstream, "%lf", (*exec_times)+cur_job)) {
-			fprintf(stderr, "invalid execution time near line %d\n",
-					cur_job);
-			exit(EXIT_FAILURE);
-		}
-
-		skip_to_next_line(fstream);
-	}
-
-	assert(cur_job == *num_jobs);
-	fclose(fstream);
-}
-
 #define NUMS 4096
 static int num[NUMS];
 static char* progname;
@@ -584,7 +517,7 @@ int main(int argc, char** argv)
 	}
 
 	if (cost_csv_file)
-		get_exec_times(cost_csv_file, column, &num_jobs, &exec_times);
+		exec_times = csv_read_column(cost_csv_file, column, &num_jobs);
 
 	if (argc - optind < 3 && cost_csv_file)
 		/* If duration is not given explicitly,

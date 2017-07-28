@@ -28,6 +28,24 @@ int str2int(const char* arg, int *failure_flag);
  */
 double str2double(const char* arg, int *failure_flag);
 
+/**
+ * Read a column of doubles from a given CSV file.
+ * @param file The path to the CSV file to parse.
+ * @param column The column to parse (one-based offset).
+ * @param num_rows Pointer to an int that will contain the number of rows upon return.
+ * @return array of parsed double values (must be freed by caller)
+ */
+double* csv_read_column(const char *file, int column, int *num_rows);
+
+/**
+ * Split a string in two at the last occurrence of the given separator.
+ * If the separator is found, the function truncates the given string and returns
+ * the tail that was cut.
+ * @param separator The character to split the string at.
+ * @param str The string to split, which is modified in case the separator is found.
+ * @return the string after the separator or NULL
+ */
+char* strsplit(char separator, char *str);
 
 /* the following macros assume that there is a no-return function called usage() */
 
@@ -62,6 +80,6 @@ double str2double(const char* arg, int *failure_flag);
 		usage("option " name " requires a positive argument"); \
 	__val; })
 
-char* strsplit(char split_char, char *str);
+
 
 #endif
