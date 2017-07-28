@@ -62,5 +62,6 @@ double str2double(const char* arg, int *failure_flag);
 		usage("option " name " requires a positive argument"); \
 	__val; })
 
+char* strsplit(char split_char, char *str);
 
 #endif

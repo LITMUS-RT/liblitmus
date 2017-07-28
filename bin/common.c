@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <string.h>
 #include <errno.h>
 
 #include "common.h"
@@ -34,4 +35,14 @@ double str2double(const char* arg, int *failure_flag)
 	if (failure_flag)
 		*failure_flag = *arg == '\0' || *end != '\0';
 	return val;
+}
+
+char* strsplit(char split_char, char *str)
+{
+	char *found = strrchr(str, split_char);
+	if (found) {
+		/* terminate first string and move to next char */
+		*found++ = '\0';
+	}
+	return found;
 }

@@ -18,7 +18,7 @@
 const char *usage_msg =
 	"Usage: (1) rtspin OPTIONS WCET PERIOD DURATION\n"
 	"       (2) rtspin -S [INPUT] WCET PERIOD DURATION\n"
-	"       (3) rtspin OPTIONS -F FILE [-C COLUMN] WCET PERIOD [DURATION]\n"
+	"       (3) rtspin OPTIONS -C FILE:COLUMN WCET PERIOD [DURATION]\n"
 	"       (4) rtspin -l\n"
 	"       (5) rtspin -B -m FOOTPRINT\n"
 	"\n"
@@ -27,7 +27,7 @@ const char *usage_msg =
 	"           using INPUT as a file from which events are received\n"
 	"           by means of blocking reads (default: read from STDIN)\n"
 	"       (3) as (1) or (2), but load per-job execution times from\n"
-	"           a CSV file\n"
+	"           the given column of a CSV file\n"
 	"       (4) Run calibration loop (how accurately are target\n"
 	"           runtimes met?)\n"
 	"       (5) Run background, non-real-time cache-thrashing loop.\n"
@@ -56,8 +56,9 @@ const char *usage_msg =
 	"    -v                verbose (print per-job statistics)\n"
 	"    -w                wait for synchronous release\n"
 	"\n"
-	"    -F FILE           load per-job execution times from CSV file\n"
-	"    -C COLUMN         specify column to read per-job execution times from (default: 1)\n"
+	"    -C FILE[:COLUMN]  load per-job execution times from CSV file;\n"
+	"                      if COLUMN is given, it specifies the column to read\n"
+	"                      per-job execution times from (default: 1)\n"
 	"\n"
 	"    -S[FILE]          read from FILE to trigger sporadic job releases\n"
 	"                      default w/o -S: periodic job releases\n"
@@ -326,7 +327,7 @@ static void job(double exec_time, double program_end, int lock_od, double cs_len
 	}
 }
 
-#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::O::TD:E:"
+#define OPTSTR "p:c:wlveo:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::O::TD:E:"
 
 int main(int argc, char** argv)
 {
@@ -349,7 +350,7 @@ int main(int argc, char** argv)
 	int test_loop = 0;
 	int background_loop = 0;
 	int column = 1;
-	const char *file = NULL;
+	const char *cost_csv_file = NULL;
 	int want_enforcement = 0;
 	double duration = 0, start = 0;
 	double *exec_times = NULL;
@@ -357,6 +358,8 @@ int main(int argc, char** argv)
 	task_class_t class = RT_CLASS_HARD;
 	int cur_job = 0, num_jobs = 0;
 	struct rt_task param;
+
+	char *after_colon;
 
 	int rss = 0;
 	int idx;
@@ -420,10 +423,11 @@ int main(int argc, char** argv)
 			background_loop = 1;
 			break;
 		case 'C':
-			column = want_non_negative_int(optarg, "-C");
-			break;
-		case 'F':
-			file = optarg;
+			after_colon = strsplit(':', optarg);
+			cost_csv_file = optarg;
+			if (after_colon) {
+				column = want_non_negative_int(after_colon, "-C");
+			}
 			break;
 		case 'S':
 			sporadic = 1;
@@ -555,7 +559,7 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (argc - optind < 3 || (argc - optind < 2 && !file))
+	if (argc - optind < 3 || (argc - optind < 2 && !cost_csv_file))
 		usage("Arguments missing.");
 
 	wcet_ms   = want_positive_double(argv[optind + 0], "WCET");
@@ -574,15 +578,15 @@ int main(int argc, char** argv)
 
 	if (period <= 0)
 		usage("The period must be a positive number.");
-	if (!file && wcet > period) {
+	if (!cost_csv_file && wcet > period) {
 		usage("The worst-case execution time must not "
 				"exceed the period.");
 	}
 
-	if (file)
-		get_exec_times(file, column, &num_jobs, &exec_times);
+	if (cost_csv_file)
+		get_exec_times(cost_csv_file, column, &num_jobs, &exec_times);
 
-	if (argc - optind < 3 && file)
+	if (argc - optind < 3 && cost_csv_file)
 		/* If duration is not given explicitly,
 		 * take duration from file. */
 		duration = num_jobs * period_ms * 0.001;
@@ -731,9 +735,8 @@ int main(int argc, char** argv)
 		}
 
 		/* figure out for how long this job should use the CPU */
-		cur_job++;
 
-		if (file) {
+		if (cost_csv_file) {
 			/* read from provided CSV file and convert to seconds */
 			acet = exec_times[cur_job % num_jobs] * 0.001;
 		} else {
@@ -793,13 +796,14 @@ int main(int argc, char** argv)
 				sleep_next_period();
 			}
 		}
+		cur_job++;
 	}
 
 	ret = task_mode(BACKGROUND_TASK);
 	if (ret != 0)
 		bail_out("could not become regular task (huh?)");
 
-	if (file)
+	if (cost_csv_file)
 		free(exec_times);
 
 	if (base != MAP_FAILED)
