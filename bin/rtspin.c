@@ -19,8 +19,9 @@ const char *usage_msg =
 	"Usage: (1) rtspin OPTIONS WCET PERIOD DURATION\n"
 	"       (2) rtspin -S [INPUT] WCET PERIOD DURATION\n"
 	"       (3) rtspin OPTIONS -F FILE [-C COLUMN] WCET PERIOD [DURATION]\n"
-	"       (4) rtspin -l\n"
+	"       (4) rtspin -l [-a CYCLES]\n"
 	"       (5) rtspin -B -m FOOTPRINT\n"
+	"       (6) rtspin -A\n"
 	"\n"
 	"Modes: (1) run as periodic task with given WCET and PERIOD\n"
 	"       (2) run as sporadic task with given WCET and PERIOD,\n"
@@ -31,12 +32,15 @@ const char *usage_msg =
 	"       (4) Run calibration loop (how accurately are target\n"
 	"           runtimes met?)\n"
 	"       (5) Run background, non-real-time cache-thrashing loop.\n"
+	"       (6) Run 1 ms workload calibration (estimate cycles for 1ms, 10ms, 100ms workload)\n"
 	"\n"
 	"Required arguments:\n"
 	"    WCET, PERIOD      reservation parameters (in ms)\n"
 	"    DURATION          terminate the task after DURATION seconds\n"
 	"\n"
 	"Options:\n"
+	"    -A                calibrate 1ms workload cycles\n"
+	"    -a CYCLES         number of cycles for 1ms of workload loop chosen after calibration\n "
 	"    -B                run non-real-time background loop\n"
 	"    -c be|srt|hrt     task class (best-effort, soft real-time, hard real-time)\n"
 	"    -d DEADLINE       relative deadline, equal to the period by default (in ms)\n"
@@ -165,17 +169,22 @@ static int nr_of_pages = 0;
 static int page_size;
 static void *base = NULL;
 
-static int loop_once(void)
+static int cycles_ms = 0;
+
+static int loop(int count)
 {
 	int i, j = 0;
 	/* touch some numbers and do some math */
-	for (i = 0; i < NUMS; i++) {
-		j += num[i]++;
-		if (j > num[i])
-			num[i] = (j / 2) + 1;
+	for (i = 0; i < count; i++) {
+		int index = i % NUMS;
+		j += num[index]++;
+		if (j > num[index])
+			num[index] = (j / 2) + 1;
 	}
 	return j;
 }
+
+#define loop_once() loop(NUMS)
 
 static int loop_once_with_mem(void)
 {
@@ -202,30 +211,35 @@ static int loop_once_with_mem(void)
 
 static int loop_for(double exec_time, double emergency_exit)
 {
-	double last_loop = 0, loop_start;
 	int tmp = 0;
 
-	double start = cputime();
-	double now = cputime();
+	if (cycles_ms) {
+		double count = cycles_ms * exec_time * 1000;
+		tmp += loop(count);
+	} else {
+		double last_loop = 0, loop_start;
+		double start = cputime();
+		double now = cputime();
 
-	while (now + last_loop < start + exec_time) {
-		loop_start = now;
-		if (nr_of_pages)
-			tmp += loop_once_with_mem();
-		else
-			tmp += loop_once();
-		now = cputime();
-		last_loop = now - loop_start;
-		if (emergency_exit && wctime() > emergency_exit) {
-			/* Oops --- this should only be possible if the
-			 * execution time tracking is broken in the LITMUS^RT
-			 * kernel or the user specified infeasible parameters.
-			 */
-			fprintf(stderr, "!!! rtspin/%d emergency exit!\n",
-			        getpid());
-			fprintf(stderr, "Reached experiment timeout while "
-			        "spinning.\n");
-			break;
+		while (now + last_loop < start + exec_time) {
+			loop_start = now;
+			if (nr_of_pages)
+				tmp += loop_once_with_mem();
+			else
+				tmp += loop_once();
+			now = cputime();
+			last_loop = now - loop_start;
+			if (emergency_exit && wctime() > emergency_exit) {
+				/* Oops --- this should only be possible if the
+				 * execution time tracking is broken in the LITMUS^RT
+				 * kernel or the user specified infeasible parameters.
+				 */
+				fprintf(stderr, "!!! rtspin/%d emergency exit!\n",
+				        getpid());
+				fprintf(stderr, "Reached experiment timeout while "
+				        "spinning.\n");
+				break;
+			}
 		}
 	}
 
@@ -249,6 +263,51 @@ static void debug_delay_loop(void)
 			       100 * (end - start - delay) / delay);
 		}
 	}
+}
+
+static int calibrate_ms(int ms)
+{
+	int right = NUMS;
+	int left = 0;
+	int middle;
+
+	double start;
+	double now;
+	double dms = 0.001 * ms;
+
+	/*look for initial loop count values for binary search*/
+	for (;;)
+	{
+		printf("Probe %d loops for %d ms:\n", right, ms);
+		start = wctime();
+		loop(right);
+		now = wctime();
+		if ((now - start) >= dms)
+			break;
+		left = right;
+		right += right;
+	}
+
+	middle = (left + right) / 2;
+
+	/*binary search for a loop count value for expected calibration time*/
+	while (left < middle)
+	{
+		start = wctime();
+		loop(middle);
+		now = wctime();
+
+		printf("%d loops elapsed in %4.20f s\n", middle, now - start);
+
+		if ((now - start) < dms)
+			left = middle;
+		else if ((now - start) == dms)
+			return middle;
+		else
+			right = middle;
+		middle = (left + right) / 2;
+	}
+	return middle;
 }
 
 static int wait_for_input(int event_fd)
@@ -297,7 +356,7 @@ static void job(double exec_time, double program_end, int lock_od, double cs_len
 	}
 }
 
-#define OPTSTR "p:c:wlveo:F:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::TD:E:"
+#define OPTSTR "p:c:Awlveo:F:s:m:q:r:X:L:Q:iRu:U:Bhd:C:S::TD:E:a:"
 
 int main(int argc, char** argv)
 {
@@ -318,6 +377,7 @@ int main(int argc, char** argv)
 	int opt;
 	int wait = 0;
 	int test_loop = 0;
+	int caliber_ms = 0;
 	int background_loop = 0;
 	int column = 1;
 	const char *file = NULL;
@@ -462,6 +522,12 @@ int main(int argc, char** argv)
 			verbose = 1;
 			report_interrupts = 1;
 			break;
+		case 'A':
+			caliber_ms = 1;
+			break;
+		case 'a':
+			cycles_ms = want_non_negative_int(optarg, "-a");
+			break;
 		case ':':
 			usage("Argument missing.");
 			break;
@@ -495,7 +561,18 @@ int main(int argc, char** argv)
 	srand(getpid());
 
 	if (test_loop) {
+		if (cycles_ms > 0)
+			printf("Evaluating loop with %d cycles:\n", cycles_ms);
+
 		debug_delay_loop();
+		return 0;
+	}
+
+	if (caliber_ms) {
+		printf("In 1 ms %d loops\n", calibrate_ms(1));
+		printf("In 10 ms %d loops\n", calibrate_ms(10));
+		printf("In 100 ms %d loops\n", calibrate_ms(100));
+		printf("In 1 s %d loops\n", calibrate_ms(1000));
 		return 0;
 	}
 
