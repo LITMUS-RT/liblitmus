@@ -253,9 +253,9 @@ static void debug_delay_loop(void)
 
 	while (1) {
 		for (delay = 0.5; delay > 0.01; delay -= 0.01) {
-			start = wctime();
+			start = cputime();
 			loop_for(delay, 0);
-			end = wctime();
+			end = cputime();
 			printf("%6.4fs: looped for %10.8fs, delta=%11.8fs, error=%7.4f%%\n",
 			       delay,
 			       end - start,
