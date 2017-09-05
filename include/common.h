@@ -6,6 +6,12 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#if defined(__GNUC__)
+#define noinline      __attribute__((__noinline__))
+#else
+#define noinline
+#endif
+
 /**
  * End the current task with a message
  * @param msg Message to output before bailing
