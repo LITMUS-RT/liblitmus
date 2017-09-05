@@ -171,7 +171,7 @@ static void *base = NULL;
 
 static int cycles_ms = 0;
 
-static int loop(int count)
+static noinline int loop(int count)
 {
 	int i, j = 0;
 	/* touch some numbers and do some math */
