@@ -222,9 +222,9 @@ static int calibrate_ms(int ms)
 	for (;;)
 	{
 		printf("Probe %d loops for %d ms:\n", right, ms);
-		start = wctime();
+		start = cputime();
 		loop(right);
-		now = wctime();
+		now = cputime();
 		if ((now - start) >= dms)
 			break;
 		left = right;
@@ -236,9 +236,9 @@ static int calibrate_ms(int ms)
 	/*binary search for a loop count value for expected calibration time*/
 	while (left < middle)
 	{
-		start = wctime();
+		start = cputime();
 		loop(middle);
-		now = wctime();
+		now = cputime();
 
 		printf("%d loops elapsed in %4.20f s\n", middle, now - start);
 
